@@ -1,0 +1,27 @@
+﻿<Window x:Class="TestWPF.Start"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TestWPF"
+        mc:Ignorable="d"
+        Title="Start" Height="1080" Width="1920"
+       >
+
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+
+        </Grid.RowDefinitions>
+        <Image Source="/ẢNH BÌA.png" Height="381" Width="381" Margin="0 222 0 36 " HorizontalAlignment="Center"></Image>
+        <Border Grid.Row="1" Height="101" Width="563" Margin="0 0 0 36 " CornerRadius="50" Background="#58cc02" HorizontalAlignment="Center">
+            <Button Style="{DynamicResource Button_bodered}" Content="BẮT ĐẦU" FontSize="48"  FontWeight="Bold" Foreground="White" Background="Transparent" BorderThickness="0" Click="Button_Click"/>
+        </Border>
+        <Border Grid.Row="2" Height="101" Width="563"  CornerRadius="50" Background="White" BorderBrush="#a9a6ac" BorderThickness="2" HorizontalAlignment="Center" >
+            <Button Style="{DynamicResource Btn-bodered2}" Content="TÔI ĐÃ CÓ TÀI KHOẢN" FontSize="48" FontWeight="Bold" Foreground="#1CB0F6" Background="Transparent" BorderThickness="0" />
+        </Border>
+    </Grid>
+</Window>
