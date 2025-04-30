@@ -1,0 +1,117 @@
+﻿<Window x:Class="Learnify.Views.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fa="http://schemas.awesome.incremented/wpf/xaml/fontawesome.sharp"
+        xmlns:svg="http://sharpvectors.codeplex.com/svgc/"
+        xmlns:local="clr-namespace:Learnify.Views"
+        mc:Ignorable="d"
+        Height="720" Width="1280"
+        WindowStyle="None"
+        WindowStartupLocation="CenterScreen"
+        AllowsTransparency="True"
+        MouseDown="Window_MouseDown">
+
+    <Border Background="#E0F3FF">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <!--menu-->
+                <ColumnDefinition Width="150"/>
+                <!--content-->
+                <ColumnDefinition Width="*"/>
+                <!--friend-->
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Background="White">
+                <StackPanel>
+                    <StackPanel Orientation="Vertical"
+                                Height="70"
+                                Margin="20">
+                        <svg:SvgViewbox Source="/Images/Logo_UIT_updated.svg"
+                                        Height="70"
+                                        HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <RadioButton Style="{StaticResource menuButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Home" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Trang chủ" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="CalendarAlt" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Lịch" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Clock" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Bấm giờ" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Medal" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Xếp hạng" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Bullhorn" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Chiến dịch" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Home" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Thống kê" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Award" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Phần thưởng" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1">
+                <svg:SvgViewbox Source="/Images/Learnify.svg"
+                                Width="159"
+                                Height="40"
+                                VerticalAlignment="Top"
+                                HorizontalAlignment="Left"
+                                Margin="20"/>
+            </Border>
+
+
+
+            <Border Background="White" Grid.Column="2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" HorizontalAlignment="Right">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="30"/>
+                            <ColumnDefinition Width="30"/>
+                        </Grid.ColumnDefinitions>
+                        <!--nút exit-->
+                        <Button x:Name="btnExit" Grid.Column="1" Click="btnExit_Click" Background="Transparent" BorderThickness="0">
+                            <Image Source="/Images/ButtonClose.png"/>
+                        </Button>
+                        <!--nút thu nhỏ cửa sổ-->
+                        <Button x:Name="btnMinisize" Grid.Column="0" Click="btnMinisize_Click" Background="Transparent" BorderThickness="0">
+                            <Image Source="/Images/ButtonMinisize.png"/>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
