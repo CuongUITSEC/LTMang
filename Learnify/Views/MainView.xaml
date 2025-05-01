@@ -10,8 +10,7 @@
         Height="720" Width="1280"
         WindowStyle="None"
         WindowStartupLocation="CenterScreen"
-        AllowsTransparency="True"
-        MouseDown="Window_MouseDown">
+        AllowsTransparency="True">
 
     <Border Background="#E0F3FF" BorderThickness="1">
         <Border.BorderBrush>
@@ -83,7 +82,7 @@
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#2ee8aa">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="Home" Style="{StaticResource menuButtonIcon}"/>
+                            <fa:IconImage Icon="ChartPie"  Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Thống kê" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
@@ -108,13 +107,57 @@
             
             <!--content-->
             <Border Grid.Column="1">
-                
-                <svg:SvgViewbox Source="/Images/Learnify.svg"
-                                Width="159"
-                                Height="40"
-                                VerticalAlignment="Top"
-                                HorizontalAlignment="Left"
-                                Margin="20"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="20"/>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel x:Name="pnlControlBar"
+                                Grid.Row="0"
+                                Orientation="Horizontal"
+                                FlowDirection="RightToLeft"
+                                Background="Transparent"
+                                MouseLeftButtonDown="pnlControlBar_MouseLeftButtonDown"
+                                MouseEnter="pnlControlBar_MouseEnter">
+                        
+                    </StackPanel>
+                    
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <svg:SvgViewbox Source="/Images/Learnify.svg"
+                                        Width="159"
+                                        Height="40"
+                                        VerticalAlignment="Top"
+                                        HorizontalAlignment="Left"
+                                        Margin="20,0,0,0"/>
+                        
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,20,0">
+                            <fa:IconImage Icon="Bell" 
+                                          Width="20"
+                                          Height="20"
+                                          VerticalAlignment="Top"
+                                          Margin="0,0,10,0"/>
+                            <fa:IconImage Icon="User" 
+                                          Width="20"
+                                          Height="20"
+                                          VerticalAlignment="Top"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="3"
+                            Margin="50,0,50,75">
+                        <local:MainViewControl/>
+                    </Border>
+                </Grid>
             </Border>
 
 

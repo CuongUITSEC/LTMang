@@ -2,6 +2,8 @@ E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\Learnify.exe.config
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\Learnify.exe
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\Learnify.pdb
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\FontAwesome.Sharp.dll
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\LiveCharts.dll
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\LiveCharts.Wpf.dll
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Converters.Wpf.dll
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Core.dll
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Css.dll
@@ -10,6 +12,10 @@ E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Model.dll
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Rendering.Gdi.dll
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Rendering.Wpf.dll
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Runtime.Wpf.dll
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\LiveCharts.pdb
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\LiveCharts.xml
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\LiveCharts.Wpf.pdb
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\LiveCharts.Wpf.xml
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Converters.Wpf.xml
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Core.xml
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\bin\Debug\SharpVectors.Css.xml
@@ -22,12 +28,15 @@ E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Learnify.csproj.AssemblyRe
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Styles\ButtonStyle.baml
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\MainWindow.g.cs
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Views\MainView.g.cs
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Views\MainViewControl.g.cs
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\App.g.cs
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\GeneratedInternalTypeHelper.g.cs
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Learnify_MarkupCompile.cache
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Learnify_MarkupCompile.lref
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\App.baml
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\MainWindow.baml
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Views\MainView.baml
+E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Views\MainViewControl.baml
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Learnify.g.resources
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Learnify.Properties.Resources.resources
 E:\lap-trinh-mang-can-ban\Learnify\Learnify\obj\Debug\Learnify.csproj.GenerateResource.cache
