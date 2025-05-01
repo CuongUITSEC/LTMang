@@ -25,7 +25,7 @@
              />
 
         <!-- Password -->
-        <PasswordBox Style="{DynamicResource PW_BOX}"  FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563" Grid.Row="2"  Margin="0,0,0,30" Padding="50 0 50 0" HorizontalAlignment="Center" PasswordChanged="PasswordBox_PasswordChanged"/>
+        <PasswordBox Style="{DynamicResource PW_BOX}"  FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563" Grid.Row="2"  Margin="0,0,0,30" Padding="50 0 50 0" HorizontalAlignment="Center" />
 
         <TextBlock  Text="Quên mật khẩu?" Opacity="20" TextAlignment="Right" Grid.Row="3" FontSize="30" FontWeight="Thin" Foreground="LightGray" Width="550"></TextBlock>
         <!-- Login Button -->

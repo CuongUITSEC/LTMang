@@ -89,6 +89,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\Analyst.xaml.cs">
+      <DependentUpon>Analyst.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\FOGOT_PW.xaml.cs">
       <DependentUpon>FOGOT_PW.xaml</DependentUpon>
     </Compile>
@@ -130,6 +133,10 @@
     <Page Include="Styles\PW_BOX.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Analyst.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\FOGOT_PW.xaml">
       <SubType>Designer</SubType>
