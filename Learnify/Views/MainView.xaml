@@ -1,0 +1,189 @@
+﻿<Window x:Class="Learnify.Views.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fa="http://schemas.awesome.incremented/wpf/xaml/fontawesome.sharp"
+        xmlns:svg="http://sharpvectors.codeplex.com/svgc/"
+        xmlns:local="clr-namespace:Learnify.Views"
+        mc:Ignorable="d"
+        Height="720" Width="1280"
+        WindowStyle="None"
+        WindowStartupLocation="CenterScreen"
+        AllowsTransparency="True">
+
+    <Border Background="#E0F3FF" BorderThickness="1">
+        <Border.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#5325c9" Offset="0"/>
+                <GradientStop Color="#e538c1" Offset="0.5"/>
+                <GradientStop Color="#5325c9" Offset="0"/>
+            </LinearGradientBrush>
+        </Border.BorderBrush>
+        
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <!--menu-->
+                <ColumnDefinition Width="150"/>
+                <!--content-->
+                <ColumnDefinition Width="*"/>
+                <!--friend-->
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+
+            
+            <!--menu-->
+            <Border Background="White" Grid.Column="0">
+                <StackPanel>
+                    <StackPanel Orientation="Vertical"
+                                Height="70"
+                                Margin="20">
+                        <svg:SvgViewbox Source="/Images/Logo-DH-Cong-Nghe-Thong-Tin-UIT.svg"
+                                        Height="70"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <RadioButton Style="{StaticResource menuButton}"
+                                 Tag="#8a94f8">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Home" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Trang chủ" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}"
+                                 Tag="#a057ff">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="CalendarAlt" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Lịch" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}"
+                                 Tag="#e538c1">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Clock" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Bấm giờ" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}"
+                                 Tag="#00aeef">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Medal" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Xếp hạng" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}"
+                                 Tag="#7832df">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Bullhorn" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Chiến dịch" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}"
+                                 Tag="#2ee8aa">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="ChartPie"  Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Thống kê" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}"
+                                 Tag="#24bdbd">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Gem" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Phần thưởng" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource menuButton}"
+                                 Tag="#221fcc">
+                        <StackPanel Orientation="Horizontal">
+                            <fa:IconImage Icon="Gear" Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Cài đặt" Style="{StaticResource menuButtonText}"/>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+                  
+            </Border>
+
+            
+            <!--content-->
+            <Border Grid.Column="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="20"/>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel x:Name="pnlControlBar"
+                                Grid.Row="0"
+                                Orientation="Horizontal"
+                                FlowDirection="RightToLeft"
+                                Background="Transparent"
+                                MouseLeftButtonDown="pnlControlBar_MouseLeftButtonDown"
+                                MouseEnter="pnlControlBar_MouseEnter">
+                        
+                    </StackPanel>
+                    
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <svg:SvgViewbox Source="/Images/Learnify.svg"
+                                        Width="159"
+                                        Height="40"
+                                        VerticalAlignment="Top"
+                                        HorizontalAlignment="Left"
+                                        Margin="20,0,0,0"/>
+                        
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,20,0">
+                            <fa:IconImage Icon="Bell" 
+                                          Width="20"
+                                          Height="20"
+                                          VerticalAlignment="Top"
+                                          Margin="0,0,10,0"/>
+                            <fa:IconImage Icon="User" 
+                                          Width="20"
+                                          Height="20"
+                                          VerticalAlignment="Top"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="3"
+                            Margin="50,0,50,75">
+                        <local:MainViewControl Loaded="MainViewControl_Loaded"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+
+
+            <Border Background="White" Grid.Column="2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" HorizontalAlignment="Right">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="30"/>
+                            <ColumnDefinition Width="30"/>
+                        </Grid.ColumnDefinitions>
+                        <!--nút exit-->
+                        <Button x:Name="btnExit" Grid.Column="1" Click="btnExit_Click" Background="Transparent" BorderThickness="0">
+                            <Image Source="/Images/ButtonClose.png"/>
+                        </Button>
+                        <!--nút thu nhỏ cửa sổ-->
+                        <Button x:Name="btnMinisize" Grid.Column="0" Click="btnMinisize_Click" Background="Transparent" BorderThickness="0">
+                            <Image Source="/Images/ButtonMinisize.png"/>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
