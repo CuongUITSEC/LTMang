@@ -5,8 +5,27 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Learnify.Views"
         mc:Ignorable="d"
-        Title="FOGOT_PW" Height="450" Width="800">
+        Title="FOGOT_PW" Height="1080" Width="1920">
     <Grid>
-        
+        <Grid.RowDefinitions >
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+
+        </Grid.RowDefinitions>
+        <!--title-->
+        <TextBlock Grid.Row="0" Text="QUÊN MẬT KHẨU" FontWeight="Bold" FontSize="64" Height="AUTO" Width="600" TextWrapping="WrapWithOverflow" TextAlignment="Center"  Margin="0 260 0 96" Foreground="Black" HorizontalAlignment="Center"></TextBlock>
+        <!-- Username -->
+        <TextBox Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="1"  Margin="0,0,0,27" HorizontalAlignment="Center" Text=""         />
+        <!--EMAIL-->
+        <TextBox Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="2"  Margin="0,0,0,27" HorizontalAlignment="Center" Text=""  />
+        <!-- Password -->
+        <PasswordBox Style="{DynamicResource PW_BOX}"  FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563" Grid.Row="3"  Margin="0,0,0,70" Padding="50 0 50 0" HorizontalAlignment="Center" />
+        <!-- Login Button -->
+        <Button  Style="{DynamicResource Button_bodered}" FontWeight="Bold" Foreground="White" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="ĐẶT LẠI MẬT KHẨU" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#58CC02"
+  BorderThickness="0" Margin="0,0,0,27" />
     </Grid>
 </Window>

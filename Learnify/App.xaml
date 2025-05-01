@@ -7,6 +7,11 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Styles/ButtonStyle.xaml"/>
+                <ResourceDictionary Source="/Styles/btn-bodered.xaml"/>
+                <ResourceDictionary Source="/Styles/btn-bodered2.xaml"/>
+                <ResourceDictionary Source="/Styles/INPUT-BOX.xaml"/>
+                <ResourceDictionary Source="/Styles/PW_BOX.xaml"/>
+                
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

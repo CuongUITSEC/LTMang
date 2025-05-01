@@ -89,6 +89,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\FOGOT_PW.xaml.cs">
+      <DependentUpon>FOGOT_PW.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
@@ -98,6 +101,15 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\SIGN-IN.xaml.cs">
+      <DependentUpon>SIGN-IN.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SIGN-UP.xaml.cs">
+      <DependentUpon>SIGN-UP.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Start.xaml.cs">
+      <DependentUpon>Start.xaml</DependentUpon>
     </Compile>
     <Page Include="Styles\btn-bodered.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -119,11 +131,27 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Views\FOGOT_PW.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\MainView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\MainViewControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\SIGN-IN.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\SIGN-UP.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Start.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
