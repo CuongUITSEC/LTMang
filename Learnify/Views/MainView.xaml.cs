@@ -56,5 +56,10 @@ namespace Learnify.Views
         {
 
         }
+
+        private void HomePage_Loaded(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

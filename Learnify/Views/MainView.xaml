@@ -112,7 +112,7 @@
             <Border Grid.Column="1">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="20"/>
+                        <RowDefinition Height="30"/>
                         <RowDefinition Height="40"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
@@ -157,7 +157,7 @@
 
                     <Border Grid.Row="3"
                             Margin="50,50,50,100">
-                        <userControls:HomePage/>
+                        <userControls:HomePage Loaded="HomePage_Loaded"/>
                     </Border>
                 </Grid>
             </Border>

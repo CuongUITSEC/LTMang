@@ -90,6 +90,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ViewModels\AnalystViewModel.cs" />
+    <Compile Include="ViewModels\HomeViewModel.cs" />
     <Compile Include="Views\Analyst.xaml.cs">
       <DependentUpon>Analyst.xaml</DependentUpon>
     </Compile>
