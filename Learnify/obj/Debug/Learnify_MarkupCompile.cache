@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-E:\CODE\UIT\UIT-LTMang\LTMang\app\Learnify\obj\Debug\
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\
 Learnify
 none
 false
 DEBUG;TRACE
-E:\CODE\UIT\UIT-LTMang\LTMang\app\Learnify\App.xaml
-121248150496
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\App.xaml
+12-226726664
 
-12734279103
-25-802897792
-Styles\btn-bodered.xaml;Styles\btn-bodered2.xaml;Styles\ButtonStyle.xaml;Styles\INPUT-BOX.xaml;Styles\PW_BOX.xaml;Views\Analyst.xaml;Views\FOGOT_PW.xaml;Views\MainView.xaml;Views\MainViewControl.xaml;Views\SIGN-IN.xaml;Views\SIGN-UP.xaml;Views\Start.xaml;
+12179678887
+25-2138510798
+Styles\btn-bodered.xaml;Styles\btn-bodered2.xaml;Styles\ButtonStyle.xaml;Styles\INPUT-BOX.xaml;Styles\PW_BOX.xaml;Views\Analyst.xaml;Views\FOGOT_PW.xaml;Views\MainView.xaml;Views\SIGN-IN.xaml;Views\SIGN-UP.xaml;Views\Start.xaml;Views\UserControls\HomePage.xaml;
 
 False
 

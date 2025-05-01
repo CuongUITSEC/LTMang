@@ -6,6 +6,9 @@
         xmlns:fa="http://schemas.awesome.incremented/wpf/xaml/fontawesome.sharp"
         xmlns:svg="http://sharpvectors.codeplex.com/svgc/"
         xmlns:local="clr-namespace:Learnify.Views"
+        xmlns:userControls="clr-namespace:Learnify.Views.UserControls"
+        
+        
         mc:Ignorable="d"
         Height="720" Width="1280"
         WindowStyle="None"
@@ -111,8 +114,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="20"/>
                         <RowDefinition Height="40"/>
-                        <RowDefinition Height="40"/>
-                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
                     <StackPanel x:Name="pnlControlBar"
@@ -154,8 +156,8 @@
                     </Grid>
 
                     <Border Grid.Row="3"
-                            Margin="50,0,50,75">
-                        <local:MainViewControl Loaded="MainViewControl_Loaded"/>
+                            Margin="50,50,50,100">
+                        <userControls:HomePage/>
                     </Border>
                 </Grid>
             </Border>
