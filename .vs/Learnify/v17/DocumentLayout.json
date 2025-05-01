@@ -3,11 +3,11 @@
   "WorkspaceRootPath": "E:\\lap-trinh-mang-can-ban\\Learnify\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C008D74F-3CE7-4B2F-92DE-85A67249861C}|Learnify\\Learnify.csproj|E:\\lap-trinh-mang-can-ban\\Learnify\\learnify\\views\\mainview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "AbsoluteMoniker": "D:0:0:{C008D74F-3CE7-4B2F-92DE-85A67249861C}|Learnify\\Learnify.csproj|e:\\lap-trinh-mang-can-ban\\learnify\\learnify\\views\\mainview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{C008D74F-3CE7-4B2F-92DE-85A67249861C}|Learnify\\Learnify.csproj|solutionrelative:learnify\\views\\mainview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C008D74F-3CE7-4B2F-92DE-85A67249861C}|Learnify\\Learnify.csproj|e:\\lap-trinh-mang-can-ban\\learnify\\learnify\\views\\mainviewcontrol.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "AbsoluteMoniker": "D:0:0:{C008D74F-3CE7-4B2F-92DE-85A67249861C}|Learnify\\Learnify.csproj|E:\\lap-trinh-mang-can-ban\\Learnify\\learnify\\views\\mainviewcontrol.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{C008D74F-3CE7-4B2F-92DE-85A67249861C}|Learnify\\Learnify.csproj|solutionrelative:learnify\\views\\mainviewcontrol.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     },
     {
@@ -54,8 +54,7 @@
               "RelativeToolTip": "Learnify\\Views\\MainViewControl.xaml.cs",
               "ViewState": "AgIAAAQAAAAAAAAAAAAswDkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-01T07:27:17.95Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-01T07:27:17.95Z"
             },
             {
               "$type": "Document",
@@ -103,8 +102,7 @@
               "RelativeToolTip": "Learnify\\Views\\MainView.xaml.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-28T18:04:15.544Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-28T18:04:15.544Z"
             },
             {
               "$type": "Document",
@@ -128,8 +126,7 @@
               "RelativeToolTip": "Learnify\\MainWindow.xaml.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-28T16:58:20.839Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-28T16:58:20.839Z"
             }
           ]
         }
