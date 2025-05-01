@@ -89,6 +89,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\AnalystViewModel.cs" />
     <Compile Include="Views\Analyst.xaml.cs">
       <DependentUpon>Analyst.xaml</DependentUpon>
     </Compile>
@@ -192,7 +193,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
-    <Folder Include="ViewModes\" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\ButtonClose.png" />

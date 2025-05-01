@@ -100,3 +100,5 @@ E:\CODE\UIT\UIT-LTMang\LTMang\app\Learnify\obj\Debug\Learnify.Properties.Resourc
 E:\CODE\UIT\UIT-LTMang\LTMang\app\Learnify\obj\Debug\Learnify.csproj.GenerateResource.cache
 E:\CODE\UIT\UIT-LTMang\LTMang\app\Learnify\obj\Debug\Learnify.csproj.CoreCompileInputs.cache
 E:\CODE\UIT\UIT-LTMang\LTMang\app\Learnify\obj\Debug\Learnify.csproj.Up2Date
+E:\CODE\UIT\UIT-LTMang\LTMang\app\Learnify\obj\Debug\Views\Analyst.g.cs
+E:\CODE\UIT\UIT-LTMang\LTMang\app\Learnify\obj\Debug\Views\Analyst.baml
