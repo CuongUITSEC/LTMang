@@ -158,6 +158,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Styles\CalendarStyle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Styles\INPUT-BOX.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

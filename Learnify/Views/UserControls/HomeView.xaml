@@ -4,9 +4,12 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:svg="http://sharpvectors.codeplex.com/svgc/"
+             xmlns:fa="http://schemas.awesome.incremented/wpf/xaml/fontawesome.sharp"
+
 
              xmlns:local="clr-namespace:Learnify.Views.UserControls">
-    <Border BorderThickness="0">
+    <Border Margin="25,25,25,100">
         <Viewbox Stretch="Uniform">
 
             <Grid>
@@ -21,7 +24,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!--biểu đồ-->
-                <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,15,15">
+                <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,10,10">
                     <Viewbox Stretch="Uniform">
                         <Border Height="200"
                   Width="430"
@@ -52,7 +55,7 @@
                 </Border>
 
                 <!--Xếp hạng-->
-                <Border Grid.Row="1" Grid.Column="0" Margin="0,15,15,0">
+                <Border Grid.Row="1" Grid.Column="0" Margin="0,10,10,0">
                     <Viewbox Stretch="Uniform">
                         <Border Width="200" Height="200"
                   CornerRadius="25"
@@ -66,15 +69,52 @@
                                 </LinearGradientBrush>
                             </Border.BorderBrush>
                             <StackPanel>
-                                <TextBlock Text="Main View Control" FontSize="24" FontWeight="Bold"/>
-                                <TextBlock Text="This is the main view control content."/>
+                                <svg:SvgViewbox Source="/Images/ranking.svg"
+                                                Width="75"/>
+                                <TextBlock Text="BẢNG XẾP HẠNG"
+                                           HorizontalAlignment="Center"
+                                           FontWeight="Bold"
+                                           FontSize="13"/>
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="10,0,0,0">
+                                    <svg:SvgViewbox Source="/Images/avatar1.svg"
+                                                    Width="30"
+                                                    Margin="5"/>
+                                    <TextBlock Text="Nguyễn Phương Tuấn"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="10,0,0,0">
+                                    <svg:SvgViewbox Source="/Images/avatar1.svg"
+                                                    Width="30"
+                                                    Margin="5"/>
+                                    <TextBlock Text="Đặng Tiến Hoàng"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="10,0,0,0">
+                                    <svg:SvgViewbox Source="/Images/avatar1.svg"
+                                                    Width="30"
+                                                    Margin="5"/>
+                                    <TextBlock Text="Nguyễn Văn A"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </Viewbox>
                 </Border>
 
                 <!--Nhiệm vụ nhận thưởng-->
-                <Border Grid.Row="1" Grid.Column="1" Margin="15,15,15,0">
+                <Border Grid.Row="1" Grid.Column="1" Margin="10,10,10,0">
                     <Viewbox Stretch="Uniform">
                         <Border Width="200" Height="200"
                   CornerRadius="25"
@@ -88,15 +128,59 @@
                                 </LinearGradientBrush>
                             </Border.BorderBrush>
                             <StackPanel>
-                                <TextBlock Text="Main View Control" FontSize="24" FontWeight="Bold"/>
-                                <TextBlock Text="This is the main view control content."/>
+                                <TextBlock Text="NHIỆM VỤ" FontSize="15" FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           Margin="10"
+                                           Foreground="MediumSeaGreen"/>
+                                
+                                <Line X1="0" Y1="0"
+                                        X2="180" Y2="0"
+                                        Stroke="LightGray"
+                                        StrokeThickness="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Top"/>
+                                
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="10">
+                                    <fa:IconImage Icon="Square"
+                                                  Width="20"
+                                                  Margin="0,0,15,0"/>
+                                    <TextBlock Text="Học 60 phút (100 xu)"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="10">
+                                    <fa:IconImage Icon="Square"
+                                                  Width="20"
+                                                  Margin="0,0,15,0"/>
+                                    <TextBlock Text="Học 120 phút (200 xu)"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="10">
+                                    <fa:IconImage Icon="Square"
+                                                  Width="20"
+                                                  Margin="0,0,15,0"/>
+                                    <TextBlock Text="Học quá 180 phút (1k xu)"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                </StackPanel>
+                               
                             </StackPanel>
                         </Border>
                     </Viewbox>
                 </Border>
 
                 <!-- Right Side (Span 2 rows) -->
-                <Border Grid.Column="2" Grid.RowSpan="2" Margin="15,0,0,0">
+                <Border Grid.Column="2" Grid.RowSpan="2" Margin="10,0,0,0">
                     <Viewbox Stretch="Uniform">
                         <Border Width="250" Height="430"
                   CornerRadius="25"
@@ -110,8 +194,54 @@
                                 </LinearGradientBrush>
                             </Border.BorderBrush>
                             <StackPanel>
-                                <TextBlock Text="Main View Control" FontSize="24" FontWeight="Bold"/>
-                                <TextBlock Text="This is the main view control content."/>
+                                <StackPanel>
+                                    <TextBlock Text="TO DO LIST" FontSize="15" FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           Margin="10"
+                                           Foreground="MediumSeaGreen"/>
+
+                                    <Line X1="0" Y1="0"
+                                        X2="220" Y2="0"
+                                        Stroke="LightGray"
+                                        StrokeThickness="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Top"/>
+
+                                    <StackPanel Orientation="Horizontal"
+                                            Margin="10">
+                                        <fa:IconImage Icon="Square"
+                                                  Width="20"
+                                                  Margin="0,0,15,0"/>
+                                        <TextBlock Text="Học tiếng Anh"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                            Margin="10">
+                                        <fa:IconImage Icon="Square"
+                                                  Width="20"
+                                                  Margin="0,0,15,0"/>
+                                        <TextBlock Text="Làm bài tập Mạng"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                            Margin="10">
+                                        <fa:IconImage Icon="Square"
+                                                  Width="20"
+                                                  Margin="0,0,15,0"/>
+                                        <TextBlock Text="Nghiên cứu CTF"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               FontSize="12"/>
+                                    </StackPanel>
+
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </Viewbox>
