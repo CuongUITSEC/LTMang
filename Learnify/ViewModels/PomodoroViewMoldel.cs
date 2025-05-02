@@ -38,7 +38,6 @@ namespace Learnify.ViewModels
             private set { _timeDisplay = value; OnPropertyChanged(nameof(TimeDisplay)); }
         }
 
-        /// <summary>1→đầy, 0→rỗng</summary>
         public double Progress
         {
             get => _progress;
@@ -47,29 +46,20 @@ namespace Learnify.ViewModels
                 _progress = Math.Max(0, Math.Min(1, value));
                 OnPropertyChanged(nameof(Progress));
                 OnPropertyChanged(nameof(PomodoroArc));
-                OnPropertyChanged(nameof(BreakArc));
             }
         }
 
-        /// <summary>Cung Pomodoro: 150° từ -90° → 60°</summary>
         public Geometry PomodoroArc
         {
             get
             {
-                // nếu đang Break, ẩn Pomodoro
                 if (_isBreakTime) return Geometry.Empty;
-                // span giảm dần: 150° × Progress
-                return CreateArc(-90, 150 * Progress);
-            }
-        }
 
-        /// <summary>Cung Break: 30° từ 60° → 90°</summary>
-        public Geometry BreakArc
-        {
-            get
-            {
-                if (!_isBreakTime) return Geometry.Empty;
-                return CreateArc(60, 30 * Progress);
+                // Tính góc của cung di chuyển từ -90 độ tới 60 độ
+                double startAngle = -90 + (150 * (1 - Progress)); // Di chuyển từ -90 độ tới 60 độ
+                double endAngle = 60; // Điểm kết thúc cố định
+
+                return CreateArc(startAngle, 150 * Progress); // Cung di chuyển từ -90 độ tới 60 độ
             }
         }
 
@@ -94,20 +84,17 @@ namespace Learnify.ViewModels
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            // Giảm 1 giây
             if (_remainingTime.TotalSeconds > 0)
             {
-                _remainingTime -= TimeSpan.FromSeconds(500);
+                _remainingTime -= TimeSpan.FromSeconds(100);
             }
             else if (!_isBreakTime)
             {
-                // chuyển qua Break
                 _isBreakTime = true;
                 _remainingTime = _breakTime;
             }
             else
             {
-                // reset Pomodoro
                 _timer.Stop();
                 _isRunning = false;
                 _isBreakTime = false;
@@ -116,7 +103,6 @@ namespace Learnify.ViewModels
 
             UpdateTimeDisplay();
 
-            // Tính Progress = remaining / total
             double total = _isBreakTime ? _breakTime.TotalSeconds : _pomodoroTime.TotalSeconds;
             Progress = _remainingTime.TotalSeconds / total;
         }
@@ -126,14 +112,9 @@ namespace Learnify.ViewModels
             TimeDisplay = _remainingTime.ToString(@"mm\:ss");
         }
 
-        /// <summary>
-        /// Tạo PathGeometry cho cung:
-        /// - baseAngle: góc bắt đầu,
-        /// - spanDeg: độ dài cung theo chiều kim đồng hồ.
-        /// </summary>
         private Geometry CreateArc(double baseAngle, double spanDeg)
         {
-            double radius = 100;
+            double radius = 100; // Độ dài bán kính (hoặc kích thước)
             var center = new Point(radius, radius);
             double toRad = Math.PI / 180;
 
