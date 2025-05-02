@@ -22,7 +22,7 @@ namespace Learnify.ViewModels
 
         public HomeViewModel HomeVm { get; set; }
         public CalendarViewModel CalendarVm { get; set; }
-        public PomodoroViewMoldel PomodoroVm { get; set; }
+        public PomodoroViewModel PomodoroVm { get; set; }
         public RankingViewModel RankingVm { get; set; }
         public CampaignViewMoldel CampaignVm { get; set; }
         public AnalystViewModel AnalystVm { get; set; }
@@ -53,7 +53,7 @@ namespace Learnify.ViewModels
             // Initialize the current child view to HomeViewModel
             HomeVm = new HomeViewModel();
             CalendarVm = new CalendarViewModel();
-            PomodoroVm = new PomodoroViewMoldel();
+            PomodoroVm = new PomodoroViewModel();
             RankingVm = new RankingViewModel();
             CampaignVm = new CampaignViewMoldel();
             AnalystVm = new AnalystViewModel();

@@ -23,6 +23,7 @@ namespace Learnify.Views
         public PomodoroView()
         {
             InitializeComponent();
+            this.DataContext = new Learnify.ViewModels.PomodoroViewModel();
         }
     }
 }

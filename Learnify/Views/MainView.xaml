@@ -28,7 +28,7 @@
         <DataTemplate DataType="{x:Type viewModel:CalendarViewModel}">
             <local:CalendarView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type viewModel:PomodoroViewMoldel}">
+        <DataTemplate DataType="{x:Type viewModel:PomodoroViewModel}">
             <local:PomodoroView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:RankingViewModel}">
