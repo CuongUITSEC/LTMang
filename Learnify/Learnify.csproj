@@ -89,6 +89,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Models\UserRanking.cs" />
     <Compile Include="ViewModels\AnalystViewModel.cs" />
     <Compile Include="ViewModels\CampaignViewMoldel.cs" />
     <Compile Include="ViewModels\CartesianChartViewModel.cs" />
@@ -246,7 +247,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Models\" />
+    <Resource Include="Images\avatar1.svg" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\ButtonClose.png" />
@@ -260,6 +261,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="ẢNH BÌA.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ranking.svg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

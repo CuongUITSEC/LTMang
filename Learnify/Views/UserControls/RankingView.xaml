@@ -3,10 +3,120 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Learnify.Views"
+             xmlns:svg="http://sharpvectors.codeplex.com/svgc/"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+             d:DesignHeight="600" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <!-- Hiệu ứng bóng đổ -->
+        <DropShadowEffect x:Key="ShadowEffect"
+                          Color="Gray"
+                          Direction="270"
+                          ShadowDepth="2"
+                          BlurRadius="5"
+                          Opacity="0.3"/>
+    </UserControl.Resources>
+
+    <Border BorderBrush="Transparent" CornerRadius="50" Background="White" Padding="20">
+        <Grid Background="White">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- Banner -->
+                <RowDefinition Height="Auto"/>
+                <!-- Tiêu đề -->
+                <RowDefinition Height="*"/>
+                <!-- Danh sách -->
+            </Grid.RowDefinitions>
+
+            <!-- Banner -->
+            <svg:SvgViewbox Source="/Images/ranking.svg"
+                            Height="80"
+                            Width="auto"
+                            VerticalAlignment="Bottom"
+                            HorizontalAlignment="Center"
+                            Grid.Row="0"
+                            Margin="0,0,0,20"/>
+
+            <!-- Tiêu đề -->
+            <TextBlock Text="BẢNG XẾP HẠNG"
+                       FontWeight="Bold"
+                       FontSize="20"
+                       Grid.Row="1"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,10"/>
+
+            <!-- Danh sách người dùng -->
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Hidden"
+                          PanningMode="VerticalOnly">
+                <ItemsControl ItemsSource="{Binding Leaderboard}" Margin="0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="White"
+                                    CornerRadius="10"
+                                    Margin="5"
+                                    Padding="10"
+                                    Effect="{StaticResource ShadowEffect}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40"/>
+                                        <!-- Rank -->
+                                        <ColumnDefinition Width="Auto"/>
+                                        <!-- Avatar + Name -->
+                                        <ColumnDefinition Width="*"/>
+                                        <!-- Time -->
+                                        <ColumnDefinition Width="40"/>
+                                        <!-- Star -->
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Rank -->
+                                    <TextBlock Text="{Binding Rank}"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center"
+                                               FontWeight="Bold"/>
+
+                                    <!-- Avatar + Name -->
+                                    <StackPanel Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                VerticalAlignment="Center"
+                                                Margin="10,0">
+                                        <!-- Avatar SVG với clip tròn -->
+                                        <Grid Width="40" Height="40">
+                                            <svg:SvgViewbox Source="{Binding Avatar}"
+                                                            Stretch="Uniform"
+                                                            Width="40" Height="40"/>
+                                            <Grid.Clip>
+                                                <EllipseGeometry Center="20,20"
+                                                                 RadiusX="20"
+                                                                 RadiusY="20"/>
+                                            </Grid.Clip>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Name}"
+                                                   VerticalAlignment="Center"
+                                                   FontWeight="SemiBold"
+                                                   Margin="10,0,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- Time -->
+                                    <TextBlock Text="{Binding Time}"
+                                               Grid.Column="2"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center"
+                                               FontWeight="Medium"/>
+
+                                    <!-- Star icon SVG -->
+                                    <svg:SvgViewbox Source="{Binding StarIcon}"
+                                                    Grid.Column="3"
+                                                    Width="30"
+                                                    Height="30"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
 </UserControl>
