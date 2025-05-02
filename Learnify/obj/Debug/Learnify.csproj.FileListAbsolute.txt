@@ -134,7 +134,6 @@ E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Styles\btn-bodered2.baml
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Styles\ButtonStyle.baml
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Styles\INPUT-BOX.baml
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Styles\PW_BOX.baml
-E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\Analyst.g.cs
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\FOGOT_PW.g.cs
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\MainView.g.cs
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\SIGN-IN.g.cs
@@ -145,7 +144,6 @@ E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\GeneratedInternalTypeHelper.
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Learnify_MarkupCompile.cache
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Learnify_MarkupCompile.lref
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\App.baml
-E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\Analyst.baml
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\FOGOT_PW.baml
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\MainView.baml
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\SIGN-IN.baml
@@ -162,5 +160,15 @@ E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CalendarV
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\HomeView.g.cs
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CalendarView.baml
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\HomeView.baml
-E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CompaignView.g.cs
-E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CompaignView.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\AnalystView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CampaignView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\AnalystView.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CampaignView.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\PomodoroView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\RankingView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\RewardView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\SettingsView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\PomodoroView.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\RankingView.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\RewardView.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\SettingsView.baml

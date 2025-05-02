@@ -90,14 +90,18 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ViewModels\AnalystViewModel.cs" />
+    <Compile Include="ViewModels\CampaignViewMoldel.cs" />
+    <Compile Include="ViewModels\CartesianChartViewModel.cs" />
     <Compile Include="ViewModels\CalendarViewModel.cs" />
     <Compile Include="ViewModels\HomeViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\PieChartViewModel.cs" />
+    <Compile Include="ViewModels\PomodoroViewMoldel.cs" />
+    <Compile Include="ViewModels\RankingViewModel.cs" />
+    <Compile Include="ViewModels\RewardViewModel.cs" />
+    <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
-    <Compile Include="Views\Analyst.xaml.cs">
-      <DependentUpon>Analyst.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="ViewModels\ViewModelCommand.cs" />
     <Compile Include="Views\FOGOT_PW.xaml.cs">
       <DependentUpon>FOGOT_PW.xaml</DependentUpon>
     </Compile>
@@ -117,14 +121,29 @@
     <Compile Include="Views\Start.xaml.cs">
       <DependentUpon>Start.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\UserControls\AnalystView.xaml.cs">
+      <DependentUpon>AnalystView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserControls\CalendarView.xaml.cs">
       <DependentUpon>CalendarView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\UserControls\CompaignView.xaml.cs">
-      <DependentUpon>CompaignView.xaml</DependentUpon>
+    <Compile Include="Views\UserControls\CampaignView.xaml.cs">
+      <DependentUpon>CampaignView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\UserControls\HomeView.xaml.cs">
       <DependentUpon>HomeView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserControls\PomodoroView.xaml.cs">
+      <DependentUpon>PomodoroView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserControls\RankingView.xaml.cs">
+      <DependentUpon>RankingView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserControls\RewardView.xaml.cs">
+      <DependentUpon>RewardView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserControls\SettingsView.xaml.cs">
+      <DependentUpon>SettingsView.xaml</DependentUpon>
     </Compile>
     <Page Include="Styles\btn-bodered.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -146,10 +165,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\Analyst.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Views\FOGOT_PW.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -170,17 +185,37 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\UserControls\AnalystView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\UserControls\CalendarView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\UserControls\CompaignView.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="Views\UserControls\CampaignView.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\UserControls\HomeView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserControls\PomodoroView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\UserControls\RankingView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\UserControls\RewardView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\UserControls\SettingsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>

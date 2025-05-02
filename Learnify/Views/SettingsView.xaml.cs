@@ -13,14 +13,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Learnify.Views.UserControls
+namespace Learnify.Views
 {
     /// <summary>
-    /// Interaction logic for CompaignView.xaml
+    /// Interaction logic for SettingsView.xaml
     /// </summary>
-    public partial class CompaignView : UserControl
+    public partial class SettingsView : UserControl
     {
-        public CompaignView()
+        public SettingsView()
         {
             InitializeComponent();
         }

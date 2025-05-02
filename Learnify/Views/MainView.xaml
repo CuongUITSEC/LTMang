@@ -25,6 +25,27 @@
         <DataTemplate DataType="{x:Type viewModel:HomeViewModel}">
             <userControls:HomeView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:CalendarViewModel}">
+            <local:CalendarView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:PomodoroViewMoldel}">
+            <local:PomodoroView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:RankingViewModel}">
+            <local:RankingView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:CampaignViewMoldel}">
+            <local:CampaignView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:AnalystViewModel}">
+            <local:AnalystView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:RewardViewModel}">
+            <local:RewardView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:SettingsViewModel}">
+            <local:SettingsView/>
+        </DataTemplate>
     </Window.Resources>
     
     <Border Background="#E0F3FF" BorderThickness="1">
@@ -60,56 +81,65 @@
                     </StackPanel>
 
                     <RadioButton Style="{StaticResource menuButton}"
-                                 Tag="#8a94f8">
+                                 Tag="#8a94f8"
+                                 IsChecked="True"
+                                 Command="{Binding HomeCommand}">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="Home" Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Trang chủ" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource menuButton}"
-                                 Tag="#a057ff">
+                                 Tag="#a057ff"
+                                 Command="{Binding CalendarCommand}">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="CalendarAlt" Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Lịch" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource menuButton}"
-                                 Tag="#e538c1">
+                                 Tag="#e538c1"
+                                 Command="{Binding PomodoroCommand}">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="Clock" Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Bấm giờ" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource menuButton}"
-                                 Tag="#00aeef">
+                                 Tag="#00aeef"
+                                 Command="{Binding RankingCommand}">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="Medal" Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Xếp hạng" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource menuButton}"
-                                 Tag="#7832df">
+                                 Tag="#7832df"
+                                 Command="{Binding CampaignCommand}">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="Bullhorn" Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Chiến dịch" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource menuButton}"
-                                 Tag="#2ee8aa">
+                                 Tag="#2ee8aa"
+                                 Command="{Binding AnalystCommand}">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="ChartPie"  Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Thống kê" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource menuButton}"
-                                 Tag="#24bdbd">
+                                 Tag="#24bdbd"
+                                 Command="{Binding RewardCommand}">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="Gem" Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Phần thưởng" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
                     <RadioButton Style="{StaticResource menuButton}"
-                                 Tag="#221fcc">
+                                 Tag="#221fcc"
+                                 Command="{Binding SettingCommand}">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="Gear" Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Cài đặt" Style="{StaticResource menuButtonText}"/>
