@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Learnify.ViewModels
 {
-    public class HomeViewModel : ViewModelBase
+    public class CalendarViewModel:ViewModelBase
     {
     }
 }

@@ -158,5 +158,9 @@ E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Learnify.csproj.CoreCompileI
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Learnify.csproj.Up2Date
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Learnify.exe
 E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Learnify.pdb
-E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\HomePage.g.cs
-E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\HomePage.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CalendarView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\HomeView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CalendarView.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\HomeView.baml
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CompaignView.g.cs
+E:\lap-trinh-mang-can-ban\LTMang\Learnify\obj\Debug\Views\UserControls\CompaignView.baml

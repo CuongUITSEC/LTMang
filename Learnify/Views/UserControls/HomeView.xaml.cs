@@ -12,22 +12,18 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using LiveCharts;
-using LiveCharts.Wpf;
-
 
 namespace Learnify.Views.UserControls
 {
     /// <summary>
-    /// Interaction logic for HomePage.xaml
+    /// Interaction logic for HomeView.xaml
     /// </summary>
-
-    public partial class HomePage : UserControl
+    public partial class HomeView : UserControl
     {
-        public HomePage()
+        public HomeView()
         {
             InitializeComponent();
-            this.DataContext = new HomeViewModel(); // Gán ViewModel
+            this.DataContext = new PieChartViewModel();
         }
     }
 }

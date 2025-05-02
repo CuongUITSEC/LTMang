@@ -5,6 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:fa="http://schemas.awesome.incremented/wpf/xaml/fontawesome.sharp"
         xmlns:svg="http://sharpvectors.codeplex.com/svgc/"
+        xmlns:viewModel="clr-namespace:Learnify.ViewModels"
+        
         xmlns:local="clr-namespace:Learnify.Views"
         xmlns:userControls="clr-namespace:Learnify.Views.UserControls"
         
@@ -15,6 +17,16 @@
         WindowStartupLocation="CenterScreen"
         AllowsTransparency="True">
 
+    <Window.DataContext>
+        <viewModel:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type viewModel:HomeViewModel}">
+            <userControls:HomeView/>
+        </DataTemplate>
+    </Window.Resources>
+    
     <Border Background="#E0F3FF" BorderThickness="1">
         <Border.BorderBrush>
             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -114,6 +126,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="40"/>
+                        <!--content section-->
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -155,10 +168,9 @@
                         </StackPanel>
                     </Grid>
 
-                    <Border Grid.Row="3"
-                            Margin="50,50,50,100">
-                        <userControls:HomePage Loaded="HomePage_Loaded"/>
-                    </Border>
+                    <!--content section-->
+                    <ContentControl Content="{Binding CurrentChildView}" Grid.Row="3"
+                                    Margin="50,50,50,100"/>
                 </Grid>
             </Border>
 

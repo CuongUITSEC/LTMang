@@ -1,0 +1,123 @@
+﻿<UserControl x:Class="Learnify.Views.UserControls.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+
+             xmlns:local="clr-namespace:Learnify.Views.UserControls">
+    <Border BorderThickness="0">
+        <Viewbox Stretch="Uniform">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!--biểu đồ-->
+                <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,15,15">
+                    <Viewbox Stretch="Uniform">
+                        <Border Height="200"
+                  Width="430"
+                  CornerRadius="25"
+                  Background="White"
+                  BorderThickness="1">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#5325c9" Offset="0"/>
+                                    <GradientStop Color="#e538c1" Offset="0.5"/>
+                                    <GradientStop Color="#5325c9" Offset="0"/>
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+                            <StackPanel Orientation="Horizontal"
+                           HorizontalAlignment="Left">
+                                <lvc:PieChart Width="400"
+                                         Margin="10,0,0,0"
+                                         Series="{Binding PieSeries}"
+                                         InnerRadius="30"
+                                         Hoverable="False"
+                                         DataTooltip="{x:Null}"
+                                         LegendLocation="Right"
+                                         FontSize="25" FontFamily="Saira" FontWeight="Bold">
+                                </lvc:PieChart>
+                            </StackPanel>
+                        </Border>
+                    </Viewbox>
+                </Border>
+
+                <!--Xếp hạng-->
+                <Border Grid.Row="1" Grid.Column="0" Margin="0,15,15,0">
+                    <Viewbox Stretch="Uniform">
+                        <Border Width="200" Height="200"
+                  CornerRadius="25"
+                  Background="White"
+                  BorderThickness="1">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#5325c9" Offset="0"/>
+                                    <GradientStop Color="#e538c1" Offset="0.5"/>
+                                    <GradientStop Color="#5325c9" Offset="0"/>
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+                            <StackPanel>
+                                <TextBlock Text="Main View Control" FontSize="24" FontWeight="Bold"/>
+                                <TextBlock Text="This is the main view control content."/>
+                            </StackPanel>
+                        </Border>
+                    </Viewbox>
+                </Border>
+
+                <!--Nhiệm vụ nhận thưởng-->
+                <Border Grid.Row="1" Grid.Column="1" Margin="15,15,15,0">
+                    <Viewbox Stretch="Uniform">
+                        <Border Width="200" Height="200"
+                  CornerRadius="25"
+                  Background="White"
+                  BorderThickness="1">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#5325c9" Offset="0"/>
+                                    <GradientStop Color="#e538c1" Offset="0.5"/>
+                                    <GradientStop Color="#5325c9" Offset="0"/>
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+                            <StackPanel>
+                                <TextBlock Text="Main View Control" FontSize="24" FontWeight="Bold"/>
+                                <TextBlock Text="This is the main view control content."/>
+                            </StackPanel>
+                        </Border>
+                    </Viewbox>
+                </Border>
+
+                <!-- Right Side (Span 2 rows) -->
+                <Border Grid.Column="2" Grid.RowSpan="2" Margin="15,0,0,0">
+                    <Viewbox Stretch="Uniform">
+                        <Border Width="250" Height="430"
+                  CornerRadius="25"
+                  Background="White"
+                  BorderThickness="1">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#5325c9" Offset="0"/>
+                                    <GradientStop Color="#e538c1" Offset="0.5"/>
+                                    <GradientStop Color="#5325c9" Offset="0"/>
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+                            <StackPanel>
+                                <TextBlock Text="Main View Control" FontSize="24" FontWeight="Bold"/>
+                                <TextBlock Text="This is the main view control content."/>
+                            </StackPanel>
+                        </Border>
+                    </Viewbox>
+                </Border>
+
+            </Grid>
+        </Viewbox>
+    </Border>
+</UserControl>

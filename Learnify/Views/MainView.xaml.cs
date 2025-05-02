@@ -51,15 +51,5 @@ namespace Learnify.Views
         {
             this.MaxHeight = SystemParameters.MaximizedPrimaryScreenHeight;
         }
-
-        private void MainViewControl_Loaded(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void HomePage_Loaded(object sender, RoutedEventArgs e)
-        {
-
-        }
     }
 }
