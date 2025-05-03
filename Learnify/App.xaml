@@ -14,6 +14,7 @@
                 <ResourceDictionary Source="/Styles/INPUT-BOX.xaml"/>
                 <ResourceDictionary Source="/Styles/PW_BOX.xaml"/>
                 <ResourceDictionary Source="/Styles/CalendarStyle.xaml"/>
+                <ResourceDictionary Source="/Styles/styles.xaml"/>
 
             </ResourceDictionary.MergedDictionaries>
 
