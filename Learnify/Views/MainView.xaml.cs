@@ -27,6 +27,10 @@ namespace Learnify.Views
         {
             InitializeComponent();
         }
+        private void txtBoxSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Chưa xử lý gì
+        }
 
         private void btnExit_Click(object sender, RoutedEventArgs e)
         {

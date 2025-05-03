@@ -4,9 +4,123 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Learnify.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+             xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <Border Margin="25,25,25,25">
+        <Viewbox Stretch="Uniform">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!--bến trái-->
+                    <!--lịch nhỏ-->
+                    <Border Margin="0,0,5,5">
+                        <Viewbox Stretch="Uniform">
+                            <Border Width="320" Height="360"
+                                    CornerRadius="25"
+                                    Background="White"
+                                    BorderThickness="1"
+                                    SnapsToDevicePixels="True">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#5325c9" Offset="0"/>
+                                        <GradientStop Color="#e538c1" Offset="0.5"/>
+                                        <GradientStop Color="#5325c9" Offset="0"/>
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                                <Viewbox Stretch="Uniform"
+                                         Margin="10">
+                                    <Calendar CalendarItemStyle="{DynamicResource CalendarCalendarItemStyle1}" CalendarDayButtonStyle="{DynamicResource CalendarCalendarDayButtonStyle1}" CalendarButtonStyle="{DynamicResource CalendarCalendarButtonStyle1}" Style="{DynamicResource CalendarStyle1}"
+                                              DisplayDate="{x:Static sys:DateTime.Today}"/>
+                                </Viewbox>
+                            </Border>
+                        </Viewbox>
+                    </Border>
+
+                    <!--thêm những việc cần làm-->
+                    <Border Grid.Row="1"
+                            Margin="0,5,5,0">
+                        <Viewbox Stretch="Uniform">
+                            <Border Width="320" Height="550"
+                                    CornerRadius="25"
+                                    Background="White"
+                                    BorderThickness="1"
+                                    SnapsToDevicePixels="True">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#5325c9" Offset="0"/>
+                                        <GradientStop Color="#e538c1" Offset="0.5"/>
+                                        <GradientStop Color="#5325c9" Offset="0"/>
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left">
+                                    <!-- Biểu đồ ở đây -->
+                                </StackPanel>
+                            </Border>
+                        </Viewbox>
+                    </Border>
+                </Grid>
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <!--Hiện ngày tháng năm-->
+                    <Border Margin="5,0,0,5"
+                            HorizontalAlignment="Left">
+                        <Viewbox Stretch="Uniform">
+                            <Border Width="380" Height="50"
+                                    CornerRadius="25"
+                                    Background="White"
+                                    BorderThickness="1"
+                                    SnapsToDevicePixels="True">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#5325c9" Offset="0"/>
+                                        <GradientStop Color="#e538c1" Offset="0.5"/>
+                                        <GradientStop Color="#5325c9" Offset="0"/>
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left">
+                                    <!-- Biểu đồ ở đây -->
+                                </StackPanel>
+                            </Border>
+                        </Viewbox>
+                    </Border>
+                    <!--Lịch lớn-->
+                    <Border Grid.Row="1"
+                            Margin="5,5,0,0">
+                        <Viewbox Stretch="Uniform">
+                            <Border Width="990"
+                                    Height="865"
+                                    CornerRadius="25"
+                                    Background="White"
+                                    BorderThickness="1"
+                                    SnapsToDevicePixels="True">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#5325c9" Offset="0"/>
+                                        <GradientStop Color="#e538c1" Offset="0.5"/>
+                                        <GradientStop Color="#5325c9" Offset="0"/>
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left">
+                                    <!-- Biểu đồ ở đây -->
+                                </StackPanel>
+                            </Border>
+                        </Viewbox>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Viewbox>
+    </Border>
 </UserControl>

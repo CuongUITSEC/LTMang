@@ -199,8 +199,7 @@
                     </Grid>
 
                     <!--content section-->
-                    <ContentControl Content="{Binding CurrentChildView}" Grid.Row="3"
-                                    Margin="50,50,50,100"/>
+                    <ContentControl Content="{Binding CurrentChildView}" Grid.Row="3"/>
                 </Grid>
             </Border>
 
@@ -226,6 +225,39 @@
                             <Image Source="/Images/ButtonMinisize.png"/>
                         </Button>
                     </Grid>
+                    <StackPanel Grid.Row="1">
+                        <Grid Margin="5">
+                            <TextBox x:Name="txtBoxSearch"
+                                     Style="{StaticResource textBoxSeerch}"
+                                     TextChanged="txtBoxSearch_TextChanged"
+                                     Height="35"/>  
+                            <fa:IconImage Icon="Search"
+                                          Height="15"
+                                          HorizontalAlignment="Right"
+                                          Margin="0 0 10 0"
+                                          Foreground="#b0b9c6"/>
+                        </Grid>
+
+
+                        <RadioButton Style="{StaticResource menuButton}"
+                                     Margin="5">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="30" 
+                                         Height="30" 
+                                         ClipToBounds="True"
+                                         Margin="0 0 5 0">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="/Images/avtPhuongTuan.jpg" 
+                                                    Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="Trịnh Trần Phương Tuấn"
+                                           VerticalAlignment="Center"
+                                           FontWeight="DemiBold"
+                                           FontSize="14"/>
+                            </StackPanel>
+                        </RadioButton>
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>
