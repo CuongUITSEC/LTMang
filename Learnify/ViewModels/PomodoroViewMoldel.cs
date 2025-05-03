@@ -114,29 +114,50 @@ namespace Learnify.ViewModels
             }
             else if (!_isBreakTime)
             {
+                // Chuyển sang thời gian nghỉ
                 _isBreakTime = true;
                 _remainingTime = _breakTime;
             }
             else
             {
+                // Kết thúc nghỉ – hoàn thành phiên
+                _timer.Stop();
+                _isRunning = false;
+
+                ShowSessionCompletedMessage(); // ← Gọi thông báo
+
+                // Reset toàn bộ trạng thái
                 _isBreakTime = false;
                 _remainingTime = _pomodoroTime;
+                Progress = 1;
+                UpdateTimeDisplay();
+
+                // Cho phép lại các nút
+                CommandManager.InvalidateRequerySuggested();
             }
 
-            UpdateTimeDisplay();
-
-            double total = _isBreakTime ? _breakTime.TotalSeconds : _pomodoroTime.TotalSeconds;
-            Progress = _remainingTime.TotalSeconds / total;
+            if (_isRunning) // Chỉ cập nhật nếu đang chạy
+            {
+                UpdateTimeDisplay();
+                double total = _isBreakTime ? _breakTime.TotalSeconds : _pomodoroTime.TotalSeconds;
+                Progress = _remainingTime.TotalSeconds / total;
+            }
         }
+
 
         private void UpdateTimeDisplay()
         {
             TimeDisplay = _remainingTime.ToString(@"mm\:ss");
         }
+        private void ShowSessionCompletedMessage()
+        {
+            MessageBox.Show("Bạn đã hoàn thành 1 phiên Pomodoro!", "Hoàn thành", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
 
         private Geometry CreateArc(double startAngle, double spanDeg)
         {
-            const double radius = 100;
+            const double radius = 200;
             var center = new Point(radius, radius);
             double toRad = Math.PI / 180;
 

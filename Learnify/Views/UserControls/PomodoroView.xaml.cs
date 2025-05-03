@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Learnify.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,7 +24,9 @@ namespace Learnify.Views
         public PomodoroView()
         {
             InitializeComponent();
-            this.DataContext = new Learnify.ViewModels.PomodoroViewModel();
+            this.DataContext = new PomodoroViewModel();
+
+            
         }
     }
 }
