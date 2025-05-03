@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Learnify.ViewModels
 {
-    public class CampaignViewMoldel : ViewModelBase
+    public class CampaignViewModel : ViewModelBase
     {
     }
 }

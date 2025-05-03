@@ -90,9 +90,10 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Comands\RelayCommand.cs" />
+    <Compile Include="Models\Friend.cs" />
     <Compile Include="Models\UserRanking.cs" />
     <Compile Include="ViewModels\AnalystViewModel.cs" />
-    <Compile Include="ViewModels\CampaignViewMoldel.cs" />
+    <Compile Include="ViewModels\CampaignViewModel.cs" />
     <Compile Include="ViewModels\CartesianChartViewModel.cs" />
     <Compile Include="ViewModels\CalendarViewModel.cs" />
     <Compile Include="ViewModels\HomeViewModel.cs" />
