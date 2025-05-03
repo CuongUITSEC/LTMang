@@ -23,10 +23,11 @@ namespace Learnify.ViewModels
         {
             StartCommand = new RelayCommand(StartTimer, () => !_isRunning);
             PauseCommand = new RelayCommand(PauseTimer, () => _isRunning);
+            ResetCommand = new RelayCommand(ResetTimer);
 
             _remainingTime = _pomodoroTime;
             UpdateTimeDisplay();
-            Progress = 1; // 1 = đầy, 0 = hết
+            Progress = 1;
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += Timer_Tick;
@@ -46,6 +47,7 @@ namespace Learnify.ViewModels
                 _progress = Math.Max(0, Math.Min(1, value));
                 OnPropertyChanged(nameof(Progress));
                 OnPropertyChanged(nameof(PomodoroArc));
+                OnPropertyChanged(nameof(BreakArc));
             }
         }
 
@@ -55,16 +57,27 @@ namespace Learnify.ViewModels
             {
                 if (_isBreakTime) return Geometry.Empty;
 
-                // Tính góc của cung di chuyển từ -90 độ tới 60 độ
-                double startAngle = -90 + (150 * (1 - Progress)); // Di chuyển từ -90 độ tới 60 độ
-                double endAngle = 60; // Điểm kết thúc cố định
+                // Cung làm việc từ -90° (12h) đến 60° (6h) - tổng 150°
+                double startAngle = -90 + (150 * (1 - Progress));
+                return CreateArc(startAngle, 150 * Progress);
+            }
+        }
 
-                return CreateArc(startAngle, 150 * Progress); // Cung di chuyển từ -90 độ tới 60 độ
+        public Geometry BreakArc
+        {
+            get
+            {
+                if (!_isBreakTime) return Geometry.Empty;
+
+                // Cung nghỉ từ 60° (5h) đến 90 (6h) - ngay sau PomodoroArc
+                double startAngle = 60 + (30 * (1 - Progress));
+                return CreateArc(startAngle, 30 * Progress);
             }
         }
 
         public ICommand StartCommand { get; }
         public ICommand PauseCommand { get; }
+        public ICommand ResetCommand { get; }
 
         private void StartTimer()
         {
@@ -82,6 +95,17 @@ namespace Learnify.ViewModels
             CommandManager.InvalidateRequerySuggested();
         }
 
+        private void ResetTimer()
+        {
+            _timer.Stop();
+            _isRunning = false;
+            _isBreakTime = false;
+            _remainingTime = _pomodoroTime;
+            Progress = 1;
+            UpdateTimeDisplay();
+            CommandManager.InvalidateRequerySuggested();
+        }
+
         private void Timer_Tick(object sender, EventArgs e)
         {
             if (_remainingTime.TotalSeconds > 0)
@@ -95,8 +119,6 @@ namespace Learnify.ViewModels
             }
             else
             {
-                _timer.Stop();
-                _isRunning = false;
                 _isBreakTime = false;
                 _remainingTime = _pomodoroTime;
             }
@@ -112,31 +134,30 @@ namespace Learnify.ViewModels
             TimeDisplay = _remainingTime.ToString(@"mm\:ss");
         }
 
-        private Geometry CreateArc(double baseAngle, double spanDeg)
+        private Geometry CreateArc(double startAngle, double spanDeg)
         {
-            double radius = 100; // Độ dài bán kính (hoặc kích thước)
+            const double radius = 100;
             var center = new Point(radius, radius);
             double toRad = Math.PI / 180;
 
-            double start = baseAngle;
-            double end = baseAngle + spanDeg;
+            double endAngle = startAngle + spanDeg;
 
             var startPt = new Point(
-                center.X + radius * Math.Cos(start * toRad),
-                center.Y + radius * Math.Sin(start * toRad));
+                center.X + radius * Math.Cos(startAngle * toRad),
+                center.Y + radius * Math.Sin(startAngle * toRad));
             var endPt = new Point(
-                center.X + radius * Math.Cos(end * toRad),
-                center.Y + radius * Math.Sin(end * toRad));
+                center.X + radius * Math.Cos(endAngle * toRad),
+                center.Y + radius * Math.Sin(endAngle * toRad));
 
             bool isLargeArc = spanDeg > 180;
             var figure = new PathFigure { StartPoint = center };
             figure.Segments.Add(new LineSegment(startPt, true));
             figure.Segments.Add(new ArcSegment(endPt,
-                                               new Size(radius, radius),
-                                               0,
-                                               isLargeArc,
-                                               SweepDirection.Clockwise,
-                                               true));
+                                           new Size(radius, radius),
+                                           0,
+                                           isLargeArc,
+                                           SweepDirection.Clockwise,
+                                           true));
             figure.Segments.Add(new LineSegment(center, true));
 
             var geo = new PathGeometry();
