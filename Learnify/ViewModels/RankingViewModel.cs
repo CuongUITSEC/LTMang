@@ -28,7 +28,11 @@ namespace Learnify.ViewModels
                 new UserRanking { Rank = 3, Name = "Người bạn 3", Time = "6 giờ 25 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star3.svg" },
                 new UserRanking { Rank = 4, Name = "Người bạn 4", Time = "5 giờ 10 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star4.svg" },
                 new UserRanking { Rank = 5, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
-                new UserRanking { Rank = 6, Name = "Người bạn 6", Time = "13 giờ 29 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star6.svg" }
+                new UserRanking { Rank = 6, Name = "Người bạn 6", Time = "13 giờ 29 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star6.svg" },
+                new UserRanking { Rank = 7, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
+                new UserRanking { Rank = 8, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
+                new UserRanking { Rank = 9, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
+                new UserRanking { Rank = 10, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
             };
         }
     }

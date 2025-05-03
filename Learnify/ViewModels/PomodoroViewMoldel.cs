@@ -4,186 +4,41 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Learnify.Commands;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Learnify.ViewModels
 {
     public class PomodoroViewModel : ViewModelBase
     {
-        private string _timeDisplay;
-        private bool _isRunning;
-        private bool _isBreakTime;
-        private TimeSpan _remainingTime;
-        private double _progress;
+        public ViewModelCommand PomodoroModeCommand { get; set; }
+        public ViewModelCommand TimerModeCommand { get; set; }
+        public PomodoroModeViewModel PomodoroModeVm { get; set; }
+        public TimerModeViewModel TimerModeVm { get; set; }
 
-        private readonly TimeSpan _pomodoroTime = TimeSpan.FromMinutes(25);
-        private readonly TimeSpan _breakTime = TimeSpan.FromMinutes(5);
-        private readonly DispatcherTimer _timer;
+        private ViewModelBase _currentMode;
+
+        public ViewModelBase CurrentMode
+        {
+            get => _currentMode;
+            set
+            {
+                _currentMode = value;
+                OnPropertyChanged(nameof(CurrentMode));
+            }
+        }
 
         public PomodoroViewModel()
         {
-            StartCommand = new RelayCommand(StartTimer, () => !_isRunning);
-            PauseCommand = new RelayCommand(PauseTimer, () => _isRunning);
-            ResetCommand = new RelayCommand(ResetTimer);
+            PomodoroModeVm = new PomodoroModeViewModel();
+            TimerModeVm = new TimerModeViewModel();
 
-            _remainingTime = _pomodoroTime;
-            UpdateTimeDisplay();
-            Progress = 1;
+            CurrentMode = PomodoroModeVm;
 
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            _timer.Tick += Timer_Tick;
-        }
-
-        public string TimeDisplay
-        {
-            get => _timeDisplay;
-            private set { _timeDisplay = value; OnPropertyChanged(nameof(TimeDisplay)); }
-        }
-
-        public double Progress
-        {
-            get => _progress;
-            private set
-            {
-                _progress = Math.Max(0, Math.Min(1, value));
-                OnPropertyChanged(nameof(Progress));
-                OnPropertyChanged(nameof(PomodoroArc));
-                OnPropertyChanged(nameof(BreakArc));
-            }
-        }
-
-        public Geometry PomodoroArc
-        {
-            get
-            {
-                if (_isBreakTime) return Geometry.Empty;
-
-                // Cung làm việc từ -90° (12h) đến 60° (6h) - tổng 150°
-                double startAngle = -90 + (150 * (1 - Progress));
-                return CreateArc(startAngle, 150 * Progress);
-            }
-        }
-
-        public Geometry BreakArc
-        {
-            get
-            {
-                if (!_isBreakTime) return Geometry.Empty;
-
-                // Cung nghỉ từ 60° (5h) đến 90 (6h) - ngay sau PomodoroArc
-                double startAngle = 60 + (30 * (1 - Progress));
-                return CreateArc(startAngle, 30 * Progress);
-            }
-        }
-
-        public ICommand StartCommand { get; }
-        public ICommand PauseCommand { get; }
-        public ICommand ResetCommand { get; }
-
-        private void StartTimer()
-        {
-            if (_isRunning) return;
-            _timer.Start();
-            _isRunning = true;
-            CommandManager.InvalidateRequerySuggested();
-        }
-
-        private void PauseTimer()
-        {
-            if (!_isRunning) return;
-            _timer.Stop();
-            _isRunning = false;
-            CommandManager.InvalidateRequerySuggested();
-        }
-
-        private void ResetTimer()
-        {
-            _timer.Stop();
-            _isRunning = false;
-            _isBreakTime = false;
-            _remainingTime = _pomodoroTime;
-            Progress = 1;
-            UpdateTimeDisplay();
-            CommandManager.InvalidateRequerySuggested();
-        }
-
-        private void Timer_Tick(object sender, EventArgs e)
-        {
-            if (_remainingTime.TotalSeconds > 0)
-            {
-                _remainingTime -= TimeSpan.FromSeconds(100);
-            }
-            else if (!_isBreakTime)
-            {
-                // Chuyển sang thời gian nghỉ
-                _isBreakTime = true;
-                _remainingTime = _breakTime;
-            }
-            else
-            {
-                // Kết thúc nghỉ – hoàn thành phiên
-                _timer.Stop();
-                _isRunning = false;
-
-                ShowSessionCompletedMessage(); // ← Gọi thông báo
-
-                // Reset toàn bộ trạng thái
-                _isBreakTime = false;
-                _remainingTime = _pomodoroTime;
-                Progress = 1;
-                UpdateTimeDisplay();
-
-                // Cho phép lại các nút
-                CommandManager.InvalidateRequerySuggested();
-            }
-
-            if (_isRunning) // Chỉ cập nhật nếu đang chạy
-            {
-                UpdateTimeDisplay();
-                double total = _isBreakTime ? _breakTime.TotalSeconds : _pomodoroTime.TotalSeconds;
-                Progress = _remainingTime.TotalSeconds / total;
-            }
-        }
-
-
-        private void UpdateTimeDisplay()
-        {
-            TimeDisplay = _remainingTime.ToString(@"mm\:ss");
-        }
-        private void ShowSessionCompletedMessage()
-        {
-            MessageBox.Show("Bạn đã hoàn thành 1 phiên Pomodoro!", "Hoàn thành", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-
-        private Geometry CreateArc(double startAngle, double spanDeg)
-        {
-            const double radius = 200;
-            var center = new Point(radius, radius);
-            double toRad = Math.PI / 180;
-
-            double endAngle = startAngle + spanDeg;
-
-            var startPt = new Point(
-                center.X + radius * Math.Cos(startAngle * toRad),
-                center.Y + radius * Math.Sin(startAngle * toRad));
-            var endPt = new Point(
-                center.X + radius * Math.Cos(endAngle * toRad),
-                center.Y + radius * Math.Sin(endAngle * toRad));
-
-            bool isLargeArc = spanDeg > 180;
-            var figure = new PathFigure { StartPoint = center };
-            figure.Segments.Add(new LineSegment(startPt, true));
-            figure.Segments.Add(new ArcSegment(endPt,
-                                           new Size(radius, radius),
-                                           0,
-                                           isLargeArc,
-                                           SweepDirection.Clockwise,
-                                           true));
-            figure.Segments.Add(new LineSegment(center, true));
-
-            var geo = new PathGeometry();
-            geo.Figures.Add(figure);
-            return geo;
+            PomodoroModeCommand = new ViewModelCommand(o => { CurrentMode = PomodoroModeVm; });
+            TimerModeCommand = new ViewModelCommand(o => { CurrentMode = TimerModeVm; });
         }
     }
 }

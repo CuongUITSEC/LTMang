@@ -70,6 +70,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -99,10 +100,12 @@
     <Compile Include="ViewModels\HomeViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\PieChartViewModel.cs" />
+    <Compile Include="ViewModels\PomodoroModeViewModel.cs" />
     <Compile Include="ViewModels\PomodoroViewMoldel.cs" />
     <Compile Include="ViewModels\RankingViewModel.cs" />
     <Compile Include="ViewModels\RewardViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
+    <Compile Include="ViewModels\TimerModeViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelCommand.cs" />
     <Compile Include="Views\FOGOT_PW.xaml.cs">
@@ -136,6 +139,9 @@
     <Compile Include="Views\UserControls\HomeView.xaml.cs">
       <DependentUpon>HomeView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\UserControls\PomodoroModeView.xaml.cs">
+      <DependentUpon>PomodoroModeView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserControls\PomodoroView.xaml.cs">
       <DependentUpon>PomodoroView.xaml</DependentUpon>
     </Compile>
@@ -147,6 +153,9 @@
     </Compile>
     <Compile Include="Views\UserControls\SettingsView.xaml.cs">
       <DependentUpon>SettingsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserControls\TimerModeView.xaml.cs">
+      <DependentUpon>TimerModeView.xaml</DependentUpon>
     </Compile>
     <Page Include="Styles\btn-bodered.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -212,6 +221,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\UserControls\PomodoroModeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\UserControls\PomodoroView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -227,6 +240,10 @@
     <Page Include="Views\UserControls\SettingsView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\UserControls\TimerModeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -277,6 +294,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\avtPhuongTuan.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\pomodoro-technique 1 %281%29.png" />
+    <Resource Include="Images\pomodoro-technique 1.png" />
+    <Resource Include="Images\timer 1 %281%29.png" />
+    <Resource Include="Images\timer 1.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
