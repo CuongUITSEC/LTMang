@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Learnify.Views">
+             xmlns:local="clr-namespace:Learnify.Views"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Border Margin="25,25,25,25">
         <Viewbox Stretch="Uniform">
             <Grid>
@@ -34,7 +35,8 @@
                                 </Border.BorderBrush>
                                 <Viewbox Stretch="Uniform"
                                          Margin="10">
-                                    <Calendar CalendarItemStyle="{DynamicResource CalendarCalendarItemStyle1}" CalendarDayButtonStyle="{DynamicResource CalendarCalendarDayButtonStyle1}" CalendarButtonStyle="{DynamicResource CalendarCalendarButtonStyle1}" Style="{DynamicResource CalendarStyle1}"/>
+                                    <Calendar CalendarItemStyle="{DynamicResource CalendarCalendarItemStyle1}" CalendarDayButtonStyle="{DynamicResource CalendarCalendarDayButtonStyle1}" CalendarButtonStyle="{DynamicResource CalendarCalendarButtonStyle1}" Style="{DynamicResource CalendarStyle1}"
+                                              DisplayDate="{x:Static sys:DateTime.Today}"/>
                                 </Viewbox>
                             </Border>
                         </Viewbox>

@@ -269,5 +269,8 @@
   <ItemGroup>
     <Resource Include="Images\ranking.svg" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\avtPhuongTuan.jpg" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

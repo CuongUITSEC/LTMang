@@ -199,8 +199,7 @@
                     </Grid>
 
                     <!--content section-->
-                    <ContentControl Content="{Binding CurrentChildView}" Grid.Row="3"
-                                    />
+                    <ContentControl Content="{Binding CurrentChildView}" Grid.Row="3"/>
                 </Grid>
             </Border>
 
@@ -226,6 +225,21 @@
                             <Image Source="/Images/ButtonMinisize.png"/>
                         </Button>
                     </Grid>
+                    <StackPanel Grid.Row="1">
+                        <RadioButton Style="{StaticResource menuButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="30" 
+                                         Height="30" 
+                                         ClipToBounds="True">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="/Images/avtPhuongTuan.jpg" 
+                                                    Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="Trịnh Trần Phương Tuấn"/>
+                            </StackPanel>
+                        </RadioButton>
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>
