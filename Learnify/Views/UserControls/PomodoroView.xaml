@@ -228,8 +228,8 @@
             </Setter>
         </Style>
 
-        
-        
+
+
         <Style x:Key="FocusVisual2">
             <Setter Property="Control.Template">
                 <Setter.Value>
@@ -239,7 +239,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <Style x:Key="toggle-btn" TargetType="{x:Type ToggleButton}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
             <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
@@ -288,7 +288,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <Style x:Key="ToggleButtonStyle1" TargetType="{x:Type ToggleButton}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual1}"/>
             <Setter Property="Background" Value="{StaticResource Button.Static.Background1}"/>
@@ -327,25 +327,25 @@
             </Setter>
         </Style>
 
-            <DataTemplate DataType="{x:Type vm:PomodoroModeViewModel}">
+        <DataTemplate DataType="{x:Type vm:PomodoroModeViewModel}">
             <userControls:PomodoroModeView />
-            </DataTemplate>
+        </DataTemplate>
 
-            <DataTemplate DataType="{x:Type vm:TimerModeViewModel}">
+        <DataTemplate DataType="{x:Type vm:TimerModeViewModel}">
             <userControls:TimerModeView />
-            </DataTemplate>
+        </DataTemplate>
 
     </UserControl.Resources>
 
     <UserControl.DataContext>
         <vm:PomodoroViewModel/>
     </UserControl.DataContext>
-    
-    
+
+
 
     <Grid Background="#DFF3FF">
-        
-       
+
+
 
         <StackPanel   HorizontalAlignment="Center"
                 VerticalAlignment="Top" >
@@ -357,12 +357,12 @@
                     </DockPanel>
 
                     <DockPanel  Height="60" Width="150" HorizontalAlignment="Center" Margin="15,-2,15,2" >
-                        <ToggleButton Command="{Binding PomodoroModeCommand}" BorderBrush="Transparent" Style="{DynamicResource ToggleButtonStyle1}" x:Name="TimerMode" Width="50" Height="50" HorizontalAlignment="Left" VerticalAlignment="Center" >
+                        <ToggleButton Command="{Binding TimerModeCommand }" BorderBrush="Transparent" Style="{DynamicResource ToggleButtonStyle1}" x:Name="TimerMode" Width="50" Height="50" HorizontalAlignment="Left" VerticalAlignment="Center" >
                             <ToggleButton.Background>
                                 <ImageBrush ImageSource="/Images/timer 1.png"/>
                             </ToggleButton.Background>
                         </ToggleButton>
-                        <ToggleButton Command="{Binding TimerModeCommand}" BorderBrush="Transparent" Style="{DynamicResource ToggleButtonStyle1}" x:Name="PomoMode" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Center" Click="Button_Click" >
+                        <ToggleButton Command="{Binding PomodoroModeCommand }" BorderBrush="Transparent" Style="{DynamicResource ToggleButtonStyle1}" x:Name="PomoMode" Width="50" Height="50" HorizontalAlignment="Right" VerticalAlignment="Center" Click="Button_Click" >
                             <ToggleButton.Background>
                                 <ImageBrush ImageSource="/Images/pomodoro-technique 1 (1).png"/>
                             </ToggleButton.Background>
@@ -374,15 +374,19 @@
 
 
             <!-- Vòng tròn và thời gian -->
-            <Grid Width="600"
+            <Grid Width="auto"
                     Height="600">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="109*"/>
+                    <ColumnDefinition Width="169*"/>
+                </Grid.ColumnDefinitions>
 
-                <ContentControl Content="{Binding CurrentMode}" Grid.Row="3"/>
+                <ContentControl Content="{Binding CurrentMode}" Grid.ColumnSpan="2"/>
 
-                
+
             </Grid>
 
-            
+
         </StackPanel>
     </Grid>
 </UserControl>

@@ -29,5 +29,10 @@ namespace Learnify.Commands
         {
             _execute();
         }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 }

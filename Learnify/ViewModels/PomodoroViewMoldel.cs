@@ -35,7 +35,7 @@ namespace Learnify.ViewModels
             PomodoroModeVm = new PomodoroModeViewModel();
             TimerModeVm = new TimerModeViewModel();
 
-            CurrentMode = PomodoroModeVm;
+            CurrentMode = TimerModeVm;
 
             PomodoroModeCommand = new ViewModelCommand(o => { CurrentMode = PomodoroModeVm; });
             TimerModeCommand = new ViewModelCommand(o => { CurrentMode = TimerModeVm; });
