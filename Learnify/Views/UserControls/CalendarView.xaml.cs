@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,9 +21,23 @@ namespace Learnify.Views
     /// </summary>
     public partial class CalendarView : UserControl
     {
+        private ObservableCollection<string> tasks = new ObservableCollection<string>();
+
         public CalendarView()
         {
             InitializeComponent();
+            TaskList.ItemsSource = tasks;
+        }
+
+        private void AddTask_Click(object sender, RoutedEventArgs e)
+        {
+            string newTask = TaskInput.Text.Trim();
+            if (!string.IsNullOrEmpty(newTask))
+            {
+                tasks.Add(newTask);
+                TaskInput.Text = ""; // Clear textbox
+            }
         }
     }
+
 }
