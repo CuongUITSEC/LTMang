@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:timetable="clr-namespace:Learnify.Views.UserControls"
              xmlns:local="clr-namespace:Learnify.Views"
              xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Border Margin="25,25,25,25">
@@ -59,48 +60,57 @@
                                         <GradientStop Color="#5325c9" Offset="0"/>
                                     </LinearGradientBrush>
                                 </Border.BorderBrush>
-                                <StackPanel Orientation="Horizontal"
-                                            HorizontalAlignment="Left">
-                                    <!-- Biểu đồ ở đây -->
-                                </StackPanel>
+                                <DockPanel Margin="10">
+                                    <!-- Tiêu đề -->
+                                    <TextBlock Text="Việc cần làm"
+                                               FontWeight="Bold"
+                                               FontSize="18"
+                                               Foreground="#5325c9"
+                                               Margin="0,0,0,10"
+                                               DockPanel.Dock="Top"/>
+
+                                    <!-- Khu nhập liệu -->
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="0,0,0,10"
+                                                DockPanel.Dock="Top">
+                                        <TextBox x:Name="TaskInput"
+                                                 Width="200"
+                                                 Height="30"
+                                                 Margin="0,0,10,0"
+                                                 VerticalContentAlignment="Center"/>
+                                        <Button Content="Thêm"
+                                                Width="60"
+                                                Click="AddTask_Click"/>
+                                    </StackPanel>
+
+                                    <!-- Danh sách công việc -->
+                                    <ScrollViewer>
+                                        <ItemsControl x:Name="TaskList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#f5f5f5"
+                                                            CornerRadius="10"
+                                                            Margin="0,5"
+                                                            Padding="10">       
+                                                        <TextBlock Text="{Binding}" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </DockPanel>
+
                             </Border>
                         </Viewbox>
                     </Border>
                 </Grid>
                 <Grid Grid.Column="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="50"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <!--Hiện ngày tháng năm-->
-                    <Border Margin="5,0,0,5"
-                            HorizontalAlignment="Left">
-                        <Viewbox Stretch="Uniform">
-                            <Border Width="380" Height="50"
-                                    CornerRadius="25"
-                                    Background="White"
-                                    BorderThickness="1"
-                                    SnapsToDevicePixels="True">
-                                <Border.BorderBrush>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#5325c9" Offset="0"/>
-                                        <GradientStop Color="#e538c1" Offset="0.5"/>
-                                        <GradientStop Color="#5325c9" Offset="0"/>
-                                    </LinearGradientBrush>
-                                </Border.BorderBrush>
-                                <StackPanel Orientation="Horizontal"
-                                            HorizontalAlignment="Left">
-                                    <!-- Biểu đồ ở đây -->
-                                </StackPanel>
-                            </Border>
-                        </Viewbox>
-                    </Border>
                     <!--Lịch lớn-->
                     <Border Grid.Row="1"
-                            Margin="5,5,0,0">
+                            Margin="5,0,0,0">
                         <Viewbox Stretch="Uniform">
                             <Border Width="990"
-                                    Height="865"
+                                    Height="920"
                                     CornerRadius="25"
                                     Background="White"
                                     BorderThickness="1"
@@ -112,10 +122,18 @@
                                         <GradientStop Color="#5325c9" Offset="0"/>
                                     </LinearGradientBrush>
                                 </Border.BorderBrush>
-                                <StackPanel Orientation="Horizontal"
-                                            HorizontalAlignment="Left">
-                                    <!-- Biểu đồ ở đây -->
-                                </StackPanel>
+                                <DockPanel>
+                                    <TextBlock Text="Thời khóa biểu tuần"
+                                               FontWeight="Bold"
+                                               FontSize="22"
+                                               Foreground="#5325c9"
+                                               Margin="20"
+                                               DockPanel.Dock="Top" />
+                                    <Viewbox Stretch="Uniform">
+                                        <timetable:TableTime />
+                                    </Viewbox>
+                                </DockPanel>
+
                             </Border>
                         </Viewbox>
                     </Border>
