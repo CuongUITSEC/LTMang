@@ -6,46 +6,50 @@
              xmlns:local="clr-namespace:Learnify.Views"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Margin="20">
-        <!-- Giao diện Nhập thông tin sự kiện -->
-        <Border x:Name="InputPanel" CornerRadius="12" Padding="30" Background="White" HorizontalAlignment="Center" VerticalAlignment="Center" Width="300">
-            <StackPanel>
-                <TextBlock Text="Thêm chiến dịch" FontWeight="Bold" FontSize="20" Margin="0 0 0 20" HorizontalAlignment="Center"/>
-                <TextBox x:Name="EventNameTextBox" Margin="0 0 0 10" Height="30"/>
-                <DatePicker x:Name="EventDatePicker" Margin="0 0 0 20" Height="30"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Content="Hủy" Click="CancelEvent_Click" Width="80" Margin="5" Background="#FF5B71" Foreground="White"/>
-                    <Button Content="Thêm" Click="AddEvent_Click" Width="80" Margin="5" Background="#50C2FF" Foreground="White"/>
+    <Border Margin="150">
+        <Viewbox Stretch="Uniform">
+        <Grid>
+            <!-- Giao diện Nhập thông tin sự kiện -->
+            <Border x:Name="InputPanel" CornerRadius="12" Padding="30" Background="White" HorizontalAlignment="Center" VerticalAlignment="Center" Width="300">
+                <StackPanel>
+                    <TextBlock Text="Thêm chiến dịch" FontWeight="Bold" FontSize="20" Margin="0 0 0 20" HorizontalAlignment="Center"/>
+                    <TextBox x:Name="EventNameTextBox" Margin="0 0 0 10" Height="30" VerticalContentAlignment="Center"/>
+                    <DatePicker x:Name="EventDatePicker" Margin="0 0 0 20" Height="30" VerticalContentAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Hủy" Click="CancelEvent_Click" Width="80" Margin="5" Background="#FF5B71" Foreground="White"/>
+                        <Button Content="Thêm" Click="AddEvent_Click" Width="80" Margin="5" Background="#50C2FF" Foreground="White"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
-        </Border>
+            </Border>
 
-        <!-- Giao diện đếm ngược -->
-        <StackPanel x:Name="CountdownPanel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock x:Name="EventTitle" FontWeight="Bold" FontSize="24" TextAlignment="Center" Margin="0 0 0 10"/>
-            <TextBlock x:Name="EventDateText" FontSize="16" Foreground="Gray" TextAlignment="Center" Margin="0 0 0 20"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" >
-                <StackPanel Margin="10" Background="#CFF1FF">
-                    <TextBlock x:Name="DaysText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Ngày" FontSize="14" HorizontalAlignment="Center"/>
+            <!-- Giao diện đếm ngược -->
+            <StackPanel x:Name="CountdownPanel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock x:Name="EventTitle" FontWeight="Bold" FontSize="24" TextAlignment="Center" Margin="0 0 0 10"/>
+                <TextBlock x:Name="EventDateText" FontSize="16" Foreground="Gray" TextAlignment="Center" Margin="0 0 0 20"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" >
+                    <StackPanel Margin="10" Background="#CFF1FF">
+                        <TextBlock x:Name="DaysText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Ngày" FontSize="14" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Margin="10" Background="#CFF1FF" >
+                        <TextBlock x:Name="HoursText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Giờ" FontSize="14" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Margin="10" Background="#CFF1FF">
+                        <TextBlock x:Name="MinutesText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Phút" FontSize="14" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Margin="10" Background="#CFF1FF">
+                        <TextBlock x:Name="SecondsText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Giây" FontSize="14" HorizontalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
-                <StackPanel Margin="10" Background="#CFF1FF" >
-                    <TextBlock x:Name="HoursText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Giờ" FontSize="14" HorizontalAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Margin="10" Background="#CFF1FF">
-                    <TextBlock x:Name="MinutesText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Phút" FontSize="14" HorizontalAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Margin="10" Background="#CFF1FF">
-                    <TextBlock x:Name="SecondsText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Giây" FontSize="14" HorizontalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 20 0 0">
+                    <Button Content="Thêm" Click="ShowInput_Click" Width="80" Margin="5" Background="#50C2FF" Foreground="White"/>
+                    <Button Content="Xóa" Click="ClearCountdown_Click" Width="80" Margin="5" Background="#FF5B71" Foreground="White"/>
                 </StackPanel>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 20 0 0">
-                <Button Content="Thêm" Click="ShowInput_Click" Width="80" Margin="5" Background="#50C2FF" Foreground="White"/>
-                <Button Content="Xóa" Click="ClearCountdown_Click" Width="80" Margin="5" Background="#FF5B71" Foreground="White"/>
-            </StackPanel>
-        </StackPanel>
-    </Grid>
+        </Grid>
+        </Viewbox>
+    </Border>
 </UserControl>
