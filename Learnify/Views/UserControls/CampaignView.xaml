@@ -1,55 +1,226 @@
 ﻿<UserControl x:Class="Learnify.Views.CampaignView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Learnify.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="800">
     <Border Margin="150">
         <Viewbox Stretch="Uniform">
-        <Grid>
-            <!-- Giao diện Nhập thông tin sự kiện -->
-            <Border x:Name="InputPanel" CornerRadius="12" Padding="30" Background="White" HorizontalAlignment="Center" VerticalAlignment="Center" Width="300">
-                <StackPanel>
-                    <TextBlock Text="Thêm chiến dịch" FontWeight="Bold" FontSize="20" Margin="0 0 0 20" HorizontalAlignment="Center"/>
-                    <TextBox x:Name="EventNameTextBox" Margin="0 0 0 10" Height="30" VerticalContentAlignment="Center"/>
-                    <DatePicker x:Name="EventDatePicker" Margin="0 0 0 20" Height="30" VerticalContentAlignment="Center"/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Content="Hủy" Click="CancelEvent_Click" Width="80" Margin="5" Background="#FF5B71" Foreground="White"/>
-                        <Button Content="Thêm" Click="AddEvent_Click" Width="80" Margin="5" Background="#50C2FF" Foreground="White"/>
+            <Grid>
+                <!-- Giao diện Nhập thông tin sự kiện -->
+                <Border x:Name="InputPanel"
+                        CornerRadius="12"
+                        Padding="30"
+                        Background="White"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="300">
+                    <StackPanel>
+                        <TextBlock Text="Thêm chiến dịch"
+                                   FontWeight="Bold"
+                                   FontSize="20"
+                                   Margin="0 0 0 20"
+                                   HorizontalAlignment="Center"/>
+                        <TextBox x:Name="EventNameTextBox"
+                                 Margin="0 0 0 10"
+                                 Height="30"
+                                 VerticalContentAlignment="Center"/>
+                        <DatePicker x:Name="EventDatePicker"
+                                    Margin="0 0 0 20"
+                                    Height="30"
+                                    VerticalContentAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <Button Content="Hủy"
+                                    Click="CancelEvent_Click"
+                                    Width="80"
+                                    Margin="5"
+                                    Background="#FF5B71"
+                                    Foreground="White"/>
+                            <Button Content="Thêm"
+                                    Click="AddEvent_Click"
+                                    Width="80"
+                                    Margin="5"
+                                    Background="#50C2FF"
+                                    Foreground="White"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <!-- Giao diện đếm ngược -->
-            <StackPanel x:Name="CountdownPanel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock x:Name="EventTitle" FontWeight="Bold" FontSize="24" TextAlignment="Center" Margin="0 0 0 10"/>
-                <TextBlock x:Name="EventDateText" FontSize="16" Foreground="Gray" TextAlignment="Center" Margin="0 0 0 20"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" >
-                    <StackPanel Margin="10" Background="#CFF1FF">
-                        <TextBlock x:Name="DaysText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Ngày" FontSize="14" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                    <StackPanel Margin="10" Background="#CFF1FF" >
-                        <TextBlock x:Name="HoursText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Giờ" FontSize="14" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                    <StackPanel Margin="10" Background="#CFF1FF">
-                        <TextBlock x:Name="MinutesText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Phút" FontSize="14" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                    <StackPanel Margin="10" Background="#CFF1FF">
-                        <TextBlock x:Name="SecondsText" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Giây" FontSize="14" HorizontalAlignment="Center"/>
+                <!-- Giao diện đếm ngược -->
+                <StackPanel x:Name="CountdownPanel"
+                            Visibility="Collapsed"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+
+                    <Border Background="White"
+                            Padding="10"
+                            CornerRadius="20">
+                        <StackPanel>
+                            <TextBlock x:Name="EventTitle"
+                                       FontWeight="Bold"
+                                       FontSize="32"
+                                       TextAlignment="Center"
+                                       Margin="0 0 0 10"/>
+                            <TextBlock x:Name="EventDateText"
+                                       FontSize="18"
+                                       Foreground="Gray"
+                                       TextAlignment="Center"
+                                       Margin="0 0 0 20"/>
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center">
+                                <Border Margin="10"
+                                        Background="Transparent"
+                                        Width="100"
+                                        Height="130">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="3*"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <Border Grid.Row="0"
+                                                CornerRadius="20,20,0,0"
+                                                Background="#AFF0FF">
+                                            <TextBlock x:Name="DaysText"
+                                                       FontSize="60"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="Black"/>
+                                        </Border>
+                                        <Border Grid.Row="1"
+                                                Background="#95C3CD"
+                                                CornerRadius="0,0,20,20">
+                                            <TextBlock Text="Ngày"
+                                                       FontSize="14"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="Black"
+                                                       FontWeight="Bold"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+
+                                <Border Margin="10"
+                                        Background="Transparent"
+                                        Width="100"
+                                        Height="130">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="3*"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <Border Grid.Row="0"
+                                                CornerRadius="20,20,0,0"
+                                                Background="#AFF0FF">
+                                            <TextBlock x:Name="HoursText"
+                                                       FontSize="60"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="Black"/>
+                                        </Border>
+                                        <Border Grid.Row="1"
+                                                Background="#95C3CD"
+                                                CornerRadius="0,0,20,20">
+                                            <TextBlock Text="Giờ"
+                                                       FontSize="14"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="Black"
+                                                       FontWeight="Bold"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <Border Margin="10"
+                                        Background="Transparent"
+                                        Width="100"
+                                        Height="130">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="3*"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <Border Grid.Row="0"
+                                                CornerRadius="20,20,0,0"
+                                                Background="#AFF0FF">
+                                            <TextBlock x:Name="MinutesText"
+                                                       FontSize="60"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="Black"/>
+                                        </Border>
+                                        <Border Grid.Row="1"
+                                                Background="#95C3CD"
+                                                CornerRadius="0,0,20,20">
+                                            <TextBlock Text="Phút"
+                                                       FontSize="14"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="Black"
+                                                       FontWeight="Bold"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <Border Margin="10"
+                                        Background="Transparent"
+                                        Width="100"
+                                        Height="130">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="3*"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <Border Grid.Row="0"
+                                                CornerRadius="20,20,0,0"
+                                                Background="#AFF0FF">
+                                            <TextBlock x:Name="SecondsText"
+                                                       FontSize="60"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="Black"/>
+                                        </Border>
+                                        <Border Grid.Row="1"
+                                                Background="#95C3CD"
+                                                CornerRadius="0,0,20,20">
+                                            <TextBlock Text="Giây"
+                                                       FontSize="14"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="Black"
+                                                       FontWeight="Bold"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Margin="0 20 0 0">
+                        <Button Content="Thêm"
+                                Click="ShowInput_Click"
+                                Width="80"
+                                Margin="5"
+                                Background="#50C2FF"
+                                Foreground="White"/>
+                        <Button Content="Xóa"
+                                Click="ClearCountdown_Click"
+                                Width="80"
+                                Margin="5"
+                                Background="#FF5B71"
+                                Foreground="White"/>
                     </StackPanel>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 20 0 0">
-                    <Button Content="Thêm" Click="ShowInput_Click" Width="80" Margin="5" Background="#50C2FF" Foreground="White"/>
-                    <Button Content="Xóa" Click="ClearCountdown_Click" Width="80" Margin="5" Background="#FF5B71" Foreground="White"/>
-                </StackPanel>
-            </StackPanel>
-        </Grid>
+            </Grid>
         </Viewbox>
     </Border>
 </UserControl>
