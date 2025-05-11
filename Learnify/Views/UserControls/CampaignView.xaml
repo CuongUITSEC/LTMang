@@ -4,74 +4,99 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Learnify.Views"
+             xmlns:vm="clr-namespace:Learnify.ViewModels"
+             xmlns:converters="clr-namespace:Learnify.Converters"
+             xmlns:utils="clr-namespace:Learnify.Utils"
              mc:Ignorable="d"
              d:DesignHeight="450"
              d:DesignWidth="800">
-    <Border Margin="150">
+    <UserControl.DataContext>
+        <vm:CampaignViewModel/>
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Border >
         <Viewbox Stretch="Uniform">
             <Grid>
                 <!-- Giao diện Nhập thông tin sự kiện -->
-                <Border x:Name="InputPanel"
-                        CornerRadius="12"
-                        Padding="30"
+                <Border Margin="0,75,0,120"
+                        x:Name="InputPanel"
+                        CornerRadius="15"
+                        Padding="20"
                         Background="White"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Width="300">
+                        Width="300"
+                        Visibility="{Binding IsInputPanelVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                     <StackPanel>
                         <TextBlock Text="Thêm chiến dịch"
                                    FontWeight="Bold"
                                    FontSize="20"
                                    Margin="0 0 0 20"
                                    HorizontalAlignment="Center"/>
-                        <TextBox x:Name="EventNameTextBox"
+                        <TextBox Text="{Binding EventName, UpdateSourceTrigger=PropertyChanged}"
                                  Margin="0 0 0 10"
-                                 Height="30"
+                                 Height="40"
                                  VerticalContentAlignment="Center"/>
-                        <DatePicker x:Name="EventDatePicker"
-                                    Margin="0 0 0 20"
-                                    Height="30"
+                        <DatePicker SelectedDate="{Binding EventDate}"
+                                    Margin="0 0 0 10"
+                                    Height="40"
                                     VerticalContentAlignment="Center"/>
                         <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Center">
-                            <Button Content="Hủy"
-                                    Click="CancelEvent_Click"
-                                    Width="80"
-                                    Margin="5"
+                            <Button Style="{StaticResource ModernButtonStyle}" 
+                                    Content="Hủy"
+                                    FontWeight="Bold"
+                                    FontSize="18"
+                                    Command="{Binding CancelEventCommand}"
+                                    Width="100"
+                                    Height="35"
+                                    Margin="0,0,5,5"
                                     Background="#FF5B71"
+                                    utils:ButtonEffects.HoverBackground="#fa1131"
+                                    utils:ButtonEffects.PressedBackground="#c2001b"
                                     Foreground="White"/>
-                            <Button Content="Thêm"
-                                    Click="AddEvent_Click"
-                                    Width="80"
-                                    Margin="5"
+                            <Button Style="{StaticResource ModernButtonStyle}"
+                                    Content="Thêm"
+                                    FontWeight="Bold"
+                                    FontSize="18"
+                                    Command="{Binding AddEventCommand}"
+                                    Width="100"
+                                    Height="35"
+                                    Margin="5,0,0,5"
                                     Background="#50C2FF"
+                                    utils:ButtonEffects.HoverBackground="#14adff"
+                                    utils:ButtonEffects.PressedBackground="#0372ad"
                                     Foreground="White"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
                 <!-- Giao diện đếm ngược -->
-                <StackPanel x:Name="CountdownPanel"
-                            Visibility="Collapsed"
+                <StackPanel Margin="0,50,0,100"
+                            x:Name="CountdownPanel"
                             HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsCountdownVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Border Background="White"
                             Padding="10"
                             CornerRadius="20">
                         <StackPanel>
-                            <TextBlock x:Name="EventTitle"
+                            <TextBlock Text="{Binding EventTitle}"
                                        FontWeight="Bold"
                                        FontSize="32"
                                        TextAlignment="Center"
                                        Margin="0 0 0 10"/>
-                            <TextBlock x:Name="EventDateText"
+                            <TextBlock Text="{Binding EventDateText}"
                                        FontSize="18"
                                        Foreground="Gray"
                                        TextAlignment="Center"
                                        Margin="0 0 0 20"/>
                             <StackPanel Orientation="Horizontal"
                                         HorizontalAlignment="Center">
+                                <!--ngày-->
                                 <Border Margin="10"
                                         Background="Transparent"
                                         Width="100"
@@ -84,7 +109,7 @@
                                         <Border Grid.Row="0"
                                                 CornerRadius="20,20,0,0"
                                                 Background="#AFF0FF">
-                                            <TextBlock x:Name="DaysText"
+                                            <TextBlock Text="{Binding Days}"
                                                        FontSize="60"
                                                        FontWeight="Bold"
                                                        HorizontalAlignment="Center"
@@ -103,8 +128,7 @@
                                         </Border>
                                     </Grid>
                                 </Border>
-
-
+                                <!--giờ-->
                                 <Border Margin="10"
                                         Background="Transparent"
                                         Width="100"
@@ -117,7 +141,7 @@
                                         <Border Grid.Row="0"
                                                 CornerRadius="20,20,0,0"
                                                 Background="#AFF0FF">
-                                            <TextBlock x:Name="HoursText"
+                                            <TextBlock Text="{Binding Hours}"
                                                        FontSize="60"
                                                        FontWeight="Bold"
                                                        HorizontalAlignment="Center"
@@ -149,7 +173,7 @@
                                         <Border Grid.Row="0"
                                                 CornerRadius="20,20,0,0"
                                                 Background="#AFF0FF">
-                                            <TextBlock x:Name="MinutesText"
+                                            <TextBlock Text="{Binding Minutes}"
                                                        FontSize="60"
                                                        FontWeight="Bold"
                                                        HorizontalAlignment="Center"
@@ -181,7 +205,7 @@
                                         <Border Grid.Row="0"
                                                 CornerRadius="20,20,0,0"
                                                 Background="#AFF0FF">
-                                            <TextBlock x:Name="SecondsText"
+                                            <TextBlock Text="{Binding Seconds}"
                                                        FontSize="60"
                                                        FontWeight="Bold"
                                                        HorizontalAlignment="Center"
@@ -204,19 +228,31 @@
                         </StackPanel>
                     </Border>
                     <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center"
-                                Margin="0 20 0 0">
-                        <Button Content="Thêm"
-                                Click="ShowInput_Click"
-                                Width="80"
+                                HorizontalAlignment="Right"
+                                Margin="0 10 0 0">
+                        <Button Style="{StaticResource ModernButtonStyle}"
+                                Content="Thêm"
+                                FontWeight="Bold"
+                                FontSize="18"
+                                Command="{Binding ShowInputCommand}"
+                                Width="100"
+                                Height="35"
                                 Margin="5"
                                 Background="#50C2FF"
+                                utils:ButtonEffects.HoverBackground="#14adff"
+                                utils:ButtonEffects.PressedBackground="#0372ad"
                                 Foreground="White"/>
-                        <Button Content="Xóa"
-                                Click="ClearCountdown_Click"
-                                Width="80"
+                        <Button Style="{StaticResource ModernButtonStyle}"
+                                Content="Xóa"
+                                FontWeight="Bold"
+                                FontSize="18"
+                                Command="{Binding ClearCountdownCommand}"
+                                Width="100"
+                                Height="35"
                                 Margin="5"
-                                Background="#FF5B71"
+                                Background="#FF5B71" 
+                                utils:ButtonEffects.HoverBackground="#fa1131"
+                                utils:ButtonEffects.PressedBackground="#c2001b"
                                 Foreground="White"/>
                     </StackPanel>
                 </StackPanel>

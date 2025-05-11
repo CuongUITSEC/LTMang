@@ -94,6 +94,7 @@
     <Compile Include="Comands\RelayCommand.cs" />
     <Compile Include="Models\Friend.cs" />
     <Compile Include="Models\UserRanking.cs" />
+    <Compile Include="Utils\ButtonEffects.cs" />
     <Compile Include="ViewModels\AnalystViewModel.cs" />
     <Compile Include="ViewModels\CampaignViewModel.cs" />
     <Compile Include="ViewModels\CartesianChartViewModel.cs" />
@@ -168,6 +169,10 @@
     <Page Include="Styles\btn-bodered2.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Styles\button-style.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Styles\ButtonStyle.xaml">
       <SubType>Designer</SubType>
