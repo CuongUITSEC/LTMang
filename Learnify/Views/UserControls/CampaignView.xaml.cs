@@ -84,6 +84,7 @@
 //    }
 //}
 
+using System.Windows;
 using System.Windows.Controls;
 using Learnify.ViewModels;
 
@@ -95,6 +96,16 @@ namespace Learnify.Views
         {
             InitializeComponent(); // Dòng này là bắt buộc
             DataContext = new CampaignViewModel(); // Gán ViewModel ở đây
+
+        }
+
+        private void tbInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if(string.IsNullOrEmpty(tbInput.Text))
+                placeholderText.Visibility = Visibility.Visible;
+            else
+                placeholderText.Visibility = Visibility.Hidden;
+            
 
         }
     }

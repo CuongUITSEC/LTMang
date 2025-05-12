@@ -35,4 +35,5 @@ namespace Learnify.Utils
         public static void SetPressedBackground(DependencyObject obj, Brush value) =>
             obj.SetValue(PressedBackgroundProperty, value);
     }
+
 }

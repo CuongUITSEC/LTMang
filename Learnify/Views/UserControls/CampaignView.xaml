@@ -36,10 +36,24 @@
                                    FontSize="20"
                                    Margin="0 0 0 20"
                                    HorizontalAlignment="Center"/>
-                        <TextBox Text="{Binding EventName, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0 0 0 10"
-                                 Height="40"
-                                 VerticalContentAlignment="Center"/>
+                        <Grid Margin="0 0 0 10">
+                            <TextBox Text="{Binding EventName, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="40"
+                                     VerticalContentAlignment="Center"
+                                     FontSize="16"
+                                     x:Name="tbInput"
+                                     TextChanged="tbInput_TextChanged"
+                                     Background="Transparent"/>
+                            <TextBlock x:Name="placeholderText"
+                                       Text="Nhập tên chiến dịch"
+                                       FontSize="16"
+                                       Foreground="Gray"
+                                       VerticalAlignment="Center"
+                                       Margin="3,0,0,0"
+                                       Panel.ZIndex="-1"/>
+                        </Grid>
+                        
+                        
                         <DatePicker SelectedDate="{Binding EventDate}"
                                     Margin="0 0 0 10"
                                     Height="40"
