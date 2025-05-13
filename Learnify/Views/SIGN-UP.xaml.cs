@@ -22,6 +22,7 @@ namespace Learnify.Views
         public SIGN_UP()
         {
             InitializeComponent();
+            this.DataContext = new Learnify.ViewModels.Login.SIGN_UPViewModel();    
         }
     }
 }

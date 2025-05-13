@@ -190,12 +190,15 @@
     <Compile Include="Comands\BooleanToVisibilityConverter.cs" />
     <Compile Include="Comands\RelayCommand.cs" />
     <Compile Include="Models\Friend.cs" />
+    <Compile Include="Models\StudySession.cs" />
     <Compile Include="Models\UserRanking.cs" />
+    <Compile Include="Services\StudyTimeService.cs" />
     <Compile Include="ViewModels\AnalystViewModel.cs" />
     <Compile Include="ViewModels\CampaignViewModel.cs" />
     <Compile Include="ViewModels\CartesianChartViewModel.cs" />
     <Compile Include="ViewModels\CalendarViewModel.cs" />
     <Compile Include="ViewModels\HomeViewModel.cs" />
+    <Compile Include="ViewModels\Login\SIGN-UPViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\PieChartViewModel.cs" />
     <Compile Include="ViewModels\PomodoroModeViewModel.cs" />
@@ -243,6 +246,9 @@
     <Compile Include="Views\UserControls\PomodoroView.xaml.cs">
       <DependentUpon>PomodoroView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\UserControls\PW_PlaceHoder.xaml.cs">
+      <DependentUpon>PW_PlaceHoder.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserControls\RankingView.xaml.cs">
       <DependentUpon>RankingView.xaml</DependentUpon>
     </Compile>
@@ -254,6 +260,9 @@
     </Compile>
     <Compile Include="Views\UserControls\TableTime.xaml.cs">
       <DependentUpon>TableTime.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserControls\TextBox_PlaceHoder.xaml.cs">
+      <DependentUpon>TextBox_PlaceHoder.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\UserControls\TimerModeView.xaml.cs">
       <DependentUpon>TimerModeView.xaml</DependentUpon>
@@ -330,6 +339,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Views\UserControls\PW_PlaceHoder.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\UserControls\RankingView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -343,6 +356,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\UserControls\TableTime.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserControls\TextBox_PlaceHoder.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

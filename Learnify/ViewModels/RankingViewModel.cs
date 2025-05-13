@@ -1,5 +1,7 @@
 ﻿using Learnify.Models;
+using Learnify.Services; // Nhớ thêm namespace chứa StudyTimeService
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Learnify.ViewModels
 {
@@ -21,19 +23,18 @@ namespace Learnify.ViewModels
 
         public RankingViewModel()
         {
-            Leaderboard = new ObservableCollection<UserRanking>
-            {
-                new UserRanking { Rank = 1, Name = "Người bạn 1", Time = "13 giờ 29 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star1.svg" },
-                new UserRanking { Rank = 2, Name = "Người bạn 2", Time = "8 giờ 40 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star2.svg" },
-                new UserRanking { Rank = 3, Name = "Người bạn 3", Time = "6 giờ 25 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star3.svg" },
-                new UserRanking { Rank = 4, Name = "Người bạn 4", Time = "5 giờ 10 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star4.svg" },
-                new UserRanking { Rank = 5, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
-                new UserRanking { Rank = 6, Name = "Người bạn 6", Time = "13 giờ 29 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star6.svg" },
-                new UserRanking { Rank = 7, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
-                new UserRanking { Rank = 8, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
-                new UserRanking { Rank = 9, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
-                new UserRanking { Rank = 10, Name = "Người bạn 5", Time = "2 giờ 20 phút", Avatar="/Images/avatar1.svg", StarIcon="/Images/star5.svg" },
-            };
+            var rankingData = StudyTimeService.GetRankings();
+
+            Leaderboard = new ObservableCollection<UserRanking>(
+                rankingData.Select((entry, index) => new UserRanking
+                {
+                    Rank = index + 1,
+                    Name = entry.UserId, // hoặc lấy tên từ hồ sơ người dùng
+                    Time = $"{(int)entry.Time.TotalHours} giờ {entry.Time.Minutes} phút",
+                    Avatar = "/Images/avatar1.svg",
+                    StarIcon = $"/Images/star{(index + 1).ToString()}.svg"
+                }));
         }
     }
 }
+

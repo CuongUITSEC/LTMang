@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Learnify.Commands;
+using Learnify.Services;
 
 namespace Learnify.ViewModels
 {
@@ -153,7 +154,17 @@ namespace Learnify.ViewModels
         }
         private void ShowSessionCompletedMessage()
         {
-            MessageBox.Show("Bạn đã hoàn thành 1 phiên Pomodoro!", "Hoàn thành", MessageBoxButton.OK, MessageBoxImage.Information);
+            string currentUser = StudyTimeService.GetCurrentUser();
+            if (!string.IsNullOrEmpty(currentUser))
+            {
+                StudyTimeService.AddStudyTime(currentUser, _pomodoroTime);
+                MessageBox.Show("Bạn đã hoàn thành 1 phiên Pomodoro!", "Hoàn thành", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("Không thể lấy tên người dùng hiện tại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            
         }
 
 
