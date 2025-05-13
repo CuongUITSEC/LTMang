@@ -69,12 +69,13 @@ namespace Learnify.ViewModels
             CalendarVm = new CalendarViewModel();
             PomodoroVm = new PomodoroViewModel();
             RankingVm = new RankingViewModel();
-            CampaignVm = new CampaignViewModel();
+            CampaignVm = new CampaignViewModel(); // Ensure CampaignViewModel inherits from ViewModelBase
             AnalystVm = new AnalystViewModel();
             RewardVm = new RewardViewModel();
             SettingVm = new SettingsViewModel();
             CurrentChildView = HomeVm;
         }
+
 
         private void InitializeCommands()
         {

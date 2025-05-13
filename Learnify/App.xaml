@@ -15,7 +15,7 @@
                 <ResourceDictionary Source="/Styles/PW_BOX.xaml"/>
                 <ResourceDictionary Source="/Styles/CalendarStyle.xaml"/>
                 <ResourceDictionary Source="/Styles/styles.xaml"/>
-
+                <ResourceDictionary Source="/Styles/button-style.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <DataTemplate DataType="{x:Type viewModel:HomeViewModel}">

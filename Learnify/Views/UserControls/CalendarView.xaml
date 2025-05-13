@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:timetable="clr-namespace:Learnify.Views.UserControls"
+             xmlns:utils="clr-namespace:Learnify.Utils"
              xmlns:local="clr-namespace:Learnify.Views"
              xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Border Margin="25,25,25,25">
@@ -74,17 +75,25 @@
                                                 Margin="0,0,0,10"
                                                 DockPanel.Dock="Top">
                                         <TextBox x:Name="TaskInput"
+                                                 FontSize="18"
                                                  Width="200"
-                                                 Height="30"
-                                                 Margin="0,0,10,0"
+                                                 Height="40"
+                                                 Margin="0,0,14,0"
                                                  VerticalContentAlignment="Center"/>
-                                        <Button Content="Thêm"
-                                                Width="60"
-                                                Click="AddTask_Click"/>
+                                        <Button  Style="{StaticResource ModernButtonStyle}"
+                                                 Content="Thêm"
+                                                 Width="80"
+                                                 Height="40"
+                                                 FontSize="18"
+                                                 FontWeight="Bold"
+                                                 Background="#50C2FF"
+                                                 Foreground="White"
+                                                 utils:ButtonEffects.HoverBackground="#14adff"
+                                                 utils:ButtonEffects.PressedBackground="#0372ad"                                                 Click="AddTask_Click"/>
                                     </StackPanel>
 
                                     <!-- Danh sách công việc -->
-                                    <ScrollViewer>
+                                    <ScrollViewer VerticalScrollBarVisibility="Hidden" >
                                         <ItemsControl x:Name="TaskList">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
@@ -92,7 +101,8 @@
                                                             CornerRadius="10"
                                                             Margin="0,5"
                                                             Padding="10">       
-                                                        <TextBlock Text="{Binding}" />
+                                                        <TextBlock Text="{Binding}"
+                                                                   FontSize="18"/>
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
