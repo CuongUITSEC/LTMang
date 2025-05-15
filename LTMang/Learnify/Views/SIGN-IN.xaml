@@ -1,0 +1,74 @@
+﻿<Window x:Class="Learnify.Views.SIGN_IN"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Learnify.Views"
+        mc:Ignorable="d"
+        Title="SIGN_IN" Height="1080" Width="1920">
+    <Window.Resources>
+        <Style x:Key="BTN-3" TargetType="{x:Type Button}">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+            <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"  BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="50" SnapsToDevicePixels="true">
+                            <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsDefaulted" Value="true">
+                                <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter Property="Background" TargetName="border" Value="#00ADFF"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="Transparent"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="true">
+                                <Setter Property="Background" TargetName="border" Value="#00ADFF"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="Transparent"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter Property="Background" TargetName="border" Value="#00ADFF"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="Transparent"/>
+                                <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions >
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+
+        </Grid.RowDefinitions>
+        <!--title-->
+        <TextBlock Grid.Row="0" Text="ĐĂNG NHẬP" FontWeight="Bold" FontSize="64" Height="AUTO" Width="400" TextWrapping="WrapWithOverflow" TextAlignment="Center"  Margin="0 210 0 96" Foreground="Black" HorizontalAlignment="Center"></TextBlock>
+        <!-- Username -->
+        <TextBox Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="1"  Margin="0,0,0,27" HorizontalAlignment="Center" Text=""         />
+        <!--EMAIL-->
+        <TextBox Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="2"  Margin="0,0,0,27" HorizontalAlignment="Center" Text=""  />
+        <!-- Password -->
+        <PasswordBox Style="{DynamicResource PW_BOX}"  FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563" Grid.Row="3"  Margin="0,0,0,70" Padding="50 0 50 0" HorizontalAlignment="Center" />
+        <!-- Login Button -->
+        <Button  Style="{DynamicResource BTN-3}" FontWeight="Bold" Foreground="Black" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="TẠO TÀI KHOẢN" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#49C0F8"
+         BorderThickness="0" Margin="0,0,0,27" />
+        <Border Grid.Row="5" Height="101" Width="563"  CornerRadius="50" Background="White" BorderBrush="#a9a6ac" BorderThickness="2" HorizontalAlignment="Center" >
+            <Button Style="{DynamicResource Btn-bodered2}" Content="ĐĂNG NHẬP" FontSize="48" FontWeight="Bold" Foreground="#1CB0F6" Background="Transparent" BorderThickness="0" />
+        </Border>
+
+    </Grid>
+</Window>
