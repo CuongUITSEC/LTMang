@@ -3,6 +3,7 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using Learnify.Commands;
+using Learnify.Services;
 
 namespace Learnify.ViewModels
 {
@@ -88,7 +89,7 @@ namespace Learnify.ViewModels
         {
             if (_isRunning)
             {
-                // — TẠM DỪNG —
+                // Tạm dừng
                 _timer.Stop();
                 _isRunning = false;
                 _isPaused = true;
@@ -97,7 +98,19 @@ namespace Learnify.ViewModels
             {
                 // Hiển thị thông báo số giờ đã học
                 string timeStudied = $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}";
-                MessageBox.Show($"Bạn đã học trong {timeStudied}.", "Thời gian học", MessageBoxButton.OK, MessageBoxImage.Information);
+                var sessionTime = new TimeSpan(Hours, Minutes, Seconds);
+
+                // Lấy tên người dùng từ tệp JSON
+                string currentUser = StudyTimeService.GetCurrentUser();
+                if (!string.IsNullOrEmpty(currentUser))
+                {
+                    StudyTimeService.AddStudyTime(currentUser, sessionTime);
+                    MessageBox.Show($"Bạn đã học trong {timeStudied}.", "Thời gian học", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Không thể lấy tên người dùng.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
 
                 // Đặt lại đồng hồ
                 _timer.Stop();
@@ -110,6 +123,8 @@ namespace Learnify.ViewModels
             OnPropertyChanged(nameof(PauseOrResetButtonText));
             RaiseCanExecuteChanged();
         }
+
+
 
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {

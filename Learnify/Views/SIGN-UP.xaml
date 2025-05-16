@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:us="clr-namespace:Learnify.Views.UserControls"
         xmlns:local="clr-namespace:Learnify.Views"
         mc:Ignorable="d"
         Title="SIGN_UP" Height="1080" Width="1920">
@@ -19,7 +20,6 @@
         </Grid.RowDefinitions>
         <!--title-->
         <TextBlock Grid.Row="0" Text="ĐĂNG NHẬP" FontWeight="Bold" FontSize="64" Height="AUTO" Width="400" TextWrapping="WrapWithOverflow" TextAlignment="Center"  Margin="0 260 0 103" Foreground="Black" HorizontalAlignment="Center"></TextBlock>
-
         <!-- Username -->
         <TextBox x:Name="UsernameTextBox" Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="1"  Margin="0,0,0,30" HorizontalAlignment="Center" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
              />
@@ -31,6 +31,13 @@
         <!-- Login Button -->
         <Button x:Name="LoginButton"  Style="{DynamicResource Button_bodered}" FontWeight="Bold" Foreground="White" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="ĐĂNG NHẬP" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#58CC02 " Click="LoginButton_Click"
                 Command="{Binding LoginCommand}" BorderThickness="0" Margin="0,0,0,53" />
+        <us:TextBox_PlaceHoder Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  Margin="0,0,0,30" Height="88" Width="563" Place_Hoder="User name"  Grid.Row="1" ></us:TextBox_PlaceHoder>
+        <!-- Password -->
+        <us:PW_PlaceHoder  Password ="{Binding Password, Mode=TwoWay}" Grid.Row="2" Height="88" Width="563" Place_Hoder="Password" Margin="0,0,0,30"  ></us:PW_PlaceHoder>
+        <TextBlock  Text="Quên mật khẩu?" Opacity="20" TextAlignment="Right" Grid.Row="3" FontSize="30" FontWeight="Thin" Foreground="LightGray" Width="550"></TextBlock>
+        <!-- Login Button -->
+        <Button  Style="{DynamicResource Button_bodered}" FontWeight="Bold" Foreground="White" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="ĐĂNG NHẬP" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#58CC02"
+                 BorderThickness="0" Margin="0,0,0,53" />
         <Border Grid.Row="5" Height="101" Width="563"  CornerRadius="50" Background="White" BorderBrush="#a9a6ac" BorderThickness="2" HorizontalAlignment="Center" >
             <Button x:Name="SignUpButton" Click="SignUpButton_Click" Style="{DynamicResource Btn-bodered2}" Content="CHƯA CÓ TÀI KHOẢN" FontSize="48" FontWeight="Bold" Foreground="#1CB0F6" Background="Transparent" BorderThickness="0" />
         </Border>

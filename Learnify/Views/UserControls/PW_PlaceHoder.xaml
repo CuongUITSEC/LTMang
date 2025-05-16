@@ -1,0 +1,48 @@
+﻿<UserControl x:Class="Learnify.Views.UserControls.PW_PlaceHoder"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="http://schemas.awesome.incremented/wpf/xaml/fontawesome.sharp"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DesignHeight="88" d:DesignWidth="563"
+             mc:Ignorable="d">
+    <Grid>
+        <!-- Placeholder -->
+        <TextBlock x:Name="PWPlaceHoder"
+       FontSize="40"
+       Padding="35 0 0 0"
+       Foreground="Gray"
+       VerticalAlignment="Center"
+       Text="{Binding Place_Hoder, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+        <!-- PasswordBox -->
+        <PasswordBox x:Name="PW_Input"
+         PasswordChanged="PW_Input_PasswordChanged"
+         Style="{DynamicResource PW_BOX}"
+         BorderThickness="3"
+         Padding="30 0 0 0"
+         Background="Transparent"
+         FontSize="40"
+         VerticalContentAlignment="Center" />
+
+        <!-- TextBox for visible password -->
+        <TextBox x:Name="TB_Input"
+            Visibility="Collapsed"
+            BorderThickness="3"
+            Style="{DynamicResource INPUT-BOX}"
+            FontSize="40"
+            Padding="30 0 0 0"
+            VerticalContentAlignment="Center"
+            TextChanged="TB_Input_TextChanged" />
+
+        <!-- Toggle Eye Icon -->
+        <Grid Height="30" Width="30" HorizontalAlignment="Right" Margin="20">
+            <Button BorderThickness="0"
+        Background="Transparent"
+        Click="Btn_ToggleVisibility_Click">
+                <fa:IconImage x:Name="EyeIcon" Icon="EyeSlash" />
+            </Button>
+        </Grid>
+    </Grid>
+
+</UserControl>

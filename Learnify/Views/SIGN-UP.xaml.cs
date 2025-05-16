@@ -22,6 +22,7 @@ namespace Learnify.Views
         public SIGN_UP()
         {
             InitializeComponent();
+            this.DataContext = new Learnify.ViewModels.Login.SIGN_UPViewModel();    
         }
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
