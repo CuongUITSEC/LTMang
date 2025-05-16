@@ -24,5 +24,11 @@ namespace Learnify.Views
             InitializeComponent();
             this.DataContext = new Learnify.ViewModels.Login.StartViewModel();
         }
+        private void OpenMainView()
+        {
+            var mainView = new MainView(); 
+            mainView.Show();
+            this.Close();
+        }
     }
 }

@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:Learnify"
              xmlns:viewModel="clr-namespace:Learnify.ViewModels"
              xmlns:view="clr-namespace:Learnify.Views.UserControls"
-             StartupUri="Views/MainView.xaml">
+             StartupUri="Views/Start.xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

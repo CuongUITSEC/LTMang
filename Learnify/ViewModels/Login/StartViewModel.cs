@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using Learnify.Models;
 using Learnify.Commands;
-using System.Security.Cryptography;
-using Learnify.Views.UserControls;
-using Learnify.ViewModels.Login;
 
 namespace Learnify.ViewModels.Login
 {
@@ -37,18 +31,26 @@ namespace Learnify.ViewModels.Login
 
         public StartViewModel()
         {
-            StartVm = new START_ViewModel ();
-            Sign_InVm = new SIGN_IN_ViewModel();
-            Sign_UpVm = new SIGN_UP_ViewModel();
-            Forgot_PWVm= new FORGOT_PW_Viewmodel ();
+            StartVm = new START_ViewModel();
+            Sign_InVm = new SIGN_IN_ViewModel(); // đăng ký
+            Sign_UpVm = new SIGN_UP_ViewModel(OnLoginSuccess); // đăng nhập
+            Forgot_PWVm = new FORGOT_PW_Viewmodel();
 
             CurrentView = StartVm;
 
-            StartCommand = new ViewModelCommand(o => { CurrentView = StartVm; });
-            Sign_InCommand = new ViewModelCommand(o => { CurrentView = Sign_InVm; });
-            Sign_UpCommand = new ViewModelCommand(o => { CurrentView = Sign_UpVm; });
-            Forgot_PWCommand = new ViewModelCommand(o => { CurrentView = Forgot_PWVm; });
+            StartCommand = new ViewModelCommand(o => CurrentView = StartVm);
+            Sign_InCommand = new ViewModelCommand(o => CurrentView = Sign_InVm);
+            Sign_UpCommand = new ViewModelCommand(o => CurrentView = Sign_UpVm);
+            Forgot_PWCommand = new ViewModelCommand(o => CurrentView = Forgot_PWVm);
+        }
 
+
+        public event Action LoginSucceeded;
+
+
+        public void OnLoginSuccess()
+        {
+            LoginSucceeded?.Invoke();
         }
     }
 }
