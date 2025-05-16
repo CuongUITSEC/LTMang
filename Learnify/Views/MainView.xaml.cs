@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 using System.Runtime;
 using SharpVectors.Woffs;
 using System.Windows.Interop;
+using Learnify.Properties;
 
 namespace Learnify.Views
 {
@@ -54,6 +55,11 @@ namespace Learnify.Views
         private void pnlControlBar_MouseEnter(object sender, MouseEventArgs e)
         {
             this.MaxHeight = SystemParameters.MaximizedPrimaryScreenHeight;
+        }
+
+        private void RadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            
         }
     }
 }

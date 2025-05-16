@@ -21,18 +21,18 @@
         <TextBlock Grid.Row="0" Text="ĐĂNG NHẬP" FontWeight="Bold" FontSize="64" Height="AUTO" Width="400" TextWrapping="WrapWithOverflow" TextAlignment="Center"  Margin="0 260 0 103" Foreground="Black" HorizontalAlignment="Center"></TextBlock>
 
         <!-- Username -->
-        <TextBox Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="1"  Margin="0,0,0,30" HorizontalAlignment="Center" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+        <TextBox x:Name="UsernameTextBox" Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="1"  Margin="0,0,0,30" HorizontalAlignment="Center" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
              />
 
         <!-- Password -->
-        <PasswordBox Style="{DynamicResource PW_BOX}"  FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563" Grid.Row="2"  Margin="0,0,0,30" Padding="50 0 50 0" HorizontalAlignment="Center" />
+        <PasswordBox x:Name="PasswordBox" Style="{DynamicResource PW_BOX}"  FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563" Grid.Row="2"  Margin="0,0,0,30" Padding="50 0 50 0" HorizontalAlignment="Center" />
 
         <TextBlock  Text="Quên mật khẩu?" Opacity="20" TextAlignment="Right" Grid.Row="3" FontSize="30" FontWeight="Thin" Foreground="LightGray" Width="550"></TextBlock>
         <!-- Login Button -->
-        <Button  Style="{DynamicResource Button_bodered}" FontWeight="Bold" Foreground="White" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="ĐĂNG NHẬP" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#58CC02"
+        <Button x:Name="LoginButton"  Style="{DynamicResource Button_bodered}" FontWeight="Bold" Foreground="White" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="ĐĂNG NHẬP" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#58CC02 " Click="LoginButton_Click"
                 Command="{Binding LoginCommand}" BorderThickness="0" Margin="0,0,0,53" />
         <Border Grid.Row="5" Height="101" Width="563"  CornerRadius="50" Background="White" BorderBrush="#a9a6ac" BorderThickness="2" HorizontalAlignment="Center" >
-            <Button Style="{DynamicResource Btn-bodered2}" Content="CHƯA CÓ TÀI KHOẢN" FontSize="48" FontWeight="Bold" Foreground="#1CB0F6" Background="Transparent" BorderThickness="0" />
+            <Button x:Name="SignUpButton" Click="SignUpButton_Click" Style="{DynamicResource Btn-bodered2}" Content="CHƯA CÓ TÀI KHOẢN" FontSize="48" FontWeight="Bold" Foreground="#1CB0F6" Background="Transparent" BorderThickness="0" />
         </Border>
 
     </Grid>

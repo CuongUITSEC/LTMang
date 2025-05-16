@@ -139,7 +139,7 @@
                     </RadioButton>
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#221fcc"
-                                 Command="{Binding SettingCommand}">
+                                 Command="{Binding SettingCommand}" Checked="RadioButton_Checked">
                         <StackPanel Orientation="Horizontal">
                             <fa:IconImage Icon="Gear" Style="{StaticResource menuButtonIcon}"/>
                             <TextBlock Text="Cài đặt" Style="{StaticResource menuButtonText}"/>

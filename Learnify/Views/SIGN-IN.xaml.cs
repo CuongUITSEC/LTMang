@@ -23,5 +23,23 @@ namespace Learnify.Views
         {
             InitializeComponent();
         }
+        private void SignUpButton_Click(object sender, RoutedEventArgs e)
+        {
+            string username = UsernameTextBox.Text;
+            string email = EmailTextBox.Text;
+            string password = PasswordBox.Password;
+
+            // đưa vô cơ sở dữ liệu ...
+            MessageBox.Show($"Sign Up\nUsername: {username}\nEmail: {email}");
+        }
+
+        private void SignInButton_Click(object sender, RoutedEventArgs e)
+        {
+            string username = UsernameTextBox.Text;
+            string password = PasswordBox.Password;
+
+            // kiểm tra dữ liệu các tài khoản đã đăng ký
+            MessageBox.Show($"Sign In\nUsername: {username}");
+        }
     }
 }

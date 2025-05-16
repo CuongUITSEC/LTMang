@@ -58,16 +58,16 @@
         <!--title-->
         <TextBlock Grid.Row="0" Text="ĐĂNG NHẬP" FontWeight="Bold" FontSize="64" Height="AUTO" Width="400" TextWrapping="WrapWithOverflow" TextAlignment="Center"  Margin="0 210 0 96" Foreground="Black" HorizontalAlignment="Center"></TextBlock>
         <!-- Username -->
-        <TextBox Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="1"  Margin="0,0,0,27" HorizontalAlignment="Center" Text=""         />
+        <TextBox x:Name="UsernameTextBox" Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="1"  Margin="0,0,0,27" HorizontalAlignment="Center" Text=""         />
         <!--EMAIL-->
-        <TextBox Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="2"  Margin="0,0,0,27" HorizontalAlignment="Center" Text=""  />
+        <TextBox x:Name="EmailTextBox" Style="{DynamicResource INPUT-BOX}" Padding="50 0 50 0" FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563"  Grid.Row="2"  Margin="0,0,0,27" HorizontalAlignment="Center" Text=""  />
         <!-- Password -->
-        <PasswordBox Style="{DynamicResource PW_BOX}"  FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563" Grid.Row="3"  Margin="0,0,0,70" Padding="50 0 50 0" HorizontalAlignment="Center" />
+        <PasswordBox x:Name="PasswordBox" Style="{DynamicResource PW_BOX}"  FontSize="40" VerticalContentAlignment="Center" BorderThickness="3"  Height="80" Width="563" Grid.Row="3"  Margin="0,0,0,70" Padding="50 0 50 0" HorizontalAlignment="Center" />
         <!-- Login Button -->
-        <Button  Style="{DynamicResource BTN-3}" FontWeight="Bold" Foreground="Black" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="TẠO TÀI KHOẢN" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#49C0F8"
+        <Button x:Name="SignUpButton" Style="{DynamicResource BTN-3}" FontWeight="Bold" Foreground="Black" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="TẠO TÀI KHOẢN" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#49C0F8"
          BorderThickness="0" Margin="0,0,0,27" />
         <Border Grid.Row="5" Height="101" Width="563"  CornerRadius="50" Background="White" BorderBrush="#a9a6ac" BorderThickness="2" HorizontalAlignment="Center" >
-            <Button Style="{DynamicResource Btn-bodered2}" Content="ĐĂNG NHẬP" FontSize="48" FontWeight="Bold" Foreground="#1CB0F6" Background="Transparent" BorderThickness="0" />
+            <Button x:Name="SignInButton" Style="{DynamicResource Btn-bodered2}" Content="ĐĂNG NHẬP" FontSize="48" FontWeight="Bold" Foreground="#1CB0F6" Background="Transparent" BorderThickness="0" />
         </Border>
 
     </Grid>
