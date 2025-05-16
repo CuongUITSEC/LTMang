@@ -10,19 +10,24 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Learnify.Views
+namespace Learnify.Views.UserControls
 {
     /// <summary>
-    /// Interaction logic for Start.xaml
+    /// Interaction logic for SIGN_UP.xaml
     /// </summary>
-    public partial class Start : Window
+    public partial class SIGN_UP : UserControl
     {
-        public Start()
+        public SIGN_UP()
         {
             InitializeComponent();
-            this.DataContext = new Learnify.ViewModels.Login.StartViewModel();
+        }
+
+        private void TextBlock_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+
         }
     }
 }

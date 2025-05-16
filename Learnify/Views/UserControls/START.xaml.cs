@@ -10,16 +10,17 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Learnify.Views
+namespace Learnify.Views.UserControls
 {
     /// <summary>
-    /// Interaction logic for SIGN_IN.xaml
+    /// Interaction logic for START.xaml
     /// </summary>
-    public partial class SIGN_IN : Window
+    public partial class START : UserControl
     {
-        public SIGN_IN()
+        public START()
         {
             InitializeComponent();
         }

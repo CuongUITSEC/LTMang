@@ -3,14 +3,34 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-        xmlns:local="clr-namespace:Learnify.Views.UserControls"
-             mc:Ignorable="d" 
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             mc:Ignorable="d" 
              d:DesignHeight="650" d:DesignWidth="800">
-    <Grid>
-        <Border  Grid.Row="3"
-    Margin="0" Height="550">
-            <lvc:CartesianChart Series="{Binding Series}"  />
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ComboBox chọn chế độ hiển thị: Tuần / Tháng -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
+            <TextBlock Text="Hiển thị theo:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <ComboBox ItemsSource="{Binding Modes}"
+                      SelectedItem="{Binding SelectedMode}"
+                      Width="120"
+                      Height="30"/>
+        </StackPanel>
+
+        <!-- Biểu đồ -->
+        <Border Grid.Row="1" CornerRadius="10" BorderBrush="#CCCCCC" BorderThickness="1" Padding="10">
+            <lvc:CartesianChart Series="{Binding Series}">
+                <lvc:CartesianChart.AxisX>
+                    <lvc:Axis Labels="{Binding Labels}" Title="Thời gian"/>
+                </lvc:CartesianChart.AxisX>
+                <lvc:CartesianChart.AxisY>
+                    <lvc:Axis Title="Giờ học" MinValue="0"/>
+                </lvc:CartesianChart.AxisY>
+            </lvc:CartesianChart>
         </Border>
     </Grid>
 </UserControl>

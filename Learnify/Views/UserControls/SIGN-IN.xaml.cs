@@ -10,19 +10,19 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Learnify.Views
+namespace Learnify.Views.UserControls
 {
     /// <summary>
-    /// Interaction logic for SIGN_UP.xaml
+    /// Interaction logic for SIGN_IN.xaml
     /// </summary>
-    public partial class SIGN_UP : Window
+    public partial class SIGN_IN : UserControl
     {
-        public SIGN_UP()
+        public SIGN_IN()
         {
             InitializeComponent();
-            this.DataContext = new Learnify.ViewModels.Login.SIGN_UPViewModel();    
         }
     }
 }

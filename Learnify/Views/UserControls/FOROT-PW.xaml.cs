@@ -10,16 +10,17 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Learnify.Views
+namespace Learnify.Views.UserControls
 {
     /// <summary>
-    /// Interaction logic for FOGOT_PW.xaml
+    /// Interaction logic for FOROT_PW.xaml
     /// </summary>
-    public partial class FOGOT_PW : Window
+    public partial class FOROT_PW : UserControl
     {
-        public FOGOT_PW()
+        public FOROT_PW()
         {
             InitializeComponent();
         }
