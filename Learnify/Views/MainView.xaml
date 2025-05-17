@@ -6,11 +6,8 @@
         xmlns:fa="http://schemas.awesome.incremented/wpf/xaml/fontawesome.sharp"
         xmlns:svg="http://sharpvectors.codeplex.com/svgc/"
         xmlns:viewModel="clr-namespace:Learnify.ViewModels"
-        
         xmlns:local="clr-namespace:Learnify.Views"
         xmlns:userControls="clr-namespace:Learnify.Views.UserControls"
-        
-        
         mc:Ignorable="d"
         Height="720" Width="1280"
         WindowStyle="None"
@@ -46,17 +43,34 @@
         <DataTemplate DataType="{x:Type viewModel:SettingsViewModel}">
             <local:SettingsView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModel:NotificationViewModel}">
+            <userControls:NotificationPanel/>
+        </DataTemplate>
+
+        <Style x:Key="TransparentButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
     </Window.Resources>
-    
+
     <Border Background="#E0F3FF" BorderThickness="1">
         <Border.BorderBrush>
             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#5325c9" Offset="0"/>
                 <GradientStop Color="#e538c1" Offset="0.5"/>
-                <GradientStop Color="#5325c9" Offset="0"/>
+                <GradientStop Color="#5325c9" Offset="1"/>
             </LinearGradientBrush>
         </Border.BorderBrush>
-        
+
         <Grid>
             <Grid.ColumnDefinitions>
                 <!--menu-->
@@ -67,13 +81,10 @@
                 <ColumnDefinition Width="200"/>
             </Grid.ColumnDefinitions>
 
-            
             <!--menu-->
             <Border Background="White" Grid.Column="0">
                 <StackPanel>
-                    <StackPanel Orientation="Vertical"
-                                Height="70"
-                                Margin="20">
+                    <StackPanel Orientation="Vertical" Height="70" Margin="20">
                         <svg:SvgViewbox Source="/Images/Logo-DH-Cong-Nghe-Thong-Tin-UIT.svg"
                                         Height="70"
                                         VerticalAlignment="Center"
@@ -89,6 +100,7 @@
                             <TextBlock Text="Trang chủ" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
+
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#a057ff"
                                  Command="{Binding CalendarCommand}">
@@ -97,6 +109,7 @@
                             <TextBlock Text="Lịch" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
+
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#e538c1"
                                  Command="{Binding PomodoroCommand}">
@@ -105,6 +118,7 @@
                             <TextBlock Text="Bấm giờ" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
+
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#00aeef"
                                  Command="{Binding RankingCommand}">
@@ -113,6 +127,7 @@
                             <TextBlock Text="Xếp hạng" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
+
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#7832df"
                                  Command="{Binding CampaignCommand}">
@@ -121,6 +136,7 @@
                             <TextBlock Text="Chiến dịch" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
+
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#2ee8aa"
                                  Command="{Binding AnalystCommand}">
@@ -129,6 +145,7 @@
                             <TextBlock Text="Thống kê" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
+
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#24bdbd"
                                  Command="{Binding RewardCommand}">
@@ -137,6 +154,7 @@
                             <TextBlock Text="Phần thưởng" Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
+
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#221fcc"
                                  Command="{Binding SettingCommand}" Checked="RadioButton_Checked">
@@ -146,10 +164,8 @@
                         </StackPanel>
                     </RadioButton>
                 </StackPanel>
-                  
             </Border>
 
-            
             <!--content-->
             <Border Grid.Column="1">
                 <Grid>
@@ -167,39 +183,49 @@
                                 Background="Transparent"
                                 MouseLeftButtonDown="pnlControlBar_MouseLeftButtonDown"
                                 MouseEnter="pnlControlBar_MouseEnter">
-                        
+                        <!-- Bạn có thể thêm các nút điều khiển cửa sổ ở đây -->
                     </StackPanel>
-                    
+
                     <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
+
                         <svg:SvgViewbox Source="/Images/Learnify.svg"
                                         Width="159"
                                         Height="40"
                                         VerticalAlignment="Top"
                                         HorizontalAlignment="Left"
                                         Margin="20,0,0,0"/>
-                        
+
                         <StackPanel Grid.Column="1"
                                     Orientation="Horizontal"
                                     HorizontalAlignment="Right"
                                     Margin="0,0,20,0">
-                            <fa:IconImage Icon="Bell" 
-                                          Width="20"
-                                          Height="20"
-                                          VerticalAlignment="Top"/>
+                            <Button Height="20" Width="20" Background="Transparent" Command="{Binding ToggleNotificationCommand}"
+                                    Style="{StaticResource TransparentButtonStyle}"
+                                    ToolTip="Thông báo">
+                                <fa:IconImage Icon="Bell" Width="20"/>
+                            </Button>
                         </StackPanel>
                     </Grid>
 
                     <!--content section-->
-                    <ContentControl Content="{Binding CurrentChildView}" Grid.Row="3"/>
+                    <ContentControl Content="{Binding CurrentChildView}" Grid.Row="2"/>
+
+                    <!-- Thanh thông báo -->
+                    <Border Grid.Row="2"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="0,10,20,0"
+                        Visibility="{Binding IsNotificationVisible, Converter={StaticResource BoolToVisibilityConverter}}">     
+                        <ContentControl Content="{Binding NotificationVM}"/>
+                    </Border>
                 </Grid>
             </Border>
 
-
-
+            <!--friend-->
             <Border Background="White" Grid.Column="2">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -211,21 +237,24 @@
                             <ColumnDefinition Width="30"/>
                             <ColumnDefinition Width="30"/>
                         </Grid.ColumnDefinitions>
-                        <!--nút exit-->
-                        <Button x:Name="btnExit" Grid.Column="1" Click="btnExit_Click" Background="Transparent" BorderThickness="0">
-                            <Image Source="/Images/ButtonClose.png"/>
-                        </Button>
-                        <!--nút thu nhỏ cửa sổ-->
+
+                        <!-- nút thu nhỏ cửa sổ -->
                         <Button x:Name="btnMinisize" Grid.Column="0" Click="btnMinisize_Click" Background="Transparent" BorderThickness="0">
                             <Image Source="/Images/ButtonMinisize.png"/>
                         </Button>
+
+                        <!-- nút thoát -->
+                        <Button x:Name="btnExit" Grid.Column="1" Click="btnExit_Click" Background="Transparent" BorderThickness="0">
+                            <Image Source="/Images/ButtonClose.png"/>
+                        </Button>
                     </Grid>
+
                     <StackPanel Grid.Row="1">
                         <Grid Margin="5">
                             <TextBox x:Name="txtBoxSearch"
                                      Style="{StaticResource textBoxSeerch}"
                                      TextChanged="txtBoxSearch_TextChanged"
-                                     Height="35"/>  
+                                     Height="35"/>
                             <fa:IconImage Icon="Search"
                                           Height="15"
                                           HorizontalAlignment="Right"
@@ -233,15 +262,13 @@
                                           Foreground="#b0b9c6"/>
                         </Grid>
 
-                        <!--bạn bè-->
+                        <!-- bạn bè -->
                         <ListBox ItemsSource="{Binding FriendsList}"
                                  BorderThickness="0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal"
-                                                Margin="10,2,10,2">
+                                    <StackPanel Orientation="Horizontal" Margin="10,2,10,2">
                                         <!-- Avatar -->
-                                        <!--<Image Width="50" Height="50" Source="{Binding Avatar}" />-->
                                         <Ellipse Width="30" Height="30">
                                             <Ellipse.Fill>
                                                 <ImageBrush ImageSource="{Binding Avatar}" />
@@ -250,8 +277,6 @@
                                         <!-- Tên bạn bè -->
                                         <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Margin="20,0,0,0"
                                                    FontWeight="DemiBold"/>
-                                        <!-- Trạng thái Online -->
-                                        <!--<TextBlock Text="{Binding IsOnline, Converter={StaticResource OnlineStatusConverter}}" VerticalAlignment="Center" Margin="10,0,0,0" />-->
                                     </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>

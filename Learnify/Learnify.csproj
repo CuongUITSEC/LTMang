@@ -189,7 +189,9 @@
     </ApplicationDefinition>
     <Compile Include="Comands\BooleanToVisibilityConverter.cs" />
     <Compile Include="Comands\RelayCommand.cs" />
+    <Compile Include="Converters\BooleanToBackgroundConverter.cs" />
     <Compile Include="Models\Friend.cs" />
+    <Compile Include="Models\Notification.cs" />
     <Compile Include="Models\StudyLog.cs" />
     <Compile Include="Models\StudySession.cs" />
     <Compile Include="Models\UserRanking.cs" />
@@ -206,6 +208,7 @@
     <Compile Include="ViewModels\Login\START_ViewModel.cs" />
     <Compile Include="ViewModels\Login\StartViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\NotificationViewModel.cs" />
     <Compile Include="ViewModels\PieChartViewModel.cs" />
     <Compile Include="ViewModels\PomodoroModeViewModel.cs" />
     <Compile Include="ViewModels\PomodoroViewMoldel.cs" />
@@ -239,6 +242,9 @@
     </Compile>
     <Compile Include="Views\UserControls\HomeView.xaml.cs">
       <DependentUpon>HomeView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserControls\NotificationPanel.xaml.cs">
+      <DependentUpon>NotificationPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\UserControls\PomodoroModeView.xaml.cs">
       <DependentUpon>PomodoroModeView.xaml</DependentUpon>
@@ -333,6 +339,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\UserControls\HomeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserControls\NotificationPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

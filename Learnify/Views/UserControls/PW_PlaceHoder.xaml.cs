@@ -10,24 +10,30 @@ namespace Learnify.Views.UserControls
         // Dependency Property for Password
         public static readonly DependencyProperty PasswordProperty =
             DependencyProperty.Register(nameof(Password), typeof(string), typeof(PW_PlaceHoder),
-                new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+                new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnPasswordChanged));
 
         // Password Property
         public string Password
         {
             get => (string)GetValue(PasswordProperty);
-            set
+            set => SetValue(PasswordProperty, value);
+        }
+
+        // Callback when Password property is changed
+        private static void OnPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (PW_PlaceHoder)d;
+            var newPassword = e.NewValue as string ?? string.Empty;
+
+            if (control.isPasswordVisible)
             {
-                SetValue(PasswordProperty, value);
-                if (isPasswordVisible)
-                {
-                    TB_Input.Text = value ?? "";
-                }
-                else
-                {
-                    if (PW_Input.Password != value)
-                        PW_Input.Password = value ?? "";
-                }
+                if (control.TB_Input.Text != newPassword)
+                    control.TB_Input.Text = newPassword;
+            }
+            else
+            {
+                if (control.PW_Input.Password != newPassword)
+                    control.PW_Input.Password = newPassword;
             }
         }
 
@@ -46,9 +52,11 @@ namespace Learnify.Views.UserControls
         public PW_PlaceHoder()
         {
             InitializeComponent();
+            TB_Input.Visibility = Visibility.Collapsed;
+            PW_Input.Visibility = Visibility.Visible;
         }
 
-        // Handle Password changes
+        // PasswordBox event
         private void PW_Input_PasswordChanged(object sender, RoutedEventArgs e)
         {
             if (!isPasswordVisible)
@@ -61,31 +69,36 @@ namespace Learnify.Views.UserControls
                 : Visibility.Hidden;
         }
 
-        // Handle TextBox visibility and password changes
+        // TextBox event
         private void TB_Input_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if (isPasswordVisible)
+            {
+                Password = TB_Input.Text;
+            }
+
             PWPlaceHoder.Visibility = string.IsNullOrEmpty(TB_Input.Text)
                 ? Visibility.Visible
                 : Visibility.Hidden;
         }
 
-        // Toggle visibility between PasswordBox and TextBox
+        // Toggle password visibility
         private void Btn_ToggleVisibility_Click(object sender, RoutedEventArgs e)
         {
             isPasswordVisible = !isPasswordVisible;
 
             if (isPasswordVisible)
             {
-                TB_Input.Text = PW_Input.Password;
-                PW_Input.Visibility = Visibility.Collapsed;
+                TB_Input.Text = Password;
                 TB_Input.Visibility = Visibility.Visible;
+                PW_Input.Visibility = Visibility.Collapsed;
                 EyeIcon.Icon = FontAwesome.Sharp.IconChar.Eye;
             }
             else
             {
-                PW_Input.Password = TB_Input.Text;
-                TB_Input.Visibility = Visibility.Collapsed;
+                PW_Input.Password = Password;
                 PW_Input.Visibility = Visibility.Visible;
+                TB_Input.Visibility = Visibility.Collapsed;
                 EyeIcon.Icon = FontAwesome.Sharp.IconChar.EyeSlash;
             }
         }
