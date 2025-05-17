@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Learnify.ViewModels.Login;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,26 +24,22 @@ namespace Learnify.Views.UserControls
         public SIGN_UP()
         {
             InitializeComponent();
+            
+            // Khởi tạo ViewModel với callback khi login thành công
+            this.DataContext = new SIGN_UP_ViewModel(() => 
+            {
+                // Xử lý khi đăng nhập thành công
+                var window = Window.GetWindow(this);
+                if (window != null)
+                {
+                    var mainView = new MainView();
+                    mainView.Show();
+                    window.Close();
+                }
+            });
         }
+        
 
-        //private void TextBlock_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-        //{
-
-        //}
-        //private void LoginButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    string username = UsernameTextBox.Text;
-        //    string password = PasswordBox.Password;
-
-        //    // so sánh với cơ sở dữ liệu đã đăng ký
-        //    MessageBox.Show($"Username: {username}\nPassword: {password}", "Login Attempt");
-        //}
-
-        //private void SignUpButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    // chuyển đến chỗ đăng kí
-        //    MessageBox.Show("Sign up button clicked!", "Sign Up");
-        //}
 
     }
 }

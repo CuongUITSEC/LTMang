@@ -4,6 +4,7 @@
              xmlns:local="clr-namespace:Learnify"
              xmlns:viewModel="clr-namespace:Learnify.ViewModels"
              xmlns:view="clr-namespace:Learnify.Views.UserControls"
+             xmlns:converters="clr-namespace:Learnify.Converters"
              StartupUri="Views/Start.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -17,6 +18,8 @@
                 <ResourceDictionary Source="/Styles/styles.xaml"/>
                 <ResourceDictionary Source="/Styles/button-style.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <converters:BooleanToBackgroundConverter x:Key="BooleanToBackgroundConverter"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
             <DataTemplate DataType="{x:Type viewModel:HomeViewModel}">
                 <view:HomeView/>

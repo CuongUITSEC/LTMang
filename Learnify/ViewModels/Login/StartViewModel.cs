@@ -29,28 +29,29 @@ namespace Learnify.ViewModels.Login
         }
 
 
+        public event Action LoginSucceeded;
+
         public StartViewModel()
         {
             StartVm = new START_ViewModel();
-            Sign_InVm = new SIGN_IN_ViewModel(); // đăng ký
-            Sign_UpVm = new SIGN_UP_ViewModel(OnLoginSuccess); // đăng nhập
+            Sign_InVm = new SIGN_IN_ViewModel();
+            // Truyền callback khi đăng nhập thành công
+            Sign_UpVm = new SIGN_UP_ViewModel(OnLoginSuccess);
             Forgot_PWVm = new FORGOT_PW_Viewmodel();
 
             CurrentView = StartVm;
 
-            StartCommand = new ViewModelCommand(o => CurrentView = StartVm);
-            Sign_InCommand = new ViewModelCommand(o => CurrentView = Sign_InVm);
-            Sign_UpCommand = new ViewModelCommand(o => CurrentView = Sign_UpVm);
-            Forgot_PWCommand = new ViewModelCommand(o => CurrentView = Forgot_PWVm);
+            StartCommand = new ViewModelCommand(o => { CurrentView = StartVm; });
+            Sign_InCommand = new ViewModelCommand(o => { CurrentView = Sign_InVm; });
+            Sign_UpCommand = new ViewModelCommand(o => { CurrentView = Sign_UpVm; });
+            Forgot_PWCommand = new ViewModelCommand(o => { CurrentView = Forgot_PWVm; });
         }
 
-
-        public event Action LoginSucceeded;
-
-
-        public void OnLoginSuccess()
+        private void OnLoginSuccess()
         {
             LoginSucceeded?.Invoke();
         }
+
+
     }
 }

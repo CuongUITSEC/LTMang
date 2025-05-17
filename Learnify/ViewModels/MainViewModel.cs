@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using Learnify.Models;
 using Learnify.Commands;
 
@@ -19,6 +18,24 @@ namespace Learnify.ViewModels
         public ViewModelCommand SettingCommand { get; set; }
         public ViewModelCommand SearchCommand { get; set; }
 
+        // Command for toggling notification panel
+        private ViewModelCommand _toggleNotificationCommand;
+        public ViewModelCommand ToggleNotificationCommand
+        {
+            get
+            {
+                if (_toggleNotificationCommand == null)
+                {
+                    _toggleNotificationCommand = new ViewModelCommand(o =>
+                    {
+                        IsNotificationVisible = !IsNotificationVisible;
+                    });
+                }
+                return _toggleNotificationCommand;
+            }
+        }
+
+
         // Child ViewModels
         public HomeViewModel HomeVm { get; set; }
         public CalendarViewModel CalendarVm { get; set; }
@@ -28,6 +45,18 @@ namespace Learnify.ViewModels
         public AnalystViewModel AnalystVm { get; set; }
         public RewardViewModel RewardVm { get; set; }
         public SettingsViewModel SettingVm { get; set; }
+
+        // Notification ViewModel
+        private NotificationViewModel _notificationVM;
+        public NotificationViewModel NotificationVM
+        {
+            get => _notificationVM;
+            set
+            {
+                _notificationVM = value;
+                OnPropertyChanged(nameof(NotificationVM));
+            }
+        }
 
         // Friends List
         private ObservableCollection<Friend> _friendsList;
@@ -44,7 +73,19 @@ namespace Learnify.ViewModels
             }
         }
 
+        // Property quản lý hiển thị Notification Panel
+        private bool _isNotificationVisible;
+        public bool IsNotificationVisible
+        {
+            get => _isNotificationVisible;
+            set
+            {
+                _isNotificationVisible = value;
+                OnPropertyChanged(nameof(IsNotificationVisible));
+            }
+        }
 
+        // View hiện tại hiển thị trong MainView
         private ViewModelBase _currentChildView;
         public ViewModelBase CurrentChildView
         {
@@ -61,6 +102,10 @@ namespace Learnify.ViewModels
             InitializeViewModels();
             InitializeCommands();
             InitializeFriendsList();
+
+            NotificationVM = new NotificationViewModel();
+
+            IsNotificationVisible = false; // Ẩn notification panel khi khởi tạo
         }
 
         private void InitializeViewModels()
@@ -76,7 +121,6 @@ namespace Learnify.ViewModels
             CurrentChildView = HomeVm;
         }
 
-
         private void InitializeCommands()
         {
             HomeCommand = new ViewModelCommand(o => CurrentChildView = HomeVm);
@@ -87,6 +131,7 @@ namespace Learnify.ViewModels
             AnalystCommand = new ViewModelCommand(o => CurrentChildView = AnalystVm);
             RewardCommand = new ViewModelCommand(o => CurrentChildView = RewardVm);
             SettingCommand = new ViewModelCommand(o => CurrentChildView = SettingVm);
+            // SearchCommand nếu có thể khởi tạo tương tự ở đây
         }
 
         private void InitializeFriendsList()

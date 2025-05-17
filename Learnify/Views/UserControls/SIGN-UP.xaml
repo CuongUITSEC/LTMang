@@ -63,6 +63,7 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <!--title-->
+                
                 <TextBlock Grid.Row="0" Text="ĐĂNG NHẬP" FontWeight="Bold" FontSize="64" Height="AUTO" Width="400" TextWrapping="WrapWithOverflow" TextAlignment="Center"  Margin="0 100 0 70" Foreground="Black" HorizontalAlignment="Center"></TextBlock>
                 <!-- Username -->
                 <us:TextBox_PlaceHoder Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  Margin="0,0,0,30" Height="88" Width="563" Place_Hoder="User name"  Grid.Row="1" ></us:TextBox_PlaceHoder>

@@ -1,33 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using Learnify.ViewModels.Login;
 
 namespace Learnify.Views
 {
-    /// <summary>
-    /// Interaction logic for Start.xaml
-    /// </summary>
     public partial class Start : Window
     {
         public Start()
         {
             InitializeComponent();
-            this.DataContext = new Learnify.ViewModels.Login.StartViewModel();
+            var viewModel = new StartViewModel();
+            this.DataContext = viewModel;
+            
+            // Đăng ký sự kiện khi đăng nhập thành công
+            viewModel.LoginSucceeded += OpenMainView;
         }
+
         private void OpenMainView()
         {
-            var mainView = new MainView(); 
+            // Tạo và hiển thị MainView
+            var mainView = new MainView();
             mainView.Show();
+            
+            // Đóng cửa sổ hiện tại
             this.Close();
         }
     }
