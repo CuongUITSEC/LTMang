@@ -59,7 +59,7 @@ namespace Learnify.Views
 
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            
+
         }
     }
 }
