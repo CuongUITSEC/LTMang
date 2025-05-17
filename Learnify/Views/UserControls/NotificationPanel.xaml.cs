@@ -33,7 +33,6 @@ namespace Learnify.Views.UserControls
         {
             if (sender is Border border && border.DataContext is Notification notification)
             {
-                MessageBox.Show($"Bạn đã click vào: {notification.Title}"); // <-- thêm dòng này để kiểm tra
                 var vm = (NotificationViewModel)DataContext;
                 vm.MarkAsReadCommand.Execute(notification);
             }

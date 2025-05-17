@@ -10,13 +10,8 @@ using System.Windows.Input;
 
 namespace Learnify.ViewModels
 {
-    public class RewardViewModel : INotifyPropertyChanged
+    public class RewardViewModel : ViewModelBase
     {
-        // Add properties and methods specific to RewardViewModel here
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        
     }
 }

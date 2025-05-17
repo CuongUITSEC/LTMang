@@ -41,7 +41,7 @@
             <local:RewardView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:SettingsViewModel}">
-            <local:SettingsView/>
+            <userControls:SettingsView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:NotificationViewModel}">
             <userControls:NotificationPanel/>

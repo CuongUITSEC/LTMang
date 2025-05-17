@@ -12,18 +12,18 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Runtime.CompilerServices;
-using System.ComponentModel;
 
-namespace Learnify.Views
+namespace Learnify.Views.UserControls
 {
-    public class SettingsViewModel : INotifyPropertyChanged
+    /// <summary>
+    /// Interaction logic for SettingsView.xaml
+    /// </summary>
+    public partial class SettingsView : UserControl
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public SettingsView()
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            InitializeComponent();
+            DataContext=new Learnify.ViewModels.SettingsViewModel();
         }
     }
 }

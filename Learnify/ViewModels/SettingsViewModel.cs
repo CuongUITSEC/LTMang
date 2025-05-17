@@ -2,7 +2,7 @@
 
 namespace Learnify.ViewModels
 {
-    public class SettingsViewModel : INotifyPropertyChanged
+    public class SettingsViewModel : ViewModelBase
     {
         private string _userName = "Peter Pan";
         private string _email = "peter1990@gmail.com";
