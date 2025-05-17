@@ -1,55 +1,109 @@
-﻿<UserControl x:Class="Learnify.Views.SettingsView"
+﻿<UserControl x:Class="Learnify.Views.UserControls.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Learnify.ViewModels">
-    <UserControl.DataContext>
-        <vm:SettingsViewModel />
-    </UserControl.DataContext>
-    <UserControl.Background>
-        <SolidColorBrush Color="{Binding SelectedBackgroundColor, Converter={StaticResource StringToColorConverter}}" />
-    </UserControl.Background>
-    <StackPanel Margin="30" VerticalAlignment="Top" HorizontalAlignment="Center" Width="350">
-        <TextBlock Text="Settings" FontSize="28" FontWeight="Bold" Margin="0,0,0,20"/>
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="1000"
+             Background="#E1F3FF">
 
-        <!-- Language Selection -->
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock Text="Language" VerticalAlignment="Center" Width="200"/>
-            <ComboBox Width="120" SelectedItem="{Binding SelectedLanguage}">
-                <ComboBoxItem Content="English"/>
-                <ComboBoxItem Content="Tiếng Việt"/>
-            </ComboBox>
-        </StackPanel>
+    <Grid>
+        <Border Background="#FFF8F8F8"
+                CornerRadius="10"
+                Padding="20"
+                BorderBrush="#DDD"
+                BorderThickness="1"
+                Width="500"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel>
+                <!-- Avatar -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,20">
+                    <Ellipse Width="60" Height="60">
 
-        <!-- Color Mode Toggle -->
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock Text="Color Mode" VerticalAlignment="Center" Width="200"/>
-            <ToggleButton Content="{Binding ColorModeText}" IsChecked="{Binding IsDarkMode}" Width="120" Height="30"/>
-        </StackPanel>
+                    </Ellipse>
 
-        <!-- Notification Toggle -->
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock Text="Enable Notifications" VerticalAlignment="Center" Width="200"/>
-            <ToggleButton IsChecked="{Binding NotificationsEnabled}" Width="60" Height="30"/>
-        </StackPanel>
 
-        <!-- Change Background Color -->
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock Text="App Background Color" VerticalAlignment="Center" Width="200"/>
-            <ComboBox Width="120" SelectedItem="{Binding SelectedBackgroundColor}">
-                <ComboBoxItem Content="White"/>
-                <ComboBoxItem Content="LightGray"/>
-                <ComboBoxItem Content="LightBlue"/>
-                <ComboBoxItem Content="LightGreen"/>
-                <ComboBoxItem Content="LightYellow"/>
-                <ComboBoxItem Content="LightCoral"/>
-                <ComboBoxItem Content="Lavender"/>
-                <ComboBoxItem Content="MistyRose"/>
-                <ComboBoxItem Content="LightPink"/>
-                <ComboBoxItem Content="LightSalmon"/>
-            </ComboBox>
-        </StackPanel>
+                </StackPanel>
 
-        <!-- Sign Out Button -->
-        <Button Content="Sign Out" Command="{Binding SignOutCommand}" Style="{StaticResource BorderedButtonStyle}" Margin="0,20,0,0"/>
-    </StackPanel>
+                <!-- Info Rows -->
+                <Grid Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Tên người dùng" FontWeight="Bold" />
+                    <TextBlock Text="Peter Pan" Grid.Column="1" />
+                </Grid>
+
+                <Separator/>
+
+                <Grid Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Đổi mật khẩu" FontWeight="Bold" />
+                    <TextBlock Grid.Column="2" Text="❯" FontSize="16" />
+                </Grid>
+
+                <Separator/>
+
+                <Grid Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Email" FontWeight="Bold" />
+                    <TextBlock Text="peter1990@gmail.com" Grid.Column="1" />
+                </Grid>
+
+                <Separator/>
+
+                <Grid Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Số điện thoại" FontWeight="Bold" />
+                    <TextBlock Text="0991234589" Grid.Column="1" />
+                </Grid>
+
+                <Separator/>
+
+                <Grid Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Quốc gia" FontWeight="Bold" />
+                    <TextBlock Text="Việt Nam" Grid.Column="1" />
+                </Grid>
+
+                <Separator/>
+
+                <Grid Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Về chúng tôi" FontWeight="Bold" />
+                    <TextBlock Grid.Column="1" Text="❯" FontSize="16" />
+                </Grid>
+
+                <Separator/>
+
+                <Grid Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Đăng xuất" FontWeight="Bold" />
+                    <TextBlock Grid.Column="1" Text="❯" FontSize="16" />
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
 </UserControl>
