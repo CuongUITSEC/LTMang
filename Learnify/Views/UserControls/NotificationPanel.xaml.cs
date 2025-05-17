@@ -37,5 +37,6 @@ namespace Learnify.Views.UserControls
                 vm.MarkAsReadCommand.Execute(notification);
             }
         }
+
     }
 }
