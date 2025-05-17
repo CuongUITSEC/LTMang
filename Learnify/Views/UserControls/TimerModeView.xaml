@@ -296,7 +296,7 @@ TargetType="{x:Type Button}">
             </StackPanel>
         </Border>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,123,0,0">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,80,0,0">
             <!-- Nút BẮT ĐẦU -->
             <Button Style="{StaticResource Start-btn}"
             Content="BẮT ĐẦU"

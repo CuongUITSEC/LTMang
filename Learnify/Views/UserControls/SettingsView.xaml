@@ -50,6 +50,6 @@
         </StackPanel>
 
         <!-- Sign Out Button -->
-        <Button Content="Sign Out" Command="{Binding SignOutCommand}" Style="{StaticResource BorderedButtonStyle}" Margin="0,20,0,0"/>
+        <!--<Button Content="Sign Out" Command="{Binding SignOutCommand}" Style="{StaticResource BorderedButtonStyle}" Margin="0,20,0,0"/>-->
     </StackPanel>
 </UserControl>

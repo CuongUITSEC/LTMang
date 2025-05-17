@@ -105,7 +105,7 @@ namespace Learnify.ViewModels
 
             NotificationVM = new NotificationViewModel();
 
-            IsNotificationVisible = false; // Ẩn notification panel khi khởi tạo
+            IsNotificationVisible = true; // Ẩn notification panel khi khởi tạo
         }
 
         private void InitializeViewModels()

@@ -46,7 +46,7 @@ namespace Learnify.ViewModels
                 Title = "Welcome",
                 Message = "Welcome to Learnify!",
                 Time = "Just now",
-                IsRead = true
+                IsRead = false
             });
 
             Notifications.Add(new Notification

@@ -381,7 +381,7 @@
                     <ColumnDefinition Width="169*"/>
                 </Grid.ColumnDefinitions>
 
-                <ContentControl Content="{Binding CurrentMode}" Grid.ColumnSpan="2"/>
+                <ContentControl MaxHeight="500" Content="{Binding CurrentMode}" Grid.ColumnSpan="2"/>
 
 
             </Grid>
