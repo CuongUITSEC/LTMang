@@ -3,8 +3,6 @@ using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
-using System.Data.SqlClient;
-
 
 namespace Learnify.ViewModels.Login
 {
@@ -143,34 +141,9 @@ namespace Learnify.ViewModels.Login
 
         private bool AuthenticateUser(string username, string password)
         {
-            // TODO: thay đổi chuỗi kết nối phù hợp với máy bạn
-            string connectionString = "Server=.;Database=QUANLYHOCTAP;Trusted_Connection=True;"; // dùng Windows Authentication
-                                                                                                 // Hoặc:
-                                                                                                 // string connectionString = "Server=localhost;Database=QUANLYHOCTAP;User Id=sa;Password=your_password;";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                try
-                {
-                    connection.Open();
-
-                    string query = "SELECT COUNT(*) FROM NGUOIDUNG WHERE USERNAME = @username AND MATKHAU = @password";
-                    using (SqlCommand cmd = new SqlCommand(query, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@username", username);
-                        cmd.Parameters.AddWithValue("@password", password); // nên hash mật khẩu trong thực tế
-
-                        int count = (int)cmd.ExecuteScalar();
-                        return count > 0;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ShowErrorMessage("Lỗi khi kết nối CSDL: " + ex.Message, "Lỗi hệ thống");
-                    return false;
-                }
-            }
+            // Thay thế bằng logic xác thực thực tế
+            // Ví dụ đơn giản:
+            return username == "admin" && password == "123456";
         }
-
     }
 }

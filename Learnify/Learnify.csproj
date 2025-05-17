@@ -190,6 +190,7 @@
     <Compile Include="Comands\BooleanToVisibilityConverter.cs" />
     <Compile Include="Comands\RelayCommand.cs" />
     <Compile Include="Converters\BooleanToBackgroundConverter.cs" />
+    <Compile Include="Converters\StringToColorConverter.cs" />
     <Compile Include="Models\Friend.cs" />
     <Compile Include="Models\Notification.cs" />
     <Compile Include="Models\StudyLog.cs" />
