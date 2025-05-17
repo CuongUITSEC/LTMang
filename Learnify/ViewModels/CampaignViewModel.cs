@@ -150,7 +150,7 @@ namespace Learnify.ViewModels
                 return;
 
             EventTitle = EventName;
-            EventDateText = EventDate?.ToString("dd/MM/yyyy HH:mm");
+            EventDateText = EventDate?.ToString("dd/MM/yyyy");
             IsInputPanelVisible = false;
             IsCountdownVisible = true;
 

@@ -7,7 +7,8 @@
         xmlns:userControls="clr-namespace:Learnify.Views.UserControls"
         xmlns:lg="clr-namespace:Learnify.ViewModels.Login"
         mc:Ignorable="d"
-        Title="Start" Height="1080" Width="1920">
+        Title="Start" Height="720" Width="1280"
+        WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
         <DataTemplate DataType="{x:Type lg:FORGOT_PW_Viewmodel}">

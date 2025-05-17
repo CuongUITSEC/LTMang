@@ -3,10 +3,71 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:utils="clr-namespace:Learnify.Utils"
+
              xmlns:local="clr-namespace:Learnify.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+             xmlns:viewModels="clr-namespace:Learnify.ViewModels">
+
+    <UserControl.DataContext>
+        <viewModels:RewardViewModel />
+    </UserControl.DataContext>
+
+    <Border Background="White"
+            CornerRadius="30"
+            Margin="50"
+            BorderThickness="1">
+        <Border.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#5325c9" Offset="0"/>
+                <GradientStop Color="#e538c1" Offset="0.5"/>
+                <GradientStop Color="#5325c9" Offset="0"/>
+            </LinearGradientBrush>
+        </Border.BorderBrush>
+        <Viewbox Stretch="Uniform">
+            <Grid 
+            Width="700"
+            Height="450">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="NHIỆM VỤ HẰNG NGÀY" 
+                       FontSize="30" 
+                       FontWeight="Bold"  
+                       HorizontalAlignment="Center" 
+                       Margin="0 20 0 20"/>
+                <StackPanel Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding Tasks}"
+                          Margin="30 0 30 0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="White" CornerRadius="8" Padding="10" Margin="0,0,0,10" BorderBrush="#ccc" BorderThickness="1">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Left" Width="500">
+                                            <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding Description}" FontSize="12" Foreground="Gray"/>
+                                        </StackPanel>
+                                        <Button Content="{Binding ButtonText}"
+                                                Style="{StaticResource ModernButtonStyle}"
+                                                Width="80" Height="30"
+                                                Background="#14d700"
+                                                utils:ButtonEffects.HoverBackground="#16ee00"
+                                                utils:ButtonEffects.PressedBackground="#0fa300"
+                                                Foreground="White"
+                                                FontSize="13"
+                                                FontWeight="Bold"
+                                                IsEnabled="{Binding IsButtonEnabled}"
+                                                Command="{Binding ClaimCommand}"
+                                                Margin="10,0,0,0"/>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Grid>
+
+        </Viewbox>
+    </Border>
 </UserControl>

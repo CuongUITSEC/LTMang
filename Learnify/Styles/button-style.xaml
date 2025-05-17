@@ -10,14 +10,14 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border" 
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="10">
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="10">
                         <ContentPresenter HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"/>
+                                      VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" 
+                            <Setter TargetName="border" Property="Background"                                 
                                     Value="{Binding Path=(local:ButtonEffects.HoverBackground), 
                                             RelativeSource={RelativeSource TemplatedParent}}"/>
                         </Trigger>
@@ -26,9 +26,16 @@
                                     Value="{Binding Path=(local:ButtonEffects.PressedBackground), 
                                             RelativeSource={RelativeSource TemplatedParent}}"/>
                         </Trigger>
+
+                        <!-- ✅ THÊM PHẦN NÀY -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="Gray"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
 </ResourceDictionary>

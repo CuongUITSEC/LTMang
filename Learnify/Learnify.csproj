@@ -194,6 +194,7 @@
     <Compile Include="Models\Notification.cs" />
     <Compile Include="Models\StudyLog.cs" />
     <Compile Include="Models\StudySession.cs" />
+    <Compile Include="Models\TaskItem.cs" />
     <Compile Include="Models\UserRanking.cs" />
     <Compile Include="Utils\ButtonEffects.cs" />
     <Compile Include="Services\StudyTimeService.cs" />
@@ -215,6 +216,7 @@
     <Compile Include="ViewModels\RankingViewModel.cs" />
     <Compile Include="ViewModels\RewardViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
+    <Compile Include="ViewModels\TaskItemViewModel.cs" />
     <Compile Include="ViewModels\TimerModeViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelCommand.cs" />
