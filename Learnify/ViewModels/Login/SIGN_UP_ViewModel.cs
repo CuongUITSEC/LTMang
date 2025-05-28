@@ -3,6 +3,11 @@ using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Threading.Tasks;
+using System.Net.Http; 
+using System.Text;     
+using Newtonsoft.Json;
+
 
 namespace Learnify.ViewModels.Login
 {
@@ -35,7 +40,6 @@ namespace Learnify.ViewModels.Login
         public ICommand LoginCommand { get; }
         public ICommand ForgotPasswordCommand { get; }
 
-        // Implement IDataErrorInfo
         public string this[string columnName]
         {
             get
@@ -65,7 +69,7 @@ namespace Learnify.ViewModels.Login
         public SIGN_UP_ViewModel(Action onLoginSuccess)
         {
             _onLoginSuccess = onLoginSuccess;
-            LoginCommand = new ViewModelCommand(ExecuteLogin);
+            LoginCommand = new ViewModelCommand(async o => await ExecuteLoginAsync());
             ForgotPasswordCommand = new ViewModelCommand(ExecuteForgotPassword);
         }
 
@@ -75,13 +79,12 @@ namespace Learnify.ViewModels.Login
                    string.IsNullOrEmpty(this[nameof(Password)]);
         }
 
-        private void ExecuteLogin(object parameter)
+        private async Task ExecuteLoginAsync()
         {
             try
             {
                 Mouse.OverrideCursor = Cursors.Wait;
 
-                // Kiểm tra dữ liệu đầu vào trước khi xác thực
                 var usernameError = this[nameof(Username)];
                 var passwordError = this[nameof(Password)];
 
@@ -92,8 +95,9 @@ namespace Learnify.ViewModels.Login
                     return;
                 }
 
-                // Nếu dữ liệu hợp lệ thì xác thực
-                if (AuthenticateUser(Username, Password))
+                // Xác thực với Firebase
+                var result = await AuthenticateUserWithFirebase(Username, Password);
+                if (result)
                 {
                     _onLoginSuccess?.Invoke();
                 }
@@ -112,7 +116,6 @@ namespace Learnify.ViewModels.Login
             }
         }
 
-
         private void ShowErrorMessage(string message, string title)
         {
             Application.Current.Dispatcher.Invoke(() =>
@@ -121,8 +124,7 @@ namespace Learnify.ViewModels.Login
                     message,
                     title,
                     MessageBoxButton.OK,
-                    MessageBoxImage.Error,
-                    MessageBoxResult.OK);
+                    MessageBoxImage.Error);
             });
         }
 
@@ -134,16 +136,40 @@ namespace Learnify.ViewModels.Login
                     "Vui lòng liên hệ quản trị hệ thống để đặt lại mật khẩu",
                     "Quên mật khẩu",
                     MessageBoxButton.OK,
-                    MessageBoxImage.Information,
-                    MessageBoxResult.OK);
+                    MessageBoxImage.Information);
             });
         }
 
-        private bool AuthenticateUser(string username, string password)
+        // Firebase authentication via REST API
+        private async Task<bool> AuthenticateUserWithFirebase(string email, string password)
         {
-            // Thay thế bằng logic xác thực thực tế
-            // Ví dụ đơn giản:
-            return username == "admin" && password == "123456";
+            const string apiKey = "\r\nAIzaSyAhTPGYk6qxu_t-RXT3F3LOxgBk65LicIY"; // <-- Thay bằng API Key của bạn
+            var url = $"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={apiKey}";
+
+            var payload = new
+            {
+                email = email,
+                password = password,
+                returnSecureToken = true
+            };
+
+            using (var client = new HttpClient())
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                var response = await client.PostAsync(url, content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Đăng nhập thành công
+                    return true;
+                }
+                else
+                {
+                    // Đăng nhập thất bại, có thể lấy message từ responseString nếu muốn
+                    return false;
+                }
+            }
         }
     }
 }

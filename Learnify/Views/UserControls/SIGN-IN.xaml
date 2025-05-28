@@ -64,12 +64,12 @@
                 <!-- Username -->
                 <us:TextBox_PlaceHoder  Place_Hoder="User name" FontSize="40"  Height="88" Width="563" Grid.Row="1"  Margin="0 0 0 27"></us:TextBox_PlaceHoder>
                 <!--EMAIL-->
-                <us:TextBox_PlaceHoder Place_Hoder="Email" FontSize="40" Height="88" Width="563" HorizontalAlignment="Center" Grid.Row="2" Margin="0 0 0 27" ></us:TextBox_PlaceHoder>
+                <us:TextBox_PlaceHoder Place_Hoder="Email" FontSize="40" Height="88" Width="563" HorizontalAlignment="Center" Grid.Row="2" Margin="0 0 0 27" Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ></us:TextBox_PlaceHoder>
                 <!-- Password -->
-                <us:PW_PlaceHoder Place_Hoder="Password" FontSize="40" Height="88" Width="563" Grid.Row="3"  Margin="0,0,0,50"></us:PW_PlaceHoder>
+                <us:PW_PlaceHoder Place_Hoder="Password" FontSize="40" Height="88" Width="563" Grid.Row="3"  Margin="0,0,0,50" Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ></us:PW_PlaceHoder>
                 <!-- Login Button -->
                 <Button  Style="{DynamicResource BTN-3}" FontWeight="Bold" Foreground="Black" FontSize="48" Height="101" Width="563" Grid.Row="4"  Content="TẠO TÀI KHOẢN" HorizontalAlignment="Center" VerticalAlignment="Top" Background="#49C0F8"
-  BorderThickness="0" Margin="0,0,0,27" />
+  BorderThickness="0" Margin="0,0,0,27" Command="{Binding RegisterCommand}" />
                 <Border Margin="0 0 0 50" Grid.Row="5" Height="101" Width="563"  CornerRadius="50" Background="White" BorderBrush="#a9a6ac" BorderThickness="2" HorizontalAlignment="Center" >
                     <Button  Style="{DynamicResource Btn-bodered2}" Command="{Binding DataContext.Sign_UpCommand, RelativeSource={RelativeSource AncestorType=Window}}" Content="ĐĂNG NHẬP" FontSize="48" FontWeight="Bold" Foreground="#1CB0F6" Background="Transparent" BorderThickness="0" />
                 </Border>
