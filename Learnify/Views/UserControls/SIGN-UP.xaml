@@ -71,7 +71,7 @@
                 <us:PW_PlaceHoder  Password ="{Binding Password, Mode=TwoWay}" Grid.Row="2" Height="88" Width="563" Place_Hoder="Password" Margin="0,0,0,30"  ></us:PW_PlaceHoder>
                 <Button Style="{DynamicResource Forgot_pw}" 
                     Content="Quên mật khẩu?" 
-                    Command="{Binding DataContext.Forgot_PWCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    Command="{Binding ForgotPasswordCommand}"
                     Background="Transparent"
                     BorderThickness="0"
                     Foreground="LightGray"

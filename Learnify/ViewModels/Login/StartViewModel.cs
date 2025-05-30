@@ -34,8 +34,8 @@ namespace Learnify.ViewModels.Login
         public StartViewModel()
         {
             StartVm = new START_ViewModel();
-            Sign_InVm = new SIGN_IN_ViewModel();
             // Truyền callback khi đăng nhập thành công
+            Sign_InVm = new SIGN_IN_ViewModel(OnLoginSuccess);
             Sign_UpVm = new SIGN_UP_ViewModel(OnLoginSuccess);
             Forgot_PWVm = new FORGOT_PW_Viewmodel();
 

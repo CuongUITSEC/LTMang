@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Net.Http; 
 using System.Text;     
 using Newtonsoft.Json;
+using Learnify.Services;
 
 
 namespace Learnify.ViewModels.Login
@@ -99,6 +100,9 @@ namespace Learnify.ViewModels.Login
                 var result = await AuthenticateUserWithFirebase(Username, Password);
                 if (result)
                 {
+                    // Lưu token và userId vào AuthService
+                    AuthService.SetToken(FirebaseIdToken);
+                    AuthService.SetUserId(FirebaseUserId);
                     _onLoginSuccess?.Invoke();
                 }
                 else
@@ -128,22 +132,97 @@ namespace Learnify.ViewModels.Login
             });
         }
 
-        private void ExecuteForgotPassword(object parameter)
+        private async void ExecuteForgotPassword(object parameter)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            try
             {
-                MessageBox.Show(
-                    "Vui lòng liên hệ quản trị hệ thống để đặt lại mật khẩu",
-                    "Quên mật khẩu",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-            });
+                Mouse.OverrideCursor = Cursors.Wait;
+
+                if (string.IsNullOrWhiteSpace(Username))
+                {
+                    ShowErrorMessage("Vui lòng nhập email để đặt lại mật khẩu.", "Thiếu thông tin");
+                    return;
+                }
+
+                // Gửi yêu cầu đặt lại mật khẩu qua Firebase REST API
+                const string apiKey = "AIzaSyAhTPGYk6qxu_t-RXT3F3LOxgBk65LicIY"; // <-- Thay bằng API Key của bạn
+                var url = $"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={apiKey}";
+
+                var payload = new
+                {
+                    requestType = "PASSWORD_RESET",
+                    email = Username
+                };
+
+                using (var client = new HttpClient())
+                {
+                    var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                    var response = await client.PostAsync(url, content);
+                    var responseString = await response.Content.ReadAsStringAsync();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            MessageBox.Show(
+                                "Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư của bạn.",
+                                "Quên mật khẩu",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+                        });
+                    }
+                    else
+                    {
+                        // Lấy thông báo lỗi từ Firebase nếu có
+                        string errorMsg = "Không thể gửi email đặt lại mật khẩu. Vui lòng kiểm tra lại email.";
+                        try
+                        {
+                            dynamic errorObj = JsonConvert.DeserializeObject(responseString);
+                            if (errorObj != null && errorObj.error != null && errorObj.error.message != null)
+                                errorMsg = (string)errorObj.error.message;
+                        }
+                        catch { }
+                        ShowErrorMessage(errorMsg, "Lỗi");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage("Đã xảy ra lỗi khi gửi yêu cầu đặt lại mật khẩu: " + ex.Message, "Lỗi hệ thống");
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
+            }
         }
 
         // Firebase authentication via REST API
+        private string _firebaseIdToken;
+        private string _firebaseUserId;
+        public string FirebaseIdToken
+        {
+            get => _firebaseIdToken;
+            private set
+            {
+                _firebaseIdToken = value;
+                OnPropertyChanged(nameof(FirebaseIdToken));
+            }
+        }
+
+        public string FirebaseUserId
+        {
+            get => _firebaseUserId;
+            private set
+            {
+                _firebaseUserId = value;
+                OnPropertyChanged(nameof(FirebaseUserId));
+            }
+        }
+
+        // Update AuthenticateUserWithFirebase to retrieve and store the ID token and userId
         private async Task<bool> AuthenticateUserWithFirebase(string email, string password)
         {
-            const string apiKey = "\r\nAIzaSyAhTPGYk6qxu_t-RXT3F3LOxgBk65LicIY"; // <-- Thay bằng API Key của bạn
+            const string apiKey = "AIzaSyAhTPGYk6qxu_t-RXT3F3LOxgBk65LicIY"; // <-- Replace with your API Key
             var url = $"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={apiKey}";
 
             var payload = new
@@ -161,12 +240,33 @@ namespace Learnify.ViewModels.Login
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Đăng nhập thành công
+                    // Parse the ID token and userId from the response
+                    try
+                    {
+                        dynamic resultObj = JsonConvert.DeserializeObject(responseString);
+                        if (resultObj != null)
+                        {
+                            if (resultObj.idToken != null)
+                            {
+                                FirebaseIdToken = (string)resultObj.idToken;
+                            }
+                            if (resultObj.localId != null)
+                            {
+                                FirebaseUserId = (string)resultObj.localId;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        FirebaseIdToken = null;
+                        FirebaseUserId = null;
+                    }
                     return true;
                 }
                 else
                 {
-                    // Đăng nhập thất bại, có thể lấy message từ responseString nếu muốn
+                    FirebaseIdToken = null;
+                    FirebaseUserId = null;
                     return false;
                 }
             }

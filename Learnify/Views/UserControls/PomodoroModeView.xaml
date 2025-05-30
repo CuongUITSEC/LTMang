@@ -248,66 +248,54 @@
                     <RowDefinition Height="auto"></RowDefinition>
                     <RowDefinition Height="auto"></RowDefinition>
                 </Grid.RowDefinitions>
+                <Ellipse Height="450" Width="450" Fill="#4E5558" Stroke="LightGray" StrokeThickness="2"/>
+
                 <Grid Height="400" Width="400" Grid.Row="0">
                     <!-- Nền vòng tròn -->
-                    <Ellipse Fill="WhiteSmoke"
-Stroke="LightGray"
-StrokeThickness="2"/>
-
+                    <Ellipse Fill="WhiteSmoke" Stroke="LightGray" StrokeThickness="2"/>
                     <!-- Vòng Pomodoro (màu đỏ) - Đặt trong Canvas để kiểm soát vị trí -->
                     <Canvas>
                         <!-- Cả hai Path sử dụng cùng tâm (200,200) -->
-                        <Path Data="{Binding PomodoroArc}"
-    Fill="#FF4F5B"
-    Opacity="0.8"
-  Width="400"
-    Height="400"
-  Canvas.Left="0"
-    Canvas.Top="0"/>
+                        <Path Data="{Binding PomodoroArc}"    Fill="#FF4F5B"      Width="400"    Height="400"  Canvas.Left="0"    Canvas.Top="0"/>
 
                         <!-- Vòng Break (màu xanh) - cùng vị trí với PomodoroArc -->
-                        <Path Data="{Binding BreakArc}"
-    Fill="#4F93FF"
-    Opacity="0.8"
-  Width="400"
-    Height="400"
-  Canvas.Left="0"
-    Canvas.Top="0"/>
+                        <Path Data="{Binding BreakArc}"    Fill="#4F93FF"      Width="400"    Height="400"  Canvas.Left="0"    Canvas.Top="0"/>
                     </Canvas>
+                    <Image Source="/Images/Picture1.png" HorizontalAlignment="Center" VerticalAlignment="Center" Width="370" Height="370"/>
+                    <Ellipse Height="250" Width="250" Fill="#FF4F5B"   Stroke="LightGray" StrokeThickness="2"  />
+                    <Ellipse Height="200" Width="200" Fill="WhiteSmoke" Stroke="LightGray" StrokeThickness="2"  />
+
+
+
+                    
 
                     <!-- Hiển thị thời gian -->
-                    <TextBlock Text="{Binding TimeDisplay}"
-FontSize="48"
-FontWeight="Bold"
-   VerticalAlignment="Center"
-HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding TimeDisplay}" FontSize="48" FontWeight="Bold"   VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Grid>
 
                 <!-- Các nút điều khiển -->
 
-                <StackPanel Grid.Row="1" Orientation="Horizontal"
-        HorizontalAlignment="Center"
-        Margin="0,20,0,0">
+                <StackPanel Grid.Row="1" Orientation="Horizontal"        HorizontalAlignment="Center"        Margin="0,20,0,0">
                     <Button Style="{StaticResource Start-btn}"
-            Content="BẮT ĐẦU"
-            Command="{Binding StartCommand}"
-            Background="#F8475E"
-            Foreground="White"
-            Width="258"
-            Height="82"
-            FontWeight="Bold"
-            Margin="10"
-            FontSize="32"/>
+                        Content="BẮT ĐẦU"
+                        Command="{Binding StartCommand}"
+                        Background="#F8475E"
+                        Foreground="White"
+                        Width="258"
+                        Height="82"
+                        FontWeight="Bold"
+                        Margin="10"
+                        FontSize="32"/>
                     <Button Style="{StaticResource Stop-btn}"
-            Content="TẠM DỪNG"
-            Command="{Binding PauseCommand}"
-            Background="#83CBEB"
-            Foreground="White"
-            Width="258"
-            Height="82"
-            FontWeight="Bold"
-            Margin="10"
-            FontSize="32"/>
+                        Content="TẠM DỪNG"
+                        Command="{Binding PauseCommand}"
+                        Background="#83CBEB"
+                        Foreground="White"
+                        Width="258"
+                        Height="82"
+                        FontWeight="Bold"
+                        Margin="10"
+                        FontSize="32"/>
                 </StackPanel>
             </Grid>
         </Viewbox>

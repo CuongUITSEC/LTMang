@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Learnify.Commands;
 using Learnify.Services;
+using System.Threading.Tasks;
 
 namespace Learnify.ViewModels
 {
@@ -15,15 +16,27 @@ namespace Learnify.ViewModels
         private bool _isBreakTime;
         private TimeSpan _remainingTime;
         private double _progress;
+        private string _currentUsername;
+        private string _currentUserId;
+        private readonly FirebaseService _firebaseService;
 
         private readonly TimeSpan _pomodoroTime = TimeSpan.FromMinutes(25);
         private readonly TimeSpan _breakTime = TimeSpan.FromMinutes(5);
         private readonly DispatcherTimer _timer;
 
-
+        public string CurrentUsername
+        {
+            get => _currentUsername;
+            private set
+            {
+                _currentUsername = value;
+                OnPropertyChanged(nameof(CurrentUsername));
+            }
+        }
 
         public PomodoroModeViewModel()
         {
+            _firebaseService = new FirebaseService();
             StartCommand = new RelayCommand(StartTimer, () => !_isRunning);
             PauseCommand = new RelayCommand(PauseTimer, () => _isRunning);
             ResetCommand = new RelayCommand(ResetTimer);
@@ -34,6 +47,23 @@ namespace Learnify.ViewModels
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _timer.Tick += Timer_Tick;
+
+            // Kiểm tra xác thực
+            if (AuthService.IsAuthenticated())
+            {
+                _currentUserId = AuthService.GetUserId();
+                LoadUsernameAsync(_currentUserId);
+            }
+            else
+            {
+                MessageBox.Show("Vui lòng đăng nhập để sử dụng tính năng này.", 
+                    "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private async void LoadUsernameAsync(string userId)
+        {
+            CurrentUsername = await _firebaseService.GetUsernameAsync(userId);
         }
 
         public string TimeDisplay
@@ -53,11 +83,12 @@ namespace Learnify.ViewModels
                 OnPropertyChanged(nameof(BreakArc));
             }
         }
+
         public Geometry PomodoroArc
         {
             get
             {
-                if (_isBreakTime) return Geometry.Empty;  // Vòng Pomodoro chỉ vẽ khi không phải thời gian nghỉ
+                if (_isBreakTime) return Geometry.Empty;  // Chỉ vẽ vòng Pomodoro khi không phải thời gian nghỉ
                 double startAngle = -90 + (150 * (1 - Progress));  // Cập nhật góc của Pomodoro
                 return CreateArc(startAngle, 150 * Progress);
             }
@@ -67,13 +98,11 @@ namespace Learnify.ViewModels
         {
             get
             {
-                if (!_isBreakTime) return Geometry.Empty;  // Vòng Break chỉ vẽ khi đang nghỉ
+                if (!_isBreakTime) return Geometry.Empty;  // Chỉ vẽ vòng Break khi đang nghỉ
                 double startAngle = 60 + (30 * (1 - Progress));  // Cập nhật góc của Break
                 return CreateArc(startAngle, 30 * Progress);
             }
         }
-
-
 
         public ICommand StartCommand { get; }
         public ICommand PauseCommand { get; }
@@ -110,23 +139,23 @@ namespace Learnify.ViewModels
         {
             if (_remainingTime.TotalSeconds > 0)
             {
-                _remainingTime -= TimeSpan.FromSeconds(100); // Cập nhật mỗi giây
+                _remainingTime -= TimeSpan.FromSeconds(300); // Cập nhật mỗi giây
             }
             else if (!_isBreakTime)
             {
-                // Khi Pomodoro kết thúc, chuyển sang vòng Break
+                // Khi Pomodoro kết thúc, chuyển sang thời gian nghỉ
                 _isBreakTime = true;
                 _remainingTime = _breakTime;
-                Progress = 1; // Đặt lại progress của Break
+                Progress = 1; // Đặt lại tiến trình của thời gian nghỉ
             }
             else
             {
-                // Kết thúc cả Pomodoro và Break
+                // Kết thúc cả Pomodoro và thời gian nghỉ
                 _timer.Stop();
                 _isRunning = false;
                 ShowSessionCompletedMessage();
 
-                // Reset trạng thái
+                // Đặt lại trạng thái
                 _isBreakTime = false;
                 _remainingTime = _pomodoroTime;
                 Progress = 1;
@@ -139,34 +168,53 @@ namespace Learnify.ViewModels
             {
                 UpdateTimeDisplay();
 
-                // Cập nhật tiến trình cho Pomodoro hoặc Break tùy theo thời gian còn lại
+                // Cập nhật tiến trình cho Pomodoro hoặc thời gian nghỉ
                 double total = _isBreakTime ? _breakTime.TotalSeconds : _pomodoroTime.TotalSeconds;
                 Progress = _remainingTime.TotalSeconds / total;
             }
         }
 
-
-
-
         private void UpdateTimeDisplay()
         {
             TimeDisplay = _remainingTime.ToString(@"mm\:ss");
         }
-        private void ShowSessionCompletedMessage()
-        {
-            string currentUser = StudyTimeService.GetCurrentUser();
-            if (!string.IsNullOrEmpty(currentUser))
-            {
-                StudyTimeService.AddStudyTime(currentUser, _pomodoroTime);
-                MessageBox.Show("Bạn đã hoàn thành 1 phiên Pomodoro!", "Hoàn thành", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
-            {
-                MessageBox.Show("Không thể lấy tên người dùng hiện tại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            
-        }
 
+        private async void ShowSessionCompletedMessage()
+        {
+            if (!AuthService.IsAuthenticated())
+            {
+                MessageBox.Show("Vui lòng đăng nhập để lưu thời gian học.", 
+                    "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                // Lưu thời gian học lên Firebase
+                bool success = await _firebaseService.SaveStudyTimeAsync(_currentUserId, _pomodoroTime);
+                
+                if (success)
+                {
+                    // Lấy thời gian học tổng cộng
+                    var totalStudyTime = await _firebaseService.GetStudyTimeAsync(_currentUserId);
+                    string message = $"Chúc mừng {CurrentUsername}!\n" +
+                                   $"Bạn đã hoàn thành một phiên Pomodoro.\n" +
+                                   $"Tổng thời gian học: {totalStudyTime.Hours} giờ {totalStudyTime.Minutes} phút";
+                    
+                    MessageBox.Show(message, "Hoàn thành", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Không thể lưu thời gian học. Vui lòng kiểm tra kết nối mạng và thử lại.", 
+                        "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Đã xảy ra lỗi: {ex.Message}", 
+                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
         private Geometry CreateArc(double startAngle, double spanDeg)
         {

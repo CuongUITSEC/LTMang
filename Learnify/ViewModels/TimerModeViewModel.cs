@@ -45,6 +45,9 @@ namespace Learnify.ViewModels
         private readonly Timer _timer;
         private bool _isRunning;
         private bool _isPaused;
+        private readonly FirebaseService _firebaseService;
+        private string _currentUserId;
+        private string _currentUsername;
 
         // Command để bắt đầu
         public ICommand StartCommand { get; }
@@ -54,6 +57,8 @@ namespace Learnify.ViewModels
 
         public TimerModeViewModel()
         {
+            _firebaseService = new FirebaseService();
+            
             // Khởi tạo Timer, 1s tick
             _timer = new Timer(1000) { AutoReset = true };
             _timer.Elapsed += OnTimerElapsed;
@@ -66,6 +71,23 @@ namespace Learnify.ViewModels
             _isRunning = false;
             _isPaused = false;
             ResetValues();
+
+            // Kiểm tra xác thực và lấy thông tin người dùng
+            if (AuthService.IsAuthenticated())
+            {
+                _currentUserId = AuthService.GetUserId();
+                LoadUsernameAsync(_currentUserId);
+            }
+            else
+            {
+                MessageBox.Show("Vui lòng đăng nhập để sử dụng tính năng này.", 
+                    "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private async void LoadUsernameAsync(string userId)
+        {
+            _currentUsername = await _firebaseService.GetUsernameAsync(userId);
         }
 
         // Nội dung của nút thứ hai, binding Content
@@ -85,7 +107,7 @@ namespace Learnify.ViewModels
             RaiseCanExecuteChanged();
         }
 
-        private void PauseOrResetTimer()
+        private async void PauseOrResetTimer()
         {
             if (_isRunning)
             {
@@ -100,16 +122,38 @@ namespace Learnify.ViewModels
                 string timeStudied = $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}";
                 var sessionTime = new TimeSpan(Hours, Minutes, Seconds);
 
-                // Lấy tên người dùng từ tệp JSON
-                string currentUser = StudyTimeService.GetCurrentUser();
-                if (!string.IsNullOrEmpty(currentUser))
+                if (!AuthService.IsAuthenticated())
                 {
-                    StudyTimeService.AddStudyTime(currentUser, sessionTime);
-                    MessageBox.Show($"Bạn đã học trong {timeStudied}.", "Thời gian học", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Vui lòng đăng nhập để lưu thời gian học.", 
+                        "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
                 }
-                else
+
+                try
                 {
-                    MessageBox.Show("Không thể lấy tên người dùng.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    // Lưu thời gian học lên Firebase
+                    bool success = await _firebaseService.SaveStudyTimeAsync(_currentUserId, sessionTime);
+                    
+                    if (success)
+                    {
+                        // Lấy thời gian học tổng cộng
+                        var totalStudyTime = await _firebaseService.GetStudyTimeAsync(_currentUserId);
+                        string message = $"Chúc mừng {_currentUsername}!\n" +
+                                       $"Bạn đã học trong {timeStudied}.\n" +
+                                       $"Tổng thời gian học: {totalStudyTime.Hours} giờ {totalStudyTime.Minutes} phút";
+                        
+                        MessageBox.Show(message, "Thời gian học", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Không thể lưu thời gian học. Vui lòng kiểm tra kết nối mạng và thử lại.", 
+                            "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Đã xảy ra lỗi: {ex.Message}", 
+                        "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
                 // Đặt lại đồng hồ
@@ -123,8 +167,6 @@ namespace Learnify.ViewModels
             OnPropertyChanged(nameof(PauseOrResetButtonText));
             RaiseCanExecuteChanged();
         }
-
-
 
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {

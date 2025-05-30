@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Newtonsoft.Json;
+using Learnify.Services;
 
 namespace Learnify.ViewModels.Login
 {
@@ -13,6 +14,9 @@ namespace Learnify.ViewModels.Login
     {
         private string _email;
         private string _password;
+        private readonly Action _onRegisterSuccess;
+        private string _firebaseIdToken;
+        private string _firebaseUserId;
 
         public string Email
         {
@@ -34,10 +38,31 @@ namespace Learnify.ViewModels.Login
             }
         }
 
+        public string FirebaseIdToken
+        {
+            get => _firebaseIdToken;
+            private set
+            {
+                _firebaseIdToken = value;
+                OnPropertyChanged(nameof(FirebaseIdToken));
+            }
+        }
+
+        public string FirebaseUserId
+        {
+            get => _firebaseUserId;
+            private set
+            {
+                _firebaseUserId = value;
+                OnPropertyChanged(nameof(FirebaseUserId));
+            }
+        }
+
         public ICommand RegisterCommand { get; }
 
-        public SIGN_IN_ViewModel()
+        public SIGN_IN_ViewModel(Action onRegisterSuccess = null)
         {
+            _onRegisterSuccess = onRegisterSuccess;
             RegisterCommand = new ViewModelCommand(async o => await ExecuteRegisterAsync());
         }
 
@@ -70,7 +95,7 @@ namespace Learnify.ViewModels.Login
         {
             try
             {
-                Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+                Mouse.OverrideCursor = Cursors.Wait;
 
                 var emailError = this[nameof(Email)];
                 var passwordError = this[nameof(Password)];
@@ -85,7 +110,10 @@ namespace Learnify.ViewModels.Login
                 var result = await RegisterUserWithFirebase(Email, Password);
                 if (result)
                 {
-                    ShowErrorMessage("Đăng ký thành công!", "Thành công");
+                    // Lưu token và userId vào AuthService
+                    AuthService.SetToken(FirebaseIdToken);
+                    AuthService.SetUserId(FirebaseUserId);
+                    _onRegisterSuccess?.Invoke();
                 }
                 else
                 {
@@ -117,7 +145,7 @@ namespace Learnify.ViewModels.Login
         // Đăng ký tài khoản mới với Firebase
         private async Task<bool> RegisterUserWithFirebase(string email, string password)
         {
-            const string apiKey = "\nAIzaSyAhTPGYk6qxu_t-RXT3F3LOxgBk65LicIY"; // Thay bằng API Key của bạn
+            const string apiKey = "AIzaSyAhTPGYk6qxu_t-RXT3F3LOxgBk65LicIY"; // Thay bằng API Key của bạn
             var url = $"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={apiKey}";
 
             var payload = new
@@ -135,11 +163,33 @@ namespace Learnify.ViewModels.Login
 
                 if (response.IsSuccessStatusCode)
                 {
+                    // Parse the ID token and userId from the response
+                    try
+                    {
+                        dynamic resultObj = JsonConvert.DeserializeObject(responseString);
+                        if (resultObj != null)
+                        {
+                            if (resultObj.idToken != null)
+                            {
+                                FirebaseIdToken = (string)resultObj.idToken;
+                            }
+                            if (resultObj.localId != null)
+                            {
+                                FirebaseUserId = (string)resultObj.localId;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        FirebaseIdToken = null;
+                        FirebaseUserId = null;
+                    }
                     return true;
                 }
                 else
                 {
-                    // Có thể lấy message lỗi từ responseString nếu muốn
+                    FirebaseIdToken = null;
+                    FirebaseUserId = null;
                     return false;
                 }
             }
