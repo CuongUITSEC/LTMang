@@ -100,10 +100,36 @@ namespace Learnify.ViewModels.Login
                 var result = await AuthenticateUserWithFirebase(Username, Password);
                 if (result)
                 {
-                    // Lưu token và userId vào AuthService
-                    AuthService.SetToken(FirebaseIdToken);
-                    AuthService.SetUserId(FirebaseUserId);
-                    _onLoginSuccess?.Invoke();
+                    try
+                    {
+                        // Lưu token và userId vào AuthService
+                        AuthService.SetToken(FirebaseIdToken);
+                        AuthService.SetUserId(FirebaseUserId);
+                        
+                        // Kiểm tra và tạo username nếu chưa có
+                        var firebaseService = new FirebaseService();
+                        var existingUsername = await firebaseService.GetUsernameAsync(FirebaseUserId);
+                        
+                        if (string.IsNullOrEmpty(existingUsername) || existingUsername == "null" || existingUsername == FirebaseUserId)
+                        {
+                            // Nếu chưa có username, tạo mới từ email
+                            var defaultUsername = Username.Split('@')[0];
+                            var saveResult = await firebaseService.SaveUsernameAsync(FirebaseUserId, defaultUsername);
+                            if (!saveResult)
+                            {
+                                throw new Exception("Không thể lưu thông tin người dùng");
+                            }
+                            existingUsername = defaultUsername;
+                        }
+                        
+                        AuthService.SetUsername(existingUsername);
+                        _onLoginSuccess?.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowErrorMessage("Đã xảy ra lỗi khi lưu thông tin người dùng: " + ex.Message, "Lỗi hệ thống");
+                        return;
+                    }
                 }
                 else
                 {

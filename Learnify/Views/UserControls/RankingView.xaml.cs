@@ -23,7 +23,6 @@ namespace Learnify.Views
         public RankingView()
         {
             InitializeComponent();
-            this.DataContext = new Learnify.ViewModels.RankingViewModel();
         }
     }
 }

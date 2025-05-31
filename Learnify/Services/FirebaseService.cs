@@ -106,8 +106,11 @@ namespace Learnify.Services
                 var username = await GetUsernameAsync(userId);
                 if (string.IsNullOrEmpty(username) || username == "null")
                 {
-                    Debug.WriteLine($"No username found for user {userId}, setting username to UID");
-                    await SaveUsernameAsync(userId, userId);
+                    // Lấy tên thật của user từ AuthService nếu có
+                    var realUsername = AuthService.GetUsername();
+                    if (string.IsNullOrEmpty(realUsername))
+                        realUsername = userId;
+                    await SaveUsernameAsync(userId, realUsername);
                 }
 
                 // Tạo timestamp cho phiên học mới
@@ -449,14 +452,44 @@ namespace Learnify.Services
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     var users = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(content);
-                    foreach (var user in users)
+                    if (users != null)
                     {
-                        var userId = user.Key;
-                        var username = user.Value["username"]?.ToString();
-                        if (string.IsNullOrEmpty(username) || username == "null")
+                        foreach (var user in users)
                         {
-                            Debug.WriteLine($"Fixing username for user {userId}");
-                            await SaveUsernameAsync(userId, userId);
+                            try
+                            {
+                                var userId = user.Key;
+                                var username = user.Value["username"]?.ToString();
+                                
+                                // Kiểm tra nếu username không tồn tại hoặc không hợp lệ
+                                if (string.IsNullOrEmpty(username) || username == "null" || username == userId)
+                                {
+                                    Debug.WriteLine($"Fixing username for user {userId}");
+                                    
+                                    // Thử lấy email từ AuthService nếu có
+                                    var email = AuthService.GetUsername();
+                                    if (!string.IsNullOrEmpty(email) && email.Contains("@"))
+                                    {
+                                        username = email.Split('@')[0];
+                                    }
+                                    else
+                                    {
+                                        // Nếu không có email, tạo username từ userId
+                                        username = $"user_{userId.Substring(0, Math.Min(8, userId.Length))}";
+                                    }
+                                    
+                                    // Lưu username
+                                    var saveResult = await SaveUsernameAsync(userId, username);
+                                    if (!saveResult)
+                                    {
+                                        Debug.WriteLine($"Failed to save username for user {userId}");
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Error fixing username for user {user.Key}: {ex.Message}");
+                            }
                         }
                     }
                 }

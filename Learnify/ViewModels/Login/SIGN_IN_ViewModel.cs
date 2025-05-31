@@ -110,10 +110,33 @@ namespace Learnify.ViewModels.Login
                 var result = await RegisterUserWithFirebase(Email, Password);
                 if (result)
                 {
-                    // Lưu token và userId vào AuthService
-                    AuthService.SetToken(FirebaseIdToken);
-                    AuthService.SetUserId(FirebaseUserId);
-                    _onRegisterSuccess?.Invoke();
+                    try 
+                    {
+                        // Lưu thông tin xác thực
+                        AuthService.SetToken(FirebaseIdToken);
+                        AuthService.SetUserId(FirebaseUserId);
+                        
+                        // Lưu username vào database
+                        var firebaseService = new FirebaseService();
+                        var defaultUsername = Email.Split('@')[0];
+                        
+                        // Lưu username
+                        var saveResult = await firebaseService.SaveUsernameAsync(FirebaseUserId, defaultUsername);
+                        if (!saveResult)
+                        {
+                            throw new Exception("Không thể lưu thông tin người dùng");
+                        }
+
+                        // Lấy và lưu username vào AuthService
+                        var username = await firebaseService.GetUsernameAsync(FirebaseUserId);
+                        AuthService.SetUsername(username);
+                        _onRegisterSuccess?.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowErrorMessage("Đã xảy ra lỗi khi lưu thông tin người dùng: " + ex.Message, "Lỗi hệ thống");
+                        return;
+                    }
                 }
                 else
                 {

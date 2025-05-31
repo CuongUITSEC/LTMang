@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using Learnify.Models;
 using Learnify.Commands;
 using System.Threading.Tasks;
+using Learnify.Services;
 
 namespace Learnify.ViewModels
 {
@@ -128,7 +129,11 @@ namespace Learnify.ViewModels
             HomeCommand = new ViewModelCommand(o => CurrentChildView = HomeVm);
             CalendarCommand = new ViewModelCommand(o => CurrentChildView = CalendarVm);
             PomodoroCommand = new ViewModelCommand(o => CurrentChildView = PomodoroVm);
-            RankingCommand = new ViewModelCommand(o => CurrentChildView = RankingVm);
+            RankingCommand = new ViewModelCommand(o => 
+            {
+                CurrentChildView = RankingVm;
+                ((RankingViewModel)RankingVm).OnViewActivated();
+            });
             CampaignCommand = new ViewModelCommand(o => CurrentChildView = CampaignVm);
             AnalystCommand = new ViewModelCommand(o => CurrentChildView = AnalystVm);
             RewardCommand = new ViewModelCommand(o => CurrentChildView = RewardVm);

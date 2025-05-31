@@ -43,6 +43,10 @@ namespace Learnify.ViewModels
         {
             _firebaseService = new FirebaseService();
             Leaderboard = new ObservableCollection<UserRanking>();
+        }
+
+        public void OnViewActivated()
+        {
             LoadRankingsAsync();
         }
 
@@ -53,14 +57,6 @@ namespace Learnify.ViewModels
                 IsLoading = true;
                 Debug.WriteLine("Starting to load rankings...");
 
-                if (!AuthService.IsAuthenticated())
-                {
-                    Debug.WriteLine("User is not authenticated");
-                    MessageBox.Show("Vui lòng đăng nhập để xem bảng xếp hạng.", 
-                        "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
                 Debug.WriteLine("Getting rankings from Firebase...");
                 var rankings = await _firebaseService.GetStudyTimeRankingsAsync();
                 Debug.WriteLine($"Received {rankings.Count} rankings");
@@ -68,7 +64,6 @@ namespace Learnify.ViewModels
                 if (rankings.Count == 0)
                 {
                     Debug.WriteLine("No rankings found");
-                    // MessageBox.Show("Chưa có dữ liệu xếp hạng.","Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
@@ -90,19 +85,25 @@ namespace Learnify.ViewModels
                             username = "Người dùng";
                         }
 
-                        // Tính toán thời gian học
-                        var totalHours = (int)ranking.Time.TotalHours;
-                        var totalMinutes = ranking.Time.Minutes;
+                        // Tính toán thời gian học chi tiết
+                        int totalSeconds = (int)ranking.Time.TotalSeconds;
+                        int hours = totalSeconds / 3600;
+                        int minutes = (totalSeconds % 3600) / 60;
+                        int seconds = totalSeconds % 60;
 
                         // Tạo chuỗi hiển thị thời gian
                         string timeDisplay;
-                        if (totalHours > 0)
+                        if (hours > 0)
                         {
-                            timeDisplay = $"{totalHours} giờ {totalMinutes} phút";
+                            timeDisplay = $"{hours} giờ {minutes} phút {seconds} giây";
+                        }
+                        else if (minutes > 0)
+                        {
+                            timeDisplay = $"{minutes} phút {seconds} giây";
                         }
                         else
                         {
-                            timeDisplay = $"{totalMinutes} phút";
+                            timeDisplay = $"{seconds} giây";
                         }
 
                         Debug.WriteLine($"Username: {username}, Time: {timeDisplay}");

@@ -49,16 +49,8 @@ namespace Learnify.ViewModels
             _timer.Tick += Timer_Tick;
 
             // Kiểm tra xác thực
-            if (AuthService.IsAuthenticated())
-            {
-                _currentUserId = AuthService.GetUserId();
-                LoadUsernameAsync(_currentUserId);
-            }
-            else
-            {
-                MessageBox.Show("Vui lòng đăng nhập để sử dụng tính năng này.", 
-                    "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            _currentUserId = AuthService.GetUserId();
+            LoadUsernameAsync(_currentUserId);
         }
 
         private async void LoadUsernameAsync(string userId)
@@ -181,13 +173,6 @@ namespace Learnify.ViewModels
 
         private async void ShowSessionCompletedMessage()
         {
-            if (!AuthService.IsAuthenticated())
-            {
-                MessageBox.Show("Vui lòng đăng nhập để lưu thời gian học.", 
-                    "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
             try
             {
                 // Lưu thời gian học lên Firebase

@@ -9,6 +9,7 @@ namespace Learnify.Services
     {
         private static string _currentToken;
         private static string _currentUserId;
+        private static string _currentUsername;
 
         public static void SetToken(string token)
         {
@@ -25,6 +26,16 @@ namespace Learnify.Services
             _currentUserId = userId;
         }
 
+        public static void SetUsername(string username)
+        {
+            _currentUsername = username;
+        }
+
+        public static string GetUsername()
+        {
+            return _currentUsername;
+        }
+
         public static string GetUserId()
         {
             return _currentUserId;
@@ -34,6 +45,7 @@ namespace Learnify.Services
         {
             _currentToken = null;
             _currentUserId = null;
+            _currentUsername = null;
         }
 
         public static bool IsAuthenticated()

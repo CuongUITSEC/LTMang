@@ -73,16 +73,8 @@ namespace Learnify.ViewModels
             ResetValues();
 
             // Kiểm tra xác thực và lấy thông tin người dùng
-            if (AuthService.IsAuthenticated())
-            {
-                _currentUserId = AuthService.GetUserId();
-                LoadUsernameAsync(_currentUserId);
-            }
-            else
-            {
-                MessageBox.Show("Vui lòng đăng nhập để sử dụng tính năng này.", 
-                    "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            _currentUserId = AuthService.GetUserId();
+            LoadUsernameAsync(_currentUserId);
         }
 
         private async void LoadUsernameAsync(string userId)
@@ -121,13 +113,6 @@ namespace Learnify.ViewModels
                 // Hiển thị thông báo số giờ đã học
                 string timeStudied = $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}";
                 var sessionTime = new TimeSpan(Hours, Minutes, Seconds);
-
-                if (!AuthService.IsAuthenticated())
-                {
-                    MessageBox.Show("Vui lòng đăng nhập để lưu thời gian học.", 
-                        "Chưa đăng nhập", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
 
                 try
                 {

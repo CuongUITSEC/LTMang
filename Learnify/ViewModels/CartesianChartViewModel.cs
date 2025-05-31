@@ -41,6 +41,14 @@ public class CartesianChartViewModel : INotifyPropertyChanged
         UpdateChart();
     }
 
+    private List<DateTime> GetLastNDates(int n)
+    {
+        var today = DateTime.Today;
+        return Enumerable.Range(0, n)
+            .Select(i => today.AddDays(-n + 1 + i))
+            .ToList();
+    }
+
     private async void UpdateChart()
     {
         try
@@ -56,38 +64,43 @@ public class CartesianChartViewModel : INotifyPropertyChanged
 
             if (SelectedMode == "Tuần")
             {
-                var grouped = studyLogs
-                    .GroupBy(log => CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
-                        log.Date, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday))
-                    .OrderBy(g => g.Key);
-
-                Labels = grouped.Select(g => $"Tuần {g.Key}").ToList();
-                var values = grouped.Select(g => g.Sum(log => log.Hours)).ToList();
+                var weekDates = GetLastNDates(7);
+                Labels = weekDates.Select(d => d.ToString("dd/MM")).ToList();
+                var values = weekDates.Select(day =>
+                {
+                    var log = studyLogs.FirstOrDefault(l => l.Date.Date == day.Date);
+                    return log != null ? log.Hours : 0;
+                }).ToList();
 
                 Series = new SeriesCollection
                 {
                     new ColumnSeries
                     {
                         Title = "Giờ học",
-                        Values = new ChartValues<double>(values)
+                        Values = new ChartValues<double>(values),
+                        DataLabels = false,
+                        LabelPoint = point => FormatTime(point.Y)
                     }
                 };
             }
             else if (SelectedMode == "Tháng")
             {
-                var grouped = studyLogs
-                    .GroupBy(log => log.Date.Month)
-                    .OrderBy(g => g.Key);
-
-                Labels = grouped.Select(g => $"Tháng {g.Key}").ToList();
-                var values = grouped.Select(g => g.Sum(log => log.Hours)).ToList();
+                var monthDates = GetLastNDates(30);
+                Labels = monthDates.Select(d => d.ToString("dd/MM")).ToList();
+                var values = monthDates.Select(day =>
+                {
+                    var log = studyLogs.FirstOrDefault(l => l.Date.Date == day.Date);
+                    return log != null ? log.Hours : 0;
+                }).ToList();
 
                 Series = new SeriesCollection
                 {
                     new ColumnSeries
                     {
                         Title = "Giờ học",
-                        Values = new ChartValues<double>(values)
+                        Values = new ChartValues<double>(values),
+                        DataLabels = false,
+                        LabelPoint = point => FormatTime(point.Y)
                     }
                 };
             }
@@ -99,6 +112,13 @@ public class CartesianChartViewModel : INotifyPropertyChanged
         {
             Debug.WriteLine($"Error updating chart: {ex.Message}");
         }
+    }
+
+    private string FormatTime(double hours)
+    {
+        var totalSeconds = (int)(hours * 3600);
+        var ts = TimeSpan.FromSeconds(totalSeconds);
+        return $"{(int)ts.TotalHours} giờ {ts.Minutes} phút {ts.Seconds} giây";
     }
 
     protected virtual void OnPropertyChanged(string propertyName)

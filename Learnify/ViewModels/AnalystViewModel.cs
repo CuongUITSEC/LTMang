@@ -8,5 +8,11 @@ namespace Learnify.ViewModels
 {
     public class AnalystViewModel: ViewModelBase
     {
+        public CartesianChartViewModel ChartViewModel { get; set; }
+
+        public AnalystViewModel()
+        {
+            ChartViewModel = new CartesianChartViewModel();
+        }
     }
 }
