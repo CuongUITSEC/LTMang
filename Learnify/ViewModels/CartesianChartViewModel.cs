@@ -6,9 +6,15 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
+using Learnify.Services;
+using System.Diagnostics;
+using Learnify.Models;
 
 public class CartesianChartViewModel : INotifyPropertyChanged
 {
+    private readonly FirebaseService _firebaseService;
+
     public event PropertyChangedEventHandler PropertyChanged;
 
     public SeriesCollection Series { get; set; }
@@ -30,70 +36,74 @@ public class CartesianChartViewModel : INotifyPropertyChanged
 
     public CartesianChartViewModel()
     {
+        _firebaseService = new FirebaseService();
         SelectedMode = "Tuần";
         UpdateChart();
     }
 
-    private void UpdateChart()
+    private async void UpdateChart()
     {
-        var studyLogs = LoadStudyLogs(); // bạn cần implement
-
-        if (SelectedMode == "Tuần")
+        try
         {
-            var grouped = studyLogs
-                .GroupBy(log => CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
-                    log.Date, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday))
-                .OrderBy(g => g.Key);
-
-            Labels = grouped.Select(g => $"Tuần {g.Key}").ToList();
-            var values = grouped.Select(g => g.Sum(log => log.Hours)).ToList();
-
-            Series = new SeriesCollection
+            var userId = AuthService.GetUserId();
+            if (string.IsNullOrEmpty(userId))
             {
-                new ColumnSeries
+                Debug.WriteLine("User not authenticated");
+                return;
+            }
+
+            var studyLogs = await _firebaseService.GetUserStudyLogsAsync(userId);
+
+            if (SelectedMode == "Tuần")
+            {
+                var grouped = studyLogs
+                    .GroupBy(log => CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                        log.Date, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday))
+                    .OrderBy(g => g.Key);
+
+                Labels = grouped.Select(g => $"Tuần {g.Key}").ToList();
+                var values = grouped.Select(g => g.Sum(log => log.Hours)).ToList();
+
+                Series = new SeriesCollection
                 {
-                    Title = "Giờ học",
-                    Values = new ChartValues<double>(values)
-                }
-            };
+                    new ColumnSeries
+                    {
+                        Title = "Giờ học",
+                        Values = new ChartValues<double>(values)
+                    }
+                };
+            }
+            else if (SelectedMode == "Tháng")
+            {
+                var grouped = studyLogs
+                    .GroupBy(log => log.Date.Month)
+                    .OrderBy(g => g.Key);
+
+                Labels = grouped.Select(g => $"Tháng {g.Key}").ToList();
+                var values = grouped.Select(g => g.Sum(log => log.Hours)).ToList();
+
+                Series = new SeriesCollection
+                {
+                    new ColumnSeries
+                    {
+                        Title = "Giờ học",
+                        Values = new ChartValues<double>(values)
+                    }
+                };
+            }
+
+            OnPropertyChanged(nameof(Series));
+            OnPropertyChanged(nameof(Labels));
         }
-        else if (SelectedMode == "Tháng")
+        catch (Exception ex)
         {
-            var grouped = studyLogs
-                .GroupBy(log => log.Date.Month)
-                .OrderBy(g => g.Key);
-
-            Labels = grouped.Select(g => $"Tháng {g.Key}").ToList();
-            var values = grouped.Select(g => g.Sum(log => log.Hours)).ToList();
-
-            Series = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Giờ học",
-                    Values = new ChartValues<double>(values)
-                }
-            };
+            Debug.WriteLine($"Error updating chart: {ex.Message}");
         }
-
-        OnPropertyChanged(nameof(Series));
-        OnPropertyChanged(nameof(Labels));
     }
 
-    protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-    private List<StudyLog> LoadStudyLogs()
+    protected virtual void OnPropertyChanged(string propertyName)
     {
-        // TODO: Load từ DB hoặc danh sách mẫu
-        return new List<StudyLog>
-        {
-            new StudyLog { Date = DateTime.Now.AddDays(-1), Hours = 2 },
-            new StudyLog { Date = DateTime.Now.AddDays(-3), Hours = 3 },
-            new StudyLog { Date = DateTime.Now.AddDays(-10), Hours = 5 },
-            new StudyLog { Date = DateTime.Now.AddDays(-20), Hours = 4 },
-            new StudyLog { Date = DateTime.Now.AddMonths(-1), Hours = 6 },
-            new StudyLog { Date = DateTime.Now.AddMonths(-2), Hours = 7 },
-        };
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
 

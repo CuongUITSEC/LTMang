@@ -68,8 +68,7 @@ namespace Learnify.ViewModels
                 if (rankings.Count == 0)
                 {
                     Debug.WriteLine("No rankings found");
-                    MessageBox.Show("Chưa có dữ liệu xếp hạng.", 
-                        "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // MessageBox.Show("Chưa có dữ liệu xếp hạng.","Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 

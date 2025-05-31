@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using Learnify.Models;
 using Learnify.Commands;
+using System.Threading.Tasks;
 
 namespace Learnify.ViewModels
 {
@@ -62,6 +63,7 @@ namespace Learnify.ViewModels
         private ObservableCollection<Friend> _friendsList;
         private ObservableCollection<Friend> _allFriends; // Danh sách gốc để filter
         private string _searchText;
+        private readonly FirebaseService _firebaseService = new FirebaseService();
 
         public ObservableCollection<Friend> FriendsList
         {
@@ -144,6 +146,19 @@ namespace Learnify.ViewModels
             };
 
             FriendsList = new ObservableCollection<Friend>(_allFriends);
+        }
+
+        public async Task SearchByUidAsync(string uid)
+        {
+            if (string.IsNullOrWhiteSpace(uid)) {
+                FriendsList = new ObservableCollection<Friend>(_allFriends);
+                return;
+            }
+            var friend = await _firebaseService.GetUserByUidAsync(uid);
+            if (friend != null)
+                FriendsList = new ObservableCollection<Friend> { friend };
+            else
+                FriendsList = new ObservableCollection<Friend>();
         }
     }
 }

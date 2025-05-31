@@ -62,9 +62,11 @@
                                         <ColumnDefinition Width="40"/>
                                         <!-- Rank -->
                                         <ColumnDefinition Width="Auto"/>
-                                        <!-- Avatar + Name -->
+                                        <!-- Avatar -->
                                         <ColumnDefinition Width="*"/>
-                                        <!-- Time -->
+                                        <!-- Username (fill) -->
+                                        <ColumnDefinition Width="120"/>
+                                        <!-- Time (fixed width, always aligned) -->
                                         <ColumnDefinition Width="40"/>
                                         <!-- Star -->
                                     </Grid.ColumnDefinitions>
@@ -75,38 +77,35 @@
                                                HorizontalAlignment="Center"
                                                FontWeight="Bold"/>
 
-                                    <!-- Avatar + Name -->
-                                    <StackPanel Grid.Column="1"
-                                                Orientation="Horizontal"
-                                                VerticalAlignment="Center"
-                                                Margin="10,0">
-                                        <!-- Avatar SVG với clip tròn -->
-                                        <Grid Width="40" Height="40">
-                                            <svg:SvgViewbox Source="{Binding Avatar}"
-                                                            Stretch="Uniform"
-                                                            Width="40" Height="40"/>
-                                            <Grid.Clip>
-                                                <EllipseGeometry Center="20,20"
-                                                                 RadiusX="20"
-                                                                 RadiusY="20"/>
-                                            </Grid.Clip>
-                                        </Grid>
-                                        <TextBlock Text="{Binding Name}"
-                                                   VerticalAlignment="Center"
-                                                   FontWeight="SemiBold"
-                                                   Margin="10,0,0,0"/>
-                                    </StackPanel>
+                                    <!-- Avatar -->
+                                    <Grid Grid.Column="1" Width="40" Height="40" VerticalAlignment="Center">
+                                        <svg:SvgViewbox Source="{Binding Avatar}"
+                                                        Stretch="Uniform"
+                                                        Width="40" Height="40"/>
+                                        <Grid.Clip>
+                                            <EllipseGeometry Center="20,20"
+                                                             RadiusX="20"
+                                                             RadiusY="20"/>
+                                        </Grid.Clip>
+                                    </Grid>
 
-                                    <!-- Time -->
-                                    <TextBlock Text="{Binding Time}"
-                                               Grid.Column="2"
+                                    <!-- Username -->
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Name}"
                                                VerticalAlignment="Center"
-                                               HorizontalAlignment="Center"
+                                               FontWeight="SemiBold"
+                                               Margin="10,0,0,0"/>
+
+                                    <!-- Time (always aligned right) -->
+                                    <TextBlock Grid.Column="3"
+                                               Text="{Binding Time}"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Left"
                                                FontWeight="Medium"/>
 
                                     <!-- Star icon SVG -->
                                     <svg:SvgViewbox Source="{Binding StarIcon}"
-                                                    Grid.Column="3"
+                                                    Grid.Column="4"
                                                     Width="30"
                                                     Height="30"
                                                     VerticalAlignment="Center"

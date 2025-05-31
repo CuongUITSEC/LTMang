@@ -14,12 +14,14 @@ namespace Learnify
     /// </summary>
     public partial class App : Application
     {
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
             StudyTimeService.LoadFromFile();
+
+            // Tự động fix username cho toàn bộ user khi khởi động app
+            var firebaseService = new FirebaseService();
+            await firebaseService.FixMissingUsernamesAsync();
         }
-
     }
-
 }

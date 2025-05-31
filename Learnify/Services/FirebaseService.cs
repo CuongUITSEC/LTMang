@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Text;
+using Learnify.Models;
 
 namespace Learnify.Services
 {
@@ -101,10 +102,16 @@ namespace Learnify.Services
                 Debug.WriteLine($"Attempting to save study time for user {userId}");
                 Debug.WriteLine($"Current study time: {studyTime.TotalMinutes} minutes");
 
+                // Kiểm tra và cập nhật username nếu chưa có
+                var username = await GetUsernameAsync(userId);
+                if (string.IsNullOrEmpty(username) || username == "null")
+                {
+                    Debug.WriteLine($"No username found for user {userId}, setting username to UID");
+                    await SaveUsernameAsync(userId, userId);
+                }
+
                 // Tạo timestamp cho phiên học mới
                 var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-                
-                // Tạo dữ liệu phiên học mới
                 var newSession = new
                 {
                     duration = studyTime.TotalMinutes,
@@ -133,7 +140,6 @@ namespace Learnify.Services
                             var existingData = JObject.Parse(responseContent);
                             var existingTotalMinutes = existingData["totalMinutes"]?.Value<double>() ?? 0;
                             Debug.WriteLine($"Existing total minutes: {existingTotalMinutes}");
-                            
                             totalMinutes += existingTotalMinutes;
                             Debug.WriteLine($"New total minutes: {totalMinutes}");
 
@@ -282,26 +288,43 @@ namespace Learnify.Services
 
                     Debug.WriteLine($"Found {users.Count} users");
                     var rankings = new List<(string UserId, TimeSpan Time)>();
-                    
+
+                    // Xác định quý hiện tại
+                    var now = DateTime.UtcNow;
+                    int currentQuarter = (now.Month - 1) / 3 + 1;
+                    int quarterStartMonth = (currentQuarter - 1) * 3 + 1;
+                    var quarterStart = new DateTime(now.Year, quarterStartMonth, 1);
+                    var quarterEnd = quarterStart.AddMonths(3);
+
                     foreach (var user in users)
                     {
                         try
                         {
                             Debug.WriteLine($"Processing user {user.Key}...");
                             var studyTimeData = user.Value["studyTime"];
-                            if (studyTimeData != null)
+                            if (studyTimeData != null && studyTimeData.Type == JTokenType.Object)
                             {
-                                var totalMinutes = studyTimeData["totalMinutes"]?.Value<double>() ?? 0;
-                                Debug.WriteLine($"User {user.Key}: {totalMinutes} minutes");
-                                
+                                // Tính tổng thời gian học trong quý hiện tại
+                                double totalMinutes = 0;
+                                var sessions = studyTimeData["sessions"] as JObject;
+                                if (sessions != null)
+                                {
+                                    foreach (var session in sessions)
+                                    {
+                                        var timestampStr = session.Value["timestamp"]?.ToString();
+                                        if (DateTime.TryParse(timestampStr, out var timestamp))
+                                        {
+                                            if (timestamp >= quarterStart && timestamp < quarterEnd)
+                                            {
+                                                totalMinutes += session.Value["duration"]?.Value<double>() ?? 0;
+                                            }
+                                        }
+                                    }
+                                }
+                                Debug.WriteLine($"User {user.Key}: {totalMinutes} minutes in current quarter");
                                 if (totalMinutes > 0)
                                 {
                                     rankings.Add((user.Key, TimeSpan.FromMinutes(totalMinutes)));
-                                    Debug.WriteLine($"Added user {user.Key} to rankings with {totalMinutes} minutes");
-                                }
-                                else
-                                {
-                                    Debug.WriteLine($"User {user.Key} has no study time");
                                 }
                             }
                             else
@@ -316,7 +339,7 @@ namespace Learnify.Services
                     }
 
                     var sortedRankings = rankings.OrderByDescending(x => x.Time.TotalMinutes).ToList();
-                    Debug.WriteLine($"Returning {sortedRankings.Count} rankings");
+                    Debug.WriteLine($"Setting leaderboard with {sortedRankings.Count} entries");
                     return sortedRankings;
                 }
                 else
@@ -331,6 +354,140 @@ namespace Learnify.Services
                 Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             }
             return new List<(string UserId, TimeSpan Time)>();
+        }
+
+        public class StudyTimeData
+        {
+            public double TotalMinutes { get; set; }
+            public string LastUpdated { get; set; }
+            public List<StudySession> Sessions { get; set; }
+        }
+
+        public class StudySession
+        {
+            public double Duration { get; set; }
+            public string Timestamp { get; set; }
+        }
+
+        public async Task<StudyTimeData> GetStudyTimeDataAsync(string userId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"users/{userId}/studyTime.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var data = JObject.Parse(content);
+                        var studyTimeData = new StudyTimeData
+                        {
+                            TotalMinutes = data["totalMinutes"]?.Value<double>() ?? 0,
+                            LastUpdated = data["lastUpdated"]?.ToString(),
+                            Sessions = new List<StudySession>()
+                        };
+
+                        var sessions = data["sessions"] as JObject;
+                        if (sessions != null)
+                        {
+                            foreach (var session in sessions)
+                            {
+                                studyTimeData.Sessions.Add(new StudySession
+                                {
+                                    Duration = session.Value["duration"]?.Value<double>() ?? 0,
+                                    Timestamp = session.Value["timestamp"]?.ToString()
+                                });
+                            }
+                        }
+
+                        return studyTimeData;
+                    }
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting study time data: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<List<StudyLog>> GetUserStudyLogsAsync(string userId)
+        {
+            var logs = new List<StudyLog>();
+            var url = GetAuthenticatedUrl($"users/{userId}/studyTime.json");
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(content) && content != "null")
+                {
+                    var data = JObject.Parse(content);
+                    var sessions = data["sessions"] as JObject;
+                    if (sessions != null)
+                    {
+                        foreach (var session in sessions)
+                        {
+                            var timestamp = DateTime.Parse(session.Value["timestamp"].ToString());
+                            var duration = session.Value["duration"].Value<double>();
+                            logs.Add(new StudyLog { Date = timestamp, Hours = duration / 60.0 });
+                        }
+                    }
+                }
+            }
+            return logs;
+        }
+
+        public async Task FixMissingUsernamesAsync()
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl("users.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var users = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(content);
+                    foreach (var user in users)
+                    {
+                        var userId = user.Key;
+                        var username = user.Value["username"]?.ToString();
+                        if (string.IsNullOrEmpty(username) || username == "null")
+                        {
+                            Debug.WriteLine($"Fixing username for user {userId}");
+                            await SaveUsernameAsync(userId, userId);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error fixing missing usernames: {ex.Message}");
+            }
+        }
+
+        public async Task<Friend> GetUserByUidAsync(string uid)
+        {
+            var url = GetAuthenticatedUrl($"users/{uid}.json");
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(content) && content != "null")
+                {
+                    var data = JObject.Parse(content);
+                    var username = data["username"]?.ToString() ?? uid;
+                    // Nếu bạn có trường avatar, lấy thêm ở đây
+                    return new Friend
+                    {
+                        Name = username,
+                        Avatar = "/Images/avatar1.svg", // hoặc lấy từ data["avatar"] nếu có
+                        IsOnline = false // hoặc lấy từ data nếu có
+                    };
+                }
+            }
+            return null;
         }
     }
 } 
