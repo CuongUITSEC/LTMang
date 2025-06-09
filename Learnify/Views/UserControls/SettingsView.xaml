@@ -3,107 +3,270 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="1000"
-             Background="#E1F3FF">
+             xmlns:converters="clr-namespace:Learnify.Converters"
+             mc:Ignorable="d"             d:DesignHeight="700" d:DesignWidth="800"
+             >
 
-    <Grid>
-        <Border Background="#FFF8F8F8"
-                CornerRadius="10"
-                Padding="20"
-                BorderBrush="#DDD"
-                BorderThickness="1"
-                Width="500"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-            <StackPanel>
-                <!-- Avatar -->
-                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,20">
-                    <Ellipse Width="60" Height="60">
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
 
-                    </Ellipse>
+    <Border Margin="40">
+            <Viewbox Stretch="Uniform">
+            <Grid >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Border Background="White"
+            CornerRadius="20"
+            Padding="50"
+            BorderBrush="Transparent"
+            BorderThickness="0"
+            Width="850"
+            Height="520"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center" Grid.Row="1">
+
+                    <Border.Effect>
+                        <DropShadowEffect Color="#20000000" Direction="270" ShadowDepth="10" BlurRadius="20" Opacity="0.3"/>
+                    </Border.Effect>
 
 
-                </StackPanel>
 
-                <!-- Info Rows -->
-                <Grid Margin="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="2*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Tên người dùng" FontWeight="Bold" />
-                    <TextBlock Text="Peter Pan" Grid.Column="1" />
-                </Grid>
+                    <StackPanel>
+                        <!-- User Info Card -->
+                        <Border Background="#FFF9F9F9" CornerRadius="15" Padding="25" Margin="0,0,0,25">
+                            <StackPanel>                                <!-- Username -->
+                                <Grid Margin="0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Tên người dùng"
+                                               FontWeight="SemiBold"
+                                               FontSize="16"
+                                               Foreground="#FF333333"
+                                               VerticalAlignment="Center"/>
+                                    
+                                    <!-- TextBlock for display mode -->
+                                    <TextBlock Text="{Binding UserName}" 
+                                               Grid.Column="1" 
+                                               FontSize="16" 
+                                               Foreground="#FF666666"
+                                               VerticalAlignment="Center"
+                                               Visibility="{Binding IsEditingUsername, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}"/>
+                                    
+                                    <!-- TextBox for edit mode -->
+                                    <TextBox x:Name="UserNameEdit"
+                                             Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" 
+                                             Grid.Column="1" 
+                                             FontSize="16" 
+                                             Foreground="#FF333333"
+                                             VerticalAlignment="Center"
+                                             Background="White"
+                                             BorderBrush="#CCCCCC"
+                                             BorderThickness="1"
+                                             Padding="5"
+                                             Visibility="{Binding IsEditingUsername, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    
+                                    <!-- Edit/Save/Cancel buttons -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0,0,0">
+                                        <!-- Edit button -->
+                                        <Border Width="24" Height="24" 
+                                                Background="#FF4CAF50" 
+                                                CornerRadius="12"
+                                                Cursor="Hand"
+                                                Margin="0,0,5,0"
+                                                Visibility="{Binding IsEditingUsername, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=inverse}">
+                                            <Button Background="Transparent" 
+                                                    BorderBrush="Transparent"
+                                                    Command="{Binding EditUsernameCommand}"
+                                                    Cursor="Hand">
+                                                <TextBlock Text="✏" 
+                                                           FontSize="12" 
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Border>
+                                        
+                                        <!-- Save button -->
+                                        <Border Width="24" Height="24" 
+                                                Background="#FF4CAF50" 
+                                                CornerRadius="12"
+                                                Cursor="Hand"
+                                                Margin="0,0,5,0"
+                                                Visibility="{Binding IsEditingUsername, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <Button Background="Transparent" 
+                                                    BorderBrush="Transparent"
+                                                    Command="{Binding SaveUsernameCommand}"
+                                                    Cursor="Hand">
+                                                <TextBlock Text="✓" 
+                                                           FontSize="12" 
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Border>
 
-                <Separator/>
+                                        <!-- Cancel button -->
+                                        <Border Width="24" Height="24" 
+                                                Background="#FFFF4444" 
+                                                CornerRadius="12"
+                                                Cursor="Hand"
+                                                Visibility="{Binding IsEditingUsername, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <Button Background="Transparent" 
+                                                    BorderBrush="Transparent"
+                                                    Command="{Binding CancelEditUsernameCommand}"
+                                                    Cursor="Hand">
+                                                <TextBlock Text="✕" 
+                                                           FontSize="12" 
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid><!-- Change Password -->
+                                <Border Background="Transparent" CornerRadius="8" Padding="0,10" Margin="0,8" Cursor="Hand">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick" Command="{Binding ChangePasswordCommand}"/>
+                                    </Border.InputBindings>
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#10000000"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="160" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Đổi mật khẩu" 
+                                     FontWeight="SemiBold" 
+                                     FontSize="16" 
+                                     Foreground="#FF333333"
+                                     VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" 
+                                     Text="›" 
+                                     FontSize="20" 
+                                     Foreground="#FFAAAAAA"
+                                     VerticalAlignment="Center"
+                                     FontWeight="Bold"/>
+                                    </Grid>
+                                </Border>
+                                <!-- Email -->
+                                <Grid Margin="0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Email" 
+                                 FontWeight="SemiBold" 
+                                 FontSize="16" 
+                                 Foreground="#FF333333"
+                                 VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Email}" 
+                                 Grid.Column="1" 
+                                 FontSize="16" 
+                                 Foreground="#FF666666"
+                                 VerticalAlignment="Center"/>
+                                </Grid>
+                                <!-- Phone -->
+                                <Grid Margin="0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Số điện thoại" 
+                                 FontWeight="SemiBold" 
+                                 FontSize="16" 
+                                 Foreground="#FF333333"
+                                 VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Phone}" 
+                                 Grid.Column="1" 
+                                 FontSize="16" 
+                                 Foreground="#FF666666"
+                                 VerticalAlignment="Center"/>
+                                </Grid>
+                                <!-- Country -->
+                                <Grid Margin="0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Quốc gia" 
+                                 FontWeight="SemiBold" 
+                                 FontSize="16" 
+                                 Foreground="#FF333333"
+                                 VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Country}" 
+                                 Grid.Column="1" 
+                                 FontSize="16" 
+                                 Foreground="#FF666666"
+                                 VerticalAlignment="Center"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        <!-- Logout Section -->
+                        <Border Background="Transparent" 
+                    CornerRadius="12" 
+                    Padding="25,15" 
+                    Margin="0,0,0,0" 
+                    Cursor="Hand">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding LogoutCommand}"/>
+                            </Border.InputBindings>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#FFFFE5E5"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                <Grid Margin="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="2*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Đổi mật khẩu" FontWeight="Bold" />
-                    <TextBlock Grid.Column="2" Text="❯" FontSize="16" />
-                </Grid>
+                                <TextBlock Grid.Column="0"
+                             Text="Đăng xuất" 
+                             FontWeight="SemiBold" 
+                             FontSize="16" 
+                             Foreground="#FFFF4444"
+                             VerticalAlignment="Center"/>
 
-                <Separator/>
-
-                <Grid Margin="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="2*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Email" FontWeight="Bold" />
-                    <TextBlock Text="peter1990@gmail.com" Grid.Column="1" />
-                </Grid>
-
-                <Separator/>
-
-                <Grid Margin="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="2*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Số điện thoại" FontWeight="Bold" />
-                    <TextBlock Text="0991234589" Grid.Column="1" />
-                </Grid>
-
-                <Separator/>
-
-                <Grid Margin="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="2*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Quốc gia" FontWeight="Bold" />
-                    <TextBlock Text="Việt Nam" Grid.Column="1" />
-                </Grid>
-
-                <Separator/>
-
-                <Grid Margin="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Về chúng tôi" FontWeight="Bold" />
-                    <TextBlock Grid.Column="1" Text="❯" FontSize="16" />
-                </Grid>
-
-                <Separator/>
-
-                <Grid Margin="0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Đăng xuất" FontWeight="Bold" />
-                    <TextBlock Grid.Column="1" Text="❯" FontSize="16" />
-                </Grid>
-            </StackPanel>
-        </Border>
-    </Grid>
+                                <!-- Logout Icon -->
+                                <Border Grid.Column="1" 
+                            Width="28" Height="28" 
+                            CornerRadius="14" 
+                            Background="#FFFF4444" 
+                            Margin="15,0,0,0"
+                            VerticalAlignment="Center">
+                                    <TextBlock Text="⟲" 
+                                 FontSize="16" 
+                                 Foreground="White"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 FontWeight="Bold"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Viewbox>
+            
+    </Border>
+    
 </UserControl>

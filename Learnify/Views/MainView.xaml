@@ -35,10 +35,10 @@
             <local:CampaignView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:AnalystViewModel}">
-            <local:AnalystView/>
+            <userControls:AnalystView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:RewardViewModel}">
-            <local:RewardView/>
+            <userControls:RewardView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:SettingsViewModel}">
             <userControls:SettingsView/>

@@ -10,6 +10,8 @@ namespace Learnify.Models
     {
         public DateTime Date { get; set; }
         public double Hours { get; set; }
+        public double Duration { get; set; } // Số phút học, map trực tiếp từ Firebase nếu có
+        public double Minutes => Hours * 60;
     }
 
 }

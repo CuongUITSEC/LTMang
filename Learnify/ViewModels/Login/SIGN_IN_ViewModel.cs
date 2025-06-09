@@ -115,9 +115,13 @@ namespace Learnify.ViewModels.Login
                         // Lưu thông tin xác thực
                         AuthService.SetToken(FirebaseIdToken);
                         AuthService.SetUserId(FirebaseUserId);
-                        
-                        // Lưu username vào database
+                        AuthService.SetUsername(Email); // Ghi lại email vào AuthService
+
+                        // Lưu email vào database
                         var firebaseService = new FirebaseService();
+                        await firebaseService.SaveUserAuthInfoAsync(FirebaseUserId, Email);
+
+                        // Lưu username vào database
                         var defaultUsername = Email.Split('@')[0];
                         
                         // Lưu username
@@ -129,7 +133,14 @@ namespace Learnify.ViewModels.Login
 
                         // Lấy và lưu username vào AuthService
                         var username = await firebaseService.GetUsernameAsync(FirebaseUserId);
-                        AuthService.SetUsername(username);
+                        if (!string.IsNullOrEmpty(username) && username != "null" && username != FirebaseUserId)
+                        {
+                            AuthService.SetUsername(username);
+                        }
+                        else
+                        {
+                            AuthService.SetUsername(defaultUsername);
+                        }
                         _onRegisterSuccess?.Invoke();
                     }
                     catch (Exception ex)

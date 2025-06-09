@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Learnify.ViewModels;
 
 namespace Learnify.Views.UserControls
 {
@@ -23,7 +24,7 @@ namespace Learnify.Views.UserControls
         public SettingsView()
         {
             InitializeComponent();
-            DataContext=new Learnify.ViewModels.SettingsViewModel();
+            DataContext = new SettingsViewModel();
         }
     }
 }

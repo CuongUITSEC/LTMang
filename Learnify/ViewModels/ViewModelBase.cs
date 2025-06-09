@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 using System.ComponentModel; // Added this using directive
 using System.Runtime.CompilerServices;
 
-
-
 namespace Learnify.ViewModels
 {
-   public abstract class ViewModelBase : INotifyPropertyChanged
+    public interface IViewActivated
+    {
+        void OnViewActivated();
+    }
+
+    public abstract class ViewModelBase : INotifyPropertyChanged, IViewActivated
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -25,6 +28,10 @@ namespace Learnify.ViewModels
             OnPropertyChanged(propertyName);
             return true;
         }
-    }
 
+        public virtual void OnViewActivated()
+        {
+            // Mặc định không làm gì cả
+        }
+    }
 }

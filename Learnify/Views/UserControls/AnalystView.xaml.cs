@@ -12,8 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Learnify.ViewModels;
 
-namespace Learnify.Views
+namespace Learnify.Views.UserControls
 {
     /// <summary>
     /// Interaction logic for AnalystView.xaml
@@ -23,7 +24,7 @@ namespace Learnify.Views
         public AnalystView()
         {
             InitializeComponent();
-            this.DataContext = new CartesianChartViewModel();
+            this.DataContext = new AnalystViewModel();
         }
     }
 }

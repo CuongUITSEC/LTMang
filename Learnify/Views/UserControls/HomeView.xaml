@@ -42,12 +42,12 @@
                            HorizontalAlignment="Left">
                                 <lvc:PieChart Width="400"
                                          Margin="10,0,0,0"
-                                         Series="{Binding PieSeries}"
+                                         Series="{Binding DataContext.HomePieVm.PieSeries, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                          InnerRadius="30"
                                          Hoverable="False"
                                          DataTooltip="{x:Null}"
                                          LegendLocation="Right"
-                                         FontSize="25" FontFamily="Saira" FontWeight="Bold">
+                                         FontSize="18" FontFamily="Saira" FontWeight="Bold">
                                 </lvc:PieChart>
                             </StackPanel>
                         </Border>
@@ -67,47 +67,30 @@
                                     <GradientStop Color="#e538c1" Offset="0.5"/>
                                     <GradientStop Color="#5325c9" Offset="0"/>
                                 </LinearGradientBrush>
-                            </Border.BorderBrush>
-                            <StackPanel>
+                            </Border.BorderBrush>                            <StackPanel>
                                 <svg:SvgViewbox Source="/Images/ranking.svg"
                                                 Width="75"/>
                                 <TextBlock Text="BẢNG XẾP HẠNG"
                                            HorizontalAlignment="Center"
                                            FontWeight="Bold"
-                                           FontSize="13"/>
-                                <StackPanel Orientation="Horizontal"
-                                            Margin="10,0,0,0">
-                                    <svg:SvgViewbox Source="/Images/avatar1.svg"
-                                                    Width="30"
-                                                    Margin="5"/>
-                                    <TextBlock Text="Nguyễn Phương Tuấn"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal"
-                                            Margin="10,0,0,0">
-                                    <svg:SvgViewbox Source="/Images/avatar1.svg"
-                                                    Width="30"
-                                                    Margin="5"/>
-                                    <TextBlock Text="Đặng Tiến Hoàng"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal"
-                                            Margin="10,0,0,0">
-                                    <svg:SvgViewbox Source="/Images/avatar1.svg"
-                                                    Width="30"
-                                                    Margin="5"/>
-                                    <TextBlock Text="Nguyễn Văn A"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                </StackPanel>
+                                           FontSize="13"/>                                <ItemsControl ItemsSource="{Binding DataContext.RankingVm.Top3Leaderboard, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              x:Name="Top3Rankings">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal"
+                                                        Margin="10,0,0,0">
+                                                <svg:SvgViewbox Source="/Images/avatar1.svg"
+                                                                Width="30"
+                                                                Margin="5"/>
+                                                <TextBlock Text="{Binding Name}"
+                                                           HorizontalAlignment="Left"
+                                                           VerticalAlignment="Center"
+                                                           FontWeight="Bold"
+                                                           FontSize="12"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
                         </Border>
                     </Viewbox>
@@ -126,8 +109,7 @@
                                     <GradientStop Color="#e538c1" Offset="0.5"/>
                                     <GradientStop Color="#5325c9" Offset="0"/>
                                 </LinearGradientBrush>
-                            </Border.BorderBrush>
-                            <StackPanel>
+                            </Border.BorderBrush>                            <StackPanel>
                                 <TextBlock Text="NHIỆM VỤ" FontSize="15" FontWeight="Bold"
                                            HorizontalAlignment="Center"
                                            Margin="10"
@@ -140,39 +122,47 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Top"/>
                                 
-                                <StackPanel Orientation="Horizontal"
-                                            Margin="10">
-                                    <fa:IconImage Icon="Square"
-                                                  Width="20"
-                                                  Margin="0,0,15,0"/>
-                                    <TextBlock Text="Học 60 phút (100 xu)"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal"
-                                            Margin="10">
-                                    <fa:IconImage Icon="Square"
-                                                  Width="20"
-                                                  Margin="0,0,15,0"/>
-                                    <TextBlock Text="Học 120 phút (200 xu)"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal"
-                                            Margin="10">
-                                    <fa:IconImage Icon="Square"
-                                                  Width="20"
-                                                  Margin="0,0,15,0"/>
-                                    <TextBlock Text="Học quá 180 phút (1k xu)"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding DataContext.RewardVm.Tasks, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              x:Name="TaskList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal"
+                                                        Margin="10">
+                                                <fa:IconImage Width="20"
+                                                              Margin="0,0,15,0">
+                                                    <fa:IconImage.Style>
+                                                        <Style TargetType="fa:IconImage">
+                                                            <Setter Property="Icon" Value="Square"/>
+                                                            <Setter Property="Foreground" Value="Gray"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                    <Setter Property="Icon" Value="CheckSquare"/>
+                                                                    <Setter Property="Foreground" Value="Green"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </fa:IconImage.Style>
+                                                </fa:IconImage>                                                <TextBlock HorizontalAlignment="Left"
+                                                           VerticalAlignment="Center"
+                                                           FontWeight="Bold"
+                                                           FontSize="9">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Title}"/>
+                                                            <Setter Property="Foreground" Value="Black"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                    <Setter Property="Foreground" Value="Gray"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                                
                             </StackPanel>
                         </Border>
@@ -194,8 +184,7 @@
                                 </LinearGradientBrush>
                             </Border.BorderBrush>
                             <StackPanel>
-                                <StackPanel>
-                                    <TextBlock Text="TO DO LIST" FontSize="15" FontWeight="Bold"
+                                <StackPanel>                                    <TextBlock Text="TO DO LIST" FontSize="15" FontWeight="Bold"
                                            HorizontalAlignment="Center"
                                            Margin="10"
                                            Foreground="MediumSeaGreen"/>
@@ -206,40 +195,6 @@
                                         StrokeThickness="1"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Top"/>
-
-                                    <StackPanel Orientation="Horizontal"
-                                            Margin="10">
-                                        <fa:IconImage Icon="Square"
-                                                  Width="20"
-                                                  Margin="0,0,15,0"/>
-                                        <TextBlock Text="Học tiếng Anh"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal"
-                                            Margin="10">
-                                        <fa:IconImage Icon="Square"
-                                                  Width="20"
-                                                  Margin="0,0,15,0"/>
-                                        <TextBlock Text="Làm bài tập Mạng"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal"
-                                            Margin="10">
-                                        <fa:IconImage Icon="Square"
-                                                  Width="20"
-                                                  Margin="0,0,15,0"/>
-                                        <TextBlock Text="Nghiên cứu CTF"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               FontSize="12"/>
-                                    </StackPanel>
 
                                 </StackPanel>
                             </StackPanel>

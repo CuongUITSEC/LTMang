@@ -35,15 +35,13 @@
                             VerticalAlignment="Bottom"
                             HorizontalAlignment="Center"
                             Grid.Row="0"
-                            Margin="0,0,0,20"/>
-
-            <!-- Tiêu đề -->
-            <TextBlock Text="BẢNG XẾP HẠNG"
-                       FontWeight="Bold"
-                       FontSize="30"
-                       Grid.Row="1"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,10"/>
+                            Margin="0,0,0,20"/>            <!-- Tiêu đề -->
+            <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,0,0,10">
+                <TextBlock Text="BẢNG XẾP HẠNG"
+                           FontWeight="Bold"
+                           FontSize="30"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
 
             <!-- Danh sách người dùng -->
             <ScrollViewer Grid.Row="2"

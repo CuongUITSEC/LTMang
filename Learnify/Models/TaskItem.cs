@@ -12,5 +12,6 @@ namespace Learnify.Models
         public string Description { get; set; }
         public bool IsCompleted { get; set; }
         public bool IsClaimed { get; set; }
+        public string Reward { get; set; }
     }
 }

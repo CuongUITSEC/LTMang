@@ -1,6 +1,10 @@
 ﻿using System.Windows.Media;
 using LiveCharts;
 using LiveCharts.Wpf;
+using System;
+using System.Threading.Tasks;
+using Learnify.Services; 
+
 
 public class PieChartViewModel
 {
@@ -12,21 +16,44 @@ public class PieChartViewModel
         {
             new PieSeries
             {
-                Title = "Số giờ học",
-                Values = new ChartValues<double> { 60 },
-                Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06AAE9")), // Màu hồng
-                DataLabels = true, // BẬT hiển thị nhãn
-                LabelPoint = point => $"{point.Y}%" // Hiển thị giá trị phần trăm
-                
+                Title = "Thời gian học hôm nay",
+                Values = new ChartValues<double> { 0 },
+                Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#06AAE9")),
+                DataLabels = true,
+                LabelPoint = point => $"{Math.Round(point.Y, 1)} phút"
             },
             new PieSeries
             {
                 Title = "Thời gian còn lại",
-                Values = new ChartValues<double> { 40 },
-                Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FBB03B")), // Màu hồng
-                DataLabels = true, // BẬT hiển thị nhãn
-                LabelPoint = point => $"{point.Y}%" // Hiển thị giá trị phần trăm
+                Values = new ChartValues<double> { 1440 },
+                Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FBB03B")),
+                DataLabels = true,
+                LabelPoint = point => $"{Math.Round(point.Y, 1)} phút"
             }
         };
+    }
+
+    public async Task UpdateTodayPieAsync()
+    {
+        var userId = AuthService.GetUserId();
+        var studyTimeData = await new FirebaseService().GetStudyTimeDataAsync(userId);
+        double todayMinutes = 0;
+        var today = DateTime.Now.Date;
+        
+        if (studyTimeData?.Sessions != null)
+        {
+            foreach (var session in studyTimeData.Sessions)
+            {
+                if (DateTime.TryParse(session.Timestamp, out var sessionTime))
+                {
+                    if (sessionTime.ToLocalTime().Date == today && session.Duration > 0)
+                        todayMinutes += session.Duration;
+                }
+            }
+        }
+
+        // Cập nhật giá trị cho biểu đồ
+        PieSeries[0].Values[0] = todayMinutes;
+        PieSeries[1].Values[0] = Math.Max(0, 1440 - todayMinutes); // 1440 phút = 24 giờ
     }
 }
