@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Learnify.Models;
 using Learnify.Commands;
 using System.Threading.Tasks;
@@ -8,8 +9,7 @@ using Learnify.Services;
 namespace Learnify.ViewModels
 {
     public class MainViewModel : ViewModelBase
-    {
-        // Commands
+    {        // Commands
         public ViewModelCommand HomeCommand { get; set; }
         public ViewModelCommand CalendarCommand { get; set; }
         public ViewModelCommand PomodoroCommand { get; set; }
@@ -100,15 +100,68 @@ namespace Learnify.ViewModels
             }
         }
 
-        public MainViewModel()
+        private Friend _selectedFriend;
+        public Friend SelectedFriend
+        {
+            get => _selectedFriend;
+            set
+            {
+                if (_selectedFriend != value)
+                {
+                    _selectedFriend = value;
+                    OnPropertyChanged(nameof(SelectedFriend));
+                    if (_selectedFriend != null)
+                    {
+                        // Hiển thị cửa sổ thông tin bạn bè
+                        ShowFriendInfo(_selectedFriend);
+                    }
+                }
+            }        }        public MainViewModel()
         {
             InitializeViewModels();
             InitializeCommands();
-            InitializeFriendsList();
+            // Không dùng InitializeFriendsList tĩnh nữa
 
-            NotificationVM = new NotificationViewModel();
-
+            NotificationVM = new NotificationViewModel(this); // Truyền MainViewModel để có thể reload FriendsList
+            NotificationVM.StartFriendRequestPolling(); // Bắt đầu polling khi đăng nhập app
             IsNotificationVisible = true; // Ẩn notification panel khi khởi tạo
+
+            // Tải danh sách bạn bè động từ Firebase khi khởi động
+            _ = ReloadFriendsListAsync();
+
+            // ...các logic khác giữ nguyên...
+            _ = Task.Run(async () => 
+            {
+                // Test Firebase permissions trước
+                var hasPermission = await _firebaseService.TestFriendsPermissionAsync();
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Firebase friends permission test: {hasPermission}");
+                
+                // Test lấy danh sách user để kiểm tra dữ liệu có tồn tại không
+                var allUserIds = await _firebaseService.GetAllUserIdsAsync();
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Found {allUserIds.Count} users in Firebase");
+                
+                // Đồng bộ current user sang publicUsers để có thể tìm kiếm
+                var currentUserId = AuthService.GetUserId();
+                if (!string.IsNullOrEmpty(currentUserId))
+                {
+                    var syncResult = await _firebaseService.SyncUserToPublicAsync(currentUserId);
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Sync current user to public: {syncResult}");
+                }
+                
+                // Đồng bộ tất cả users sang publicUsers (chỉ chạy 1 lần để setup)
+                // Uncomment dòng này nếu muốn đồng bộ tất cả users:
+                // var syncCount = await _firebaseService.SyncAllUsersToPublicAsync();
+                // System.Diagnostics.Debug.WriteLine($"[MainViewModel] Synced {syncCount} users to public");
+                
+                if (hasPermission)
+                {
+                    await FixMissingFriendsDataAsync();
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Cannot fix friends data - insufficient Firebase permissions");
+                }
+            });
         }
 
         private void InitializeViewModels()
@@ -122,9 +175,7 @@ namespace Learnify.ViewModels
             RewardVm = new RewardViewModel();
             SettingVm = new SettingsViewModel();
             CurrentChildView = HomeVm;
-        }
-
-        private void InitializeCommands()
+        }        private void InitializeCommands()
         {
             HomeCommand = new ViewModelCommand(o => CurrentChildView = HomeVm);
             CalendarCommand = new ViewModelCommand(o => CurrentChildView = CalendarVm);
@@ -138,6 +189,7 @@ namespace Learnify.ViewModels
             AnalystCommand = new ViewModelCommand(o => CurrentChildView = AnalystVm);
             RewardCommand = new ViewModelCommand(o => CurrentChildView = RewardVm);
             SettingCommand = new ViewModelCommand(o => CurrentChildView = SettingVm);
+            // Đã xóa TestSearchCommand khỏi khởi tạo
             // SearchCommand nếu có thể khởi tạo tương tự ở đây
         }
 
@@ -151,19 +203,113 @@ namespace Learnify.ViewModels
             };
 
             FriendsList = new ObservableCollection<Friend>(_allFriends);
+        }        public async Task SearchByUidAsync(string uid)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] SearchByUidAsync called with: '{uid}'");
+                
+                if (string.IsNullOrWhiteSpace(uid)) 
+                {
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] UID is empty, showing all friends");
+                    FriendsList = new ObservableCollection<Friend>(_allFriends);
+                    return;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Searching for user with UID: {uid}");
+                var friend = await _firebaseService.GetUserByUidAsync(uid);
+                
+                if (friend != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Found friend: {friend.Name} ({friend.Id})");
+                    FriendsList = new ObservableCollection<Friend> { friend };
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] No friend found");
+                    FriendsList = new ObservableCollection<Friend>();
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] FriendsList count after search: {FriendsList.Count}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] SearchByUidAsync exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] StackTrace: {ex.StackTrace}");
+                FriendsList = new ObservableCollection<Friend>();
+            }
+        }// Reload danh sách bạn bè từ Firebase
+        public async Task ReloadFriendsListAsync()
+        {
+            try
+            {
+                // TODO: Thêm hàm GetFriendsAsync vào FirebaseService để lấy danh sách bạn bè thực từ Firebase
+                var friends = await _firebaseService.GetFriendsAsync(AuthService.GetUserId());
+                if (friends != null && friends.Count > 0)
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        _allFriends = new ObservableCollection<Friend>(friends);
+                        FriendsList = new ObservableCollection<Friend>(_allFriends);
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] ReloadFriendsListAsync: Loaded {friends.Count} friends");
+                    });
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] ReloadFriendsListAsync: No friends found or empty list");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] ReloadFriendsListAsync error: {ex.Message}");
+            }
+        }        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] SearchText setter called with: '{value}'");
+                if (_searchText != value)
+                {
+                    _searchText = value;
+                    OnPropertyChanged(nameof(SearchText));
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] SearchText updated to: '{_searchText}', calling SearchByUidAsync");
+                    // Gọi tìm kiếm khi thay đổi
+                    _ = SearchByUidAsync(_searchText);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] SearchText value unchanged, skipping search");
+                }
+            }
         }
 
-        public async Task SearchByUidAsync(string uid)
+        private void ShowFriendInfo(Friend friend)
         {
-            if (string.IsNullOrWhiteSpace(uid)) {
-                FriendsList = new ObservableCollection<Friend>(_allFriends);
-                return;
+            // Tạo và hiển thị cửa sổ thông tin bạn bè
+            var infoWindow = new Learnify.Views.FriendInfoWindow(friend, NotificationVM);
+            infoWindow.ShowDialog();
+        }
+
+        // Sửa chữa dữ liệu bạn bè bị thiếu
+        public async Task FixMissingFriendsDataAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[MainViewModel] Starting to fix missing friends data...");
+                var fixedCount = await _firebaseService.FixMissingFriendsDataAsync();
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Fixed {fixedCount} missing friends relationships");
+                
+                // Reload lại danh sách bạn bè sau khi fix
+                if (fixedCount > 0)
+                {
+                    await ReloadFriendsListAsync();
+                }
             }
-            var friend = await _firebaseService.GetUserByUidAsync(uid);
-            if (friend != null)
-                FriendsList = new ObservableCollection<Friend> { friend };
-            else
-                FriendsList = new ObservableCollection<Friend>();
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] FixMissingFriendsDataAsync error: {ex.Message}");
+            }
         }
     }
 }

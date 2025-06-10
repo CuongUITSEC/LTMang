@@ -247,13 +247,11 @@
                         <Button x:Name="btnExit" Grid.Column="1" Click="btnExit_Click" Background="Transparent" BorderThickness="0">
                             <Image Source="/Images/ButtonClose.png"/>
                         </Button>
-                    </Grid>
-
-                    <StackPanel Grid.Row="1">
+                    </Grid>                    <StackPanel Grid.Row="1">
                         <Grid Margin="5">
                             <TextBox x:Name="txtBoxSearch"
                                      Style="{StaticResource textBoxSeerch}"
-                                     TextChanged="txtBoxSearch_TextChanged"
+                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                      Height="35"/>
                             <fa:IconImage Icon="Search"
                                           Height="15"
@@ -264,6 +262,7 @@
 
                         <!-- bạn bè -->
                         <ListBox ItemsSource="{Binding FriendsList}"
+                                 SelectedItem="{Binding SelectedFriend, Mode=TwoWay}"
                                  BorderThickness="0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>

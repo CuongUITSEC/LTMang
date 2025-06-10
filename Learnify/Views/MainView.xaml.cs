@@ -28,15 +28,6 @@ namespace Learnify.Views
         {
             InitializeComponent();
         }
-        private async void txtBoxSearch_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            var vm = DataContext as Learnify.ViewModels.MainViewModel;
-            if (vm != null)
-            {
-                var text = txtBoxSearch.Text;
-                await vm.SearchByUidAsync(text);
-            }
-        }
 
         private void btnExit_Click(object sender, RoutedEventArgs e)
         {

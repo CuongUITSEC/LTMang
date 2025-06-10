@@ -1,0 +1,29 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "publicUsers": {
+      "$uid": {
+        ".read": true,
+        ".write": "$uid === auth.uid",
+        ".validate": "newData.hasChildren(['username', 'avatarUrl']) && newData.child('username').isString() && newData.child('avatarUrl').isString()"
+      }
+    },
+    "friendRequests": {
+      "$receiverId": {
+        ".read": "$receiverId === auth.uid",
+        ".write": true
+      }
+    },
+    "friends": {
+      "$userId": {
+        ".read": "$userId === auth.uid",
+        ".write": "$userId === auth.uid"
+      }
+    }
+  }
+}

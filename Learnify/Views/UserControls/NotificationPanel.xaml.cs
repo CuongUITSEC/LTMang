@@ -26,7 +26,8 @@ namespace Learnify.Views.UserControls
         public NotificationPanel()
         {
             InitializeComponent();
-            DataContext = new NotificationViewModel();
+            // XÓA DataContext = new NotificationViewModel();
+            // Để DataContext tự nhận từ parent (MainViewModel.NotificationVM)
         }
 
         private void NotificationItem_Click(object sender, MouseButtonEventArgs e)

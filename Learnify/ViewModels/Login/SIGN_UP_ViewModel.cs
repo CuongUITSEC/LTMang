@@ -110,6 +110,8 @@ namespace Learnify.ViewModels.Login
                         // Lưu email vào database
                         var firebaseService = new FirebaseService();
                         await firebaseService.SaveUserAuthInfoAsync(FirebaseUserId, Username);
+                        // Cập nhật trạng thái online
+                        await firebaseService.UpdateUserOnlineStatusAsync(FirebaseUserId, true);
                         
                         // Kiểm tra và tạo username nếu chưa có
                         var existingUsername = await firebaseService.GetUsernameAsync(FirebaseUserId);

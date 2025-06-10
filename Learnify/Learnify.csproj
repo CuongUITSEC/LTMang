@@ -190,10 +190,12 @@
     </ApplicationDefinition>
     <Compile Include="Comands\RelayCommand.cs" />
     <Compile Include="Converters\BooleanToBackgroundConverter.cs" />
+    <Compile Include="Converters\BooleanToStatusConverter.cs" />
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\CountToBoolConverter.cs" />
     <Compile Include="Converters\StringToColorConverter.cs" />
     <Compile Include="Models\Friend.cs" />
+    <Compile Include="Models\FriendRequestNotification.cs" />
     <Compile Include="Models\Notification.cs" />
     <Compile Include="Models\StudyLog.cs" />
     <Compile Include="Models\StudySession.cs" />
@@ -209,6 +211,8 @@
     <Compile Include="ViewModels\CampaignViewModel.cs" />
     <Compile Include="ViewModels\CartesianChartViewModel.cs" />
     <Compile Include="ViewModels\CalendarViewModel.cs" />
+    <Compile Include="ViewModels\FriendInfoWindowViewModel.cs" />
+    <Compile Include="ViewModels\FriendsViewModel.cs" />
     <Compile Include="ViewModels\HomeViewModel.cs" />
     <Compile Include="ViewModels\Login\FORGOT_PW_Viewmodel.cs" />
     <Compile Include="ViewModels\Login\SIGN_IN_ViewModel.cs" />
@@ -227,6 +231,9 @@
     <Compile Include="ViewModels\TimerModeViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelCommand.cs" />
+    <Compile Include="Views\FriendInfoWindow.xaml.cs">
+      <DependentUpon>FriendInfoWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\MainView.xaml.cs">
       <DependentUpon>MainView.xaml</DependentUpon>
     </Compile>
@@ -325,6 +332,10 @@
     <Page Include="Styles\styles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\FriendInfoWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\MainView.xaml">
       <SubType>Designer</SubType>

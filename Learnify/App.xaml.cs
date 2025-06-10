@@ -23,5 +23,17 @@ namespace Learnify
             var firebaseService = new FirebaseService();
             await firebaseService.FixMissingUsernamesAsync();
         }
+
+        protected override async void OnExit(ExitEventArgs e)
+        {
+            // Khi thoát app, cập nhật trạng thái offline cho user hiện tại
+            var userId = AuthService.GetUserId();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var firebaseService = new FirebaseService();
+                await firebaseService.UpdateUserOnlineStatusAsync(userId, false);
+            }
+            base.OnExit(e);
+        }
     }
 }

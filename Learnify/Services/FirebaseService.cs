@@ -16,6 +16,7 @@ namespace Learnify.Services
     public class FirebaseService
     {
         private static readonly HttpClient _httpClient;
+        public static HttpClient SharedHttpClient => _httpClient;
 
         static FirebaseService()
         {
@@ -482,25 +483,99 @@ namespace Learnify.Services
 
         public async Task<Friend> GetUserByUidAsync(string uid)
         {
-            var url = GetAuthenticatedUrl($"users/{uid}.json");
-            var response = await _httpClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var content = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(content) && content != "null")
+                Debug.WriteLine($"[GetUserByUid] Searching for user: {uid}");
+                
+                if (string.IsNullOrWhiteSpace(uid))
                 {
-                    var data = JObject.Parse(content);
-                    var username = data["username"]?.ToString() ?? uid;
-                    // Nếu bạn có trường avatar, lấy thêm ở đây
-                    return new Friend
-                    {
-                        Name = username,
-                        Avatar = "/Images/avatar1.svg", // hoặc lấy từ data["avatar"] nếu có
-                        IsOnline = false // hoặc lấy từ data nếu có
-                    };
+                    Debug.WriteLine("[GetUserByUid] UID is null or empty");
+                    return null;
                 }
+                
+                // Thử tìm trong publicUsers trước (cho phép tìm kiếm tất cả user)
+                var publicUrl = GetAuthenticatedUrl($"publicUsers/{uid}.json");
+                Debug.WriteLine($"[GetUserByUid] Request URL (public): {publicUrl}");
+                
+                var response = await _httpClient.GetAsync(publicUrl);
+                Debug.WriteLine($"[GetUserByUid] Response status (public): {response.StatusCode}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[GetUserByUid] Response content (public): {content}");
+                    
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var data = JObject.Parse(content);
+                        var username = data["username"]?.ToString() ?? uid;
+                        var avatar = data["avatarUrl"]?.ToString() ?? "/Images/avatar1.svg";
+                        var email = data["email"]?.ToString() ?? "";
+                        
+                        var friend = new Friend
+                        {
+                            Name = username,
+                            Avatar = avatar,
+                            IsOnline = false, // Public data không chứa trạng thái online
+                            Id = uid,
+                            Email = email
+                        };
+                        
+                        Debug.WriteLine($"[GetUserByUid] Found user in publicUsers: {username} ({uid})");
+                        return friend;
+                    }
+                }
+                
+                // Nếu không tìm thấy trong publicUsers, thử tìm trong users (chỉ cho chính mình)
+                if (uid == AuthService.GetUserId())
+                {
+                    var privateUrl = GetAuthenticatedUrl($"users/{uid}.json");
+                    Debug.WriteLine($"[GetUserByUid] Request URL (private): {privateUrl}");
+                    
+                    var privateResponse = await _httpClient.GetAsync(privateUrl);
+                    Debug.WriteLine($"[GetUserByUid] Response status (private): {privateResponse.StatusCode}");
+                    
+                    if (privateResponse.IsSuccessStatusCode)
+                    {
+                        var content = await privateResponse.Content.ReadAsStringAsync();
+                        Debug.WriteLine($"[GetUserByUid] Response content (private): {content}");
+                        
+                        if (!string.IsNullOrEmpty(content) && content != "null")
+                        {
+                            var data = JObject.Parse(content);
+                            var username = data["username"]?.ToString() ?? uid;
+                            var avatar = data["avatarUrl"]?.ToString() ?? "/Images/avatar1.svg";
+                            var isOnline = data["isOnline"]?.Value<bool>() ?? false;
+                            
+                            var friend = new Friend
+                            {
+                                Name = username,
+                                Avatar = avatar,
+                                IsOnline = isOnline,
+                                Id = uid,
+                                Email = data["email"]?.ToString() ?? ""
+                            };
+                            
+                            Debug.WriteLine($"[GetUserByUid] Found user in users: {username} ({uid})");
+                            return friend;
+                        }
+                    }
+                    else
+                    {
+                        var errorContent = await privateResponse.Content.ReadAsStringAsync();
+                        Debug.WriteLine($"[GetUserByUid] HTTP Error (private): {privateResponse.StatusCode}, Content: {errorContent}");
+                    }
+                }
+                
+                Debug.WriteLine("[GetUserByUid] User not found in both publicUsers and users");
+                return null;
             }
-            return null;
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[GetUserByUid] Exception: {ex.Message}");
+                Debug.WriteLine($"[GetUserByUid] StackTrace: {ex.StackTrace}");
+                return null;
+            }
         }
 
         public async Task<User> GetUserInfoAsync(string userId)
@@ -884,6 +959,578 @@ namespace Learnify.Services
                 Debug.WriteLine($"[FIREBASE] Error getting weekly study time rankings: {ex.Message}");
                 Debug.WriteLine($"[FIREBASE] StackTrace: {ex.StackTrace}");
                 return new List<(string UserId, TimeSpan Time)>();
+            }
+        }
+
+        public async Task<bool> UpdateUserOnlineStatusAsync(string userId, bool isOnline)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"users/{userId}/isOnline.json");
+                var content = new StringContent(JsonConvert.SerializeObject(isOnline));
+                var response = await _httpClient.PutAsync(url, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating user online status: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Chấp nhận lời mời kết bạn (đồng bộ bạn bè 2 phía)
+        public async Task<bool> AcceptFriendRequestAsync(string senderId, string receiverId, string requestId)
+        {
+            try
+            {
+                Debug.WriteLine($"[AcceptFriendRequest] Starting accept process: {senderId} -> {receiverId}, requestId: {requestId}");
+                // 1. Cập nhật trạng thái FriendRequest thành Accepted
+                var requestUpdate = new Dictionary<string, object> { ["status"] = "Accepted" };
+                var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
+                var content = new StringContent(JsonConvert.SerializeObject(requestUpdate), Encoding.UTF8, "application/json");
+                var res1 = await _httpClient.PatchAsync(url, content);
+                content.Dispose();
+                Debug.WriteLine($"[AcceptFriendRequest] Step 1 - Update status: {res1.StatusCode}");
+                if (!res1.IsSuccessStatusCode)
+                {
+                    var error1 = await res1.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[AcceptFriendRequest] Step 1 failed: {error1}");
+                }
+                // 2. Thêm vào danh sách bạn bè của cả receiver và sender
+                var friendData = new Dictionary<string, object> { ["status"] = "Friends", ["since"] = DateTime.UtcNow.ToString("o") };
+                var urlFriendReceiver = GetAuthenticatedUrl($"friends/{receiverId}/{senderId}.json");
+                var urlFriendSender = GetAuthenticatedUrl($"friends/{senderId}/{receiverId}.json");
+                Debug.WriteLine($"[AcceptFriendRequest] Step 2 - Creating friend URLs: {urlFriendReceiver} | {urlFriendSender}");
+                var contentReceiver = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                var contentSender = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                var res2 = await _httpClient.PutAsync(urlFriendReceiver, contentReceiver);
+                var res3 = await _httpClient.PutAsync(urlFriendSender, contentSender);
+                contentReceiver.Dispose();
+                contentSender.Dispose();
+                Debug.WriteLine($"[AcceptFriendRequest] Step 2 - Add to friends: {res2.StatusCode}, {res3.StatusCode}");
+                if (!res2.IsSuccessStatusCode)
+                {
+                    var error2 = await res2.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[AcceptFriendRequest] Step 2a failed: {error2}");
+                }
+                if (!res3.IsSuccessStatusCode)
+                {
+                    var error3 = await res3.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[AcceptFriendRequest] Step 2b failed: {error3}");
+                }
+                var success = res1.IsSuccessStatusCode && res2.IsSuccessStatusCode && res3.IsSuccessStatusCode;
+                Debug.WriteLine($"[AcceptFriendRequest] Overall result: {success}");
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[AcceptFriendRequest] Exception: {ex.Message}");
+                Debug.WriteLine($"[AcceptFriendRequest] StackTrace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        // Từ chối lời mời kết bạn (cấu trúc mới)
+        public async Task<bool> DeclineFriendRequestAsync(string receiverId, string requestId)
+        {
+            // Cập nhật trạng thái FriendRequest thành Declined
+            var requestUpdate = new Dictionary<string, object> { ["status"] = "Declined" };
+            var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
+            var content = new StringContent(JsonConvert.SerializeObject(requestUpdate), Encoding.UTF8, "application/json");
+            var res = await _httpClient.PatchAsync(url, content);
+            content.Dispose();
+            return res.IsSuccessStatusCode;
+        }
+
+        // Gửi lời mời kết bạn (theo cấu trúc mới)
+        public async Task<SendFriendRequestResult> SendFriendRequestAsync(string senderId, string senderName, string receiverId, string receiverName)
+        {
+            try
+            {
+                // 1. Kiểm tra đã là bạn bè chưa
+                if (await AreAlreadyFriendsAsync(senderId, receiverId))
+                {
+                    Debug.WriteLine($"[SendFriendRequest] Users {senderId} and {receiverId} are already friends");
+                    return SendFriendRequestResult.AlreadyFriends;
+                }
+
+                // 2. Kiểm tra đã có lời mời Pending chưa
+                if (await HasPendingRequestAsync(senderId, receiverId))
+                {
+                    Debug.WriteLine($"[SendFriendRequest] Already has pending request from {senderId} to {receiverId}");
+                    return SendFriendRequestResult.HasPending;
+                }
+
+                // 3. Kiểm tra giới hạn 5 lời mời/30 phút
+                if (await ExceedsRequestLimitAsync(senderId, receiverId))
+                {
+                    Debug.WriteLine($"[SendFriendRequest] User {senderId} exceeded request limit to {receiverId}");
+                    return SendFriendRequestResult.ExceedsLimit;
+                }
+
+                // 4. Gửi lời mời kết bạn
+                var requestId = $"{senderId}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+                var request = new {
+                    senderId = senderId,
+                    senderName = senderName,
+                    receiverId = receiverId,
+                    receiverName = receiverName,
+                    status = "Pending",
+                    sentAt = DateTime.UtcNow.ToString("o")
+                };
+                var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(request);
+                var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var res = await _httpClient.PutAsync(url, content);
+                content.Dispose();
+                
+                if (res.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[SendFriendRequest] Request sent successfully from {senderId} to {receiverId}");
+                    return SendFriendRequestResult.Success;
+                }
+                else
+                {
+                    Debug.WriteLine($"[SendFriendRequest] Failed to send request: {res.StatusCode}");
+                    return SendFriendRequestResult.Error;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[SendFriendRequest] Error: {ex.Message}");
+                return SendFriendRequestResult.Error;
+            }
+        }
+
+        // Kiểm tra 2 user đã là bạn bè chưa
+        public async Task<bool> AreAlreadyFriendsAsync(string userId1, string userId2)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"friends/{userId1}/{userId2}.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return !string.IsNullOrEmpty(content) && content != "null";
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Kiểm tra vượt quá giới hạn 5 lời mời/30 phút
+        private async Task<bool> ExceedsRequestLimitAsync(string senderId, string receiverId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"friendRequests/{receiverId}.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                        var thirtyMinutesAgo = DateTime.UtcNow.AddMinutes(-30);
+                        var recentRequestsCount = 0;
+
+                        foreach (var kv in requests)
+                        {
+                            var request = kv.Value;
+                            if (request.senderId?.ToString() == senderId)
+                            {
+                                var sentAtStr = request.sentAt?.ToString();
+                                if (DateTime.TryParse(sentAtStr, out DateTime sentAt))
+                                {
+                                    if (sentAt >= thirtyMinutesAgo)
+                                    {
+                                        recentRequestsCount++;
+                                    }
+                                }
+                            }
+                        }
+
+                        Debug.WriteLine($"[ExceedsRequestLimit] User {senderId} sent {recentRequestsCount} requests to {receiverId} in last 30 minutes");
+                        return recentRequestsCount >= 5;
+                    }
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ExceedsRequestLimit] Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Kiểm tra đã có lời mời Pending chưa
+        public async Task<bool> HasPendingRequestAsync(string senderId, string receiverId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"friendRequests/{receiverId}.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                        foreach (var kv in requests)
+                        {
+                            var request = kv.Value;
+                            if (request.senderId?.ToString() == senderId && 
+                                request.status?.ToString() == "Pending")
+                            {
+                                Debug.WriteLine($"[HasPendingRequest] Found pending request from {senderId} to {receiverId}");
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[HasPendingRequest] Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Lấy danh sách bạn bè của user từ Firebase
+        public async Task<List<Friend>> GetFriendsAsync(string userId)
+        {
+            try
+            {
+                Debug.WriteLine($"[GetFriendsAsync] Loading friends for user: {userId}");
+                var url = GetAuthenticatedUrl($"friends/{userId}.json");
+                var response = await _httpClient.GetAsync(url);
+                Debug.WriteLine($"[GetFriendsAsync] Response status: {response.StatusCode}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[GetFriendsAsync] Response content: {content}");
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var friendsDict = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                        var friends = new List<Friend>();
+                        Debug.WriteLine($"[GetFriendsAsync] Found {friendsDict.Count} friends");
+                        foreach (var kv in friendsDict)
+                        {
+                            string friendId = kv.Key;
+                            Debug.WriteLine($"[GetFriendsAsync] Loading friend info for: {friendId}");
+                            // Lấy thông tin chi tiết của bạn bè
+                            var friendInfo = await GetUserByUidAsync(friendId);
+                            if (friendInfo != null)
+                            {
+                                friendInfo.Status = FriendStatus.Friends;
+                                friends.Add(friendInfo);
+                            }
+                        }
+                        Debug.WriteLine($"[GetFriendsAsync] Total loaded friends: {friends.Count}");
+                        return friends;
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[GetFriendsAsync] No friends found for user: {userId}");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine($"[GetFriendsAsync] HTTP error: {response.StatusCode}");
+                }
+                return new List<Friend>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[GetFriendsAsync] Error: {ex.Message}");
+                return new List<Friend>();
+            }
+        }
+
+        // Sửa chữa dữ liệu bạn bè bị thiếu từ các friendRequests đã Accepted
+        public async Task<int> FixMissingFriendsDataAsync()
+        {
+            try
+            {
+                Debug.WriteLine("[FixMissingFriendsData] Starting to fix missing friends data...");
+                int fixedCount = 0;
+                
+                // 1. Lấy tất cả friendRequests
+                var url = GetAuthenticatedUrl("friendRequests.json");
+                var response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[FixMissingFriendsData] Failed to get friendRequests: {response.StatusCode}");
+                    return 0;
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(content) || content == "null")
+                {
+                    Debug.WriteLine("[FixMissingFriendsData] No friendRequests found");
+                    return 0;
+                }
+                
+                var allRequests = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, dynamic>>>(content);
+                Debug.WriteLine($"[FixMissingFriendsData] Found {allRequests.Count} receivers with requests");
+                
+                // 2. Duyệt qua tất cả các request đã Accepted
+                foreach (var receiverData in allRequests)
+                {
+                    var receiverId = receiverData.Key;
+                    var requests = receiverData.Value;
+                    
+                    foreach (var requestData in requests)
+                    {
+                        var requestId = requestData.Key;
+                        var request = requestData.Value;
+                        
+                        var status = request.status?.ToString();
+                        if (status == "Accepted")
+                        {
+                            var senderId = request.senderId?.ToString();
+                            var sentAt = request.sentAt?.ToString();
+                            
+                            Debug.WriteLine($"[FixMissingFriendsData] Found accepted request: {senderId} -> {receiverId}");
+                            
+                            // 3. Kiểm tra xem đã có trong friends chưa
+                            if (!await AreAlreadyFriendsAsync(senderId, receiverId))
+                            {
+                                Debug.WriteLine($"[FixMissingFriendsData] Missing friends data, fixing...");
+                                
+                                // 4. Tạo dữ liệu bạn bè
+                                var friendData = new Dictionary<string, object> 
+                                { 
+                                    ["status"] = "Friends", 
+                                    ["since"] = sentAt ?? DateTime.UtcNow.ToString("o") 
+                                };
+                                
+                                var urlFriend1 = GetAuthenticatedUrl($"friends/{senderId}/{receiverId}.json");
+                                var urlFriend2 = GetAuthenticatedUrl($"friends/{receiverId}/{senderId}.json");
+                                
+                                var contentFriend1 = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                                var contentFriend2 = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                                
+                                var res1 = await _httpClient.PutAsync(urlFriend1, contentFriend1);
+                                var res2 = await _httpClient.PutAsync(urlFriend2, contentFriend2);
+                                
+                                contentFriend1.Dispose();
+                                contentFriend2.Dispose();
+                                
+                                if (res1.IsSuccessStatusCode && res2.IsSuccessStatusCode)
+                                {
+                                    fixedCount++;
+                                    Debug.WriteLine($"[FixMissingFriendsData] Successfully fixed: {senderId} <-> {receiverId}");
+                                }
+                                else
+                                {
+                                    Debug.WriteLine($"[FixMissingFriendsData] Failed to fix: {senderId} <-> {receiverId}");
+                                }
+                            }
+                            else
+                            {
+                                Debug.WriteLine($"[FixMissingFriendsData] Friends data already exists: {senderId} <-> {receiverId}");
+                            }
+                        }
+                    }
+                }
+                
+                Debug.WriteLine($"[FixMissingFriendsData] Fixed {fixedCount} missing friends relationships");
+                return fixedCount;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[FixMissingFriendsData] Error: {ex.Message}");
+                Debug.WriteLine($"[FixMissingFriendsData] StackTrace: {ex.StackTrace}");
+                return 0;
+            }
+        }
+
+        // Test Firebase Database Rules cho node friends
+        public async Task<bool> TestFriendsPermissionAsync()
+        {
+            try
+            {
+                var currentUserId = AuthService.GetUserId();
+                var testData = new Dictionary<string, object> { ["test"] = "permission_check" };
+                var url = GetAuthenticatedUrl($"friends/{currentUserId}/test.json");
+                var content = new StringContent(JsonConvert.SerializeObject(testData), Encoding.UTF8, "application/json");
+                
+                Debug.WriteLine($"[TestFriendsPermission] Testing write permission to: {url}");
+                var response = await _httpClient.PutAsync(url, content);
+                content.Dispose();
+                
+                Debug.WriteLine($"[TestFriendsPermission] Result: {response.StatusCode}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[TestFriendsPermission] Error: {error}");
+                }
+                
+                // Xóa dữ liệu test nếu thành công
+                if (response.IsSuccessStatusCode)
+                {
+                    var deleteUrl = GetAuthenticatedUrl($"friends/{currentUserId}/test.json");
+                    await _httpClient.DeleteAsync(deleteUrl);
+                }
+                
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[TestFriendsPermission] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Test lấy danh sách tất cả user để kiểm tra dữ liệu
+        public async Task<List<string>> GetAllUserIdsAsync()
+        {
+            try
+            {
+                Debug.WriteLine("[GetAllUserIds] Getting all user IDs from Firebase...");
+                var url = GetAuthenticatedUrl("users.json");
+                var response = await _httpClient.GetAsync(url);
+                
+                Debug.WriteLine($"[GetAllUserIds] Response status: {response.StatusCode}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[GetAllUserIds] Response content length: {content?.Length ?? 0}");
+                    
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var users = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(content);
+                        var userIds = users.Keys.ToList();
+                        
+                        Debug.WriteLine($"[GetAllUserIds] Found {userIds.Count} users:");
+                        foreach (var uid in userIds.Take(10)) // Log only first 10 for brevity
+                        {
+                            var username = users[uid]["username"]?.ToString() ?? "No username";
+                            Debug.WriteLine($"[GetAllUserIds] - {uid}: {username}");
+                        }
+                        
+                        if (userIds.Count > 10)
+                        {
+                            Debug.WriteLine($"[GetAllUserIds] ... and {userIds.Count - 10} more users");
+                        }
+                        
+                        return userIds;
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[GetAllUserIds] Empty or null response content");
+                    }
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[GetAllUserIds] HTTP Error: {response.StatusCode}, Content: {errorContent}");
+                }
+                
+                return new List<string>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[GetAllUserIds] Exception: {ex.Message}");
+                Debug.WriteLine($"[GetAllUserIds] StackTrace: {ex.StackTrace}");
+                return new List<string>();
+            }
+        }
+
+        // Đồng bộ dữ liệu user từ private sang public để cho phép tìm kiếm
+        public async Task<bool> SyncUserToPublicAsync(string userId)
+        {
+            try
+            {
+                Debug.WriteLine($"[SyncUserToPublic] Syncing user {userId} to publicUsers");
+                
+                // 1. Lấy dữ liệu từ users (private)
+                var privateUrl = GetAuthenticatedUrl($"users/{userId}.json");
+                var response = await _httpClient.GetAsync(privateUrl);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[SyncUserToPublic] Failed to get private data: {response.StatusCode}");
+                    return false;
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(content) || content == "null")
+                {
+                    Debug.WriteLine("[SyncUserToPublic] No private data found");
+                    return false;
+                }
+                
+                var userData = JObject.Parse(content);
+                
+                // 2. Tạo dữ liệu public (chỉ các trường an toàn)
+                var publicData = new
+                {
+                    username = userData["username"]?.ToString() ?? userId,
+                    avatarUrl = userData["avatarUrl"]?.ToString() ?? "/Images/avatar1.svg",
+                    email = userData["email"]?.ToString() ?? "" // Có thể bỏ email nếu muốn bảo mật hơn
+                };
+                
+                // 3. Lưu vào publicUsers
+                var publicUrl = GetAuthenticatedUrl($"publicUsers/{userId}.json");
+                var json = JsonConvert.SerializeObject(publicData);
+                var putContent = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var putResponse = await _httpClient.PutAsync(publicUrl, putContent);
+                putContent.Dispose();
+                
+                var success = putResponse.IsSuccessStatusCode;
+                Debug.WriteLine($"[SyncUserToPublic] Sync result: {success} ({putResponse.StatusCode})");
+                
+                if (!success)
+                {
+                    var error = await putResponse.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[SyncUserToPublic] Error: {error}");
+                }
+                
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[SyncUserToPublic] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Đồng bộ tất cả user hiện tại sang publicUsers
+        public async Task<int> SyncAllUsersToPublicAsync()
+        {
+            try
+            {
+                Debug.WriteLine("[SyncAllUsersToPublic] Starting sync all users...");
+                var userIds = await GetAllUserIdsAsync();
+                var syncedCount = 0;
+                
+                foreach (var userId in userIds)
+                {
+                    if (await SyncUserToPublicAsync(userId))
+                    {
+                        syncedCount++;
+                    }
+                    
+                    // Delay nhỏ để tránh spam requests
+                    await Task.Delay(100);
+                }
+                
+                Debug.WriteLine($"[SyncAllUsersToPublic] Synced {syncedCount}/{userIds.Count} users");
+                return syncedCount;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[SyncAllUsersToPublic] Exception: {ex.Message}");
+                return 0;
             }
         }
     }

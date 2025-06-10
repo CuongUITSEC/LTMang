@@ -15,6 +15,15 @@ namespace Learnify.Models
         Blocked         // Đã chặn
     }
 
+    public enum SendFriendRequestResult
+    {
+        Success,        // Gửi thành công
+        AlreadyFriends, // Đã là bạn bè
+        ExceedsLimit,   // Vượt quá giới hạn 5 lời mời/30 phút
+        HasPending,     // Đã có lời mời chờ xử lý
+        Error           // Lỗi kỹ thuật
+    }
+
     public class Friend
     {
         public string Id { get; set; }
