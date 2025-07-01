@@ -7,7 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Text;
+using System.Globalization;
 using Learnify.Models;
+using Learnify.Services;
 
 namespace Learnify.Services
 {
@@ -34,6 +36,113 @@ namespace Learnify.Services
         {
             var token = AuthService.GetToken();
             return $"{FirebaseUrl}{path}?auth={token}";
+        }
+
+        public async Task<Dictionary<string, object>> GetUserDataAsync(string userId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"users/{userId}.json");
+                var response = await _httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        return JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                    }
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting user data: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<bool> UpdateUserDataAsync(string userId, Dictionary<string, object> data)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"users/{userId}.json");
+                var content = new StringContent(JsonConvert.SerializeObject(data));
+                var response = await _httpClient.PutAsync(url, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating user data: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SaveStudyTimeAsync(string userId, double duration)
+        {
+            try
+            {
+                var timestamp = DateTime.UtcNow.ToString("o");
+                var data = new Dictionary<string, object>
+                {
+                    ["timestamp"] = timestamp,
+                    ["duration"] = duration
+                };
+
+                var url = GetAuthenticatedUrl($"studyTime/{userId}/sessions/{timestamp}.json");
+                var content = new StringContent(JsonConvert.SerializeObject(data));
+                var response = await _httpClient.PutAsync(url, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error saving study time: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<StudyTimeData> GetStudyTimeDataAsync(string userId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"users/{userId}/studyTime.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var data = JObject.Parse(content);
+                        var studyTimeData = new StudyTimeData
+                        {
+                            TotalMinutes = data["totalMinutes"]?.Value<double>() ?? 0,
+                            LastUpdated = data["lastUpdated"]?.ToString(),
+                            Sessions = new List<StudySession>()
+                        };
+
+                        var sessions = data["sessions"] as JObject;
+                        if (sessions != null)
+                        {
+                            foreach (var session in sessions)
+                            {
+                                studyTimeData.Sessions.Add(new StudySession
+                                {
+                                    Duration = session.Value["duration"]?.Value<double>() ?? 0,
+                                    Timestamp = session.Value["timestamp"]?.ToString()
+                                });
+                            }
+                        }
+
+                        return studyTimeData;
+                    }
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting study time data: {ex.Message}");
+                return null;
+            }
         }
 
         public async Task<string> GetUsernameAsync(string userId)
@@ -80,7 +189,7 @@ namespace Learnify.Services
             }
         }
 
-        // Lưu thời gian học của người dùng
+        // Lưu thời gian học của người dùng (theo giờ Việt Nam)
         public async Task<bool> SaveStudyTimeAsync(string userId, TimeSpan studyTime)
         {
             try
@@ -113,12 +222,13 @@ namespace Learnify.Services
                     await SaveUsernameAsync(userId, realUsername);
                 }
 
-                // Tạo timestamp cho phiên học mới
-                var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                // Tạo timestamp cho phiên học mới (giờ Việt Nam, không có hậu tố Z)
+                var nowVN = DateTime.UtcNow.AddHours(7);
+                var timestamp = nowVN.ToString("yyyyMMddHHmmss");
                 var newSession = new
                 {
                     duration = studyTime.TotalMinutes,
-                    timestamp = DateTime.UtcNow.ToString("o")
+                    timestamp = nowVN.ToString("yyyy-MM-ddTHH:mm:ss.fffffff") // Không có Z, Kind = Unspecified
                 };
 
                 // Lấy dữ liệu hiện tại từ Firebase
@@ -176,7 +286,7 @@ namespace Learnify.Services
                 var studyData = new
                 {
                     totalMinutes = totalMinutes,
-                    lastUpdated = DateTime.UtcNow.ToString("o"),
+                    lastUpdated = nowVN.ToString("yyyy-MM-ddTHH:mm:ss.fffffff"),
                     sessions = sessions
                 };
 
@@ -259,106 +369,6 @@ namespace Learnify.Services
             }
         }
 
-        // Lấy bảng xếp hạng thời gian học
-        public async Task<List<(string UserId, TimeSpan Time)>> GetStudyTimeRankingsAsync()
-        {
-            try
-            {
-                Debug.WriteLine("Getting study time rankings...");
-                var url = GetAuthenticatedUrl("users.json");
-                Debug.WriteLine($"Fetching data from: {url}");
-
-                var response = await _httpClient.GetAsync(url);
-                Debug.WriteLine($"Response status: {response.StatusCode}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"Response content: {content}");
-
-                    if (string.IsNullOrEmpty(content) || content == "null")
-                    {
-                        Debug.WriteLine("No data found in response");
-                        return new List<(string UserId, TimeSpan Time)>();
-                    }
-
-                    var users = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(content);
-                    if (users == null)
-                    {
-                        Debug.WriteLine("Failed to deserialize users data");
-                        return new List<(string UserId, TimeSpan Time)>();
-                    }
-
-                    Debug.WriteLine($"Found {users.Count} users");
-                    var rankings = new List<(string UserId, TimeSpan Time)>();
-
-                    // Xác định quý hiện tại
-                    var now = DateTime.UtcNow;
-                    int currentQuarter = (now.Month - 1) / 3 + 1;
-                    int quarterStartMonth = (currentQuarter - 1) * 3 + 1;
-                    var quarterStart = new DateTime(now.Year, quarterStartMonth, 1);
-                    var quarterEnd = quarterStart.AddMonths(3);
-
-                    foreach (var user in users)
-                    {
-                        try
-                        {
-                            Debug.WriteLine($"Processing user {user.Key}...");
-                            var studyTimeData = user.Value["studyTime"];
-                            if (studyTimeData != null && studyTimeData.Type == JTokenType.Object)
-                            {
-                                // Tính tổng thời gian học trong quý hiện tại
-                                double totalMinutes = 0;
-                                var sessions = studyTimeData["sessions"] as JObject;
-                                if (sessions != null)
-                                {
-                                    foreach (var session in sessions)
-                                    {
-                                        var timestampStr = session.Value["timestamp"]?.ToString();
-                                        if (DateTime.TryParse(timestampStr, out var timestamp))
-                                        {
-                                            if (timestamp >= quarterStart && timestamp < quarterEnd)
-                                            {
-                                                totalMinutes += session.Value["duration"]?.Value<double>() ?? 0;
-                                            }
-                                        }
-                                    }
-                                }
-                                Debug.WriteLine($"User {user.Key}: {totalMinutes} minutes in current quarter");
-                                if (totalMinutes > 0)
-                                {
-                                    rankings.Add((user.Key, TimeSpan.FromMinutes(totalMinutes)));
-                                }
-                            }
-                            else
-                            {
-                                Debug.WriteLine($"No study time data for user {user.Key}");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"Error processing user {user.Key}: {ex.Message}");
-                        }
-                    }
-
-                    var sortedRankings = rankings.OrderByDescending(x => x.Time.TotalMinutes).ToList();
-                    Debug.WriteLine($"Setting leaderboard with {sortedRankings.Count} entries");
-                    return sortedRankings;
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"Error response: {errorContent}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error getting study time rankings: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
-            return new List<(string UserId, TimeSpan Time)>();
-        }
-
         public class StudyTimeData
         {
             public double TotalMinutes { get; set; }
@@ -372,74 +382,44 @@ namespace Learnify.Services
             public string Timestamp { get; set; }
         }
 
-        public async Task<StudyTimeData> GetStudyTimeDataAsync(string userId)
+        public async Task<List<StudyLog>> GetUserStudyLogsAsync(string userId)
         {
             try
             {
-                var url = GetAuthenticatedUrl($"users/{userId}/studyTime.json");
+                var url = GetAuthenticatedUrl($"users/{userId}/studyLogs.json");
                 var response = await _httpClient.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     if (!string.IsNullOrEmpty(content) && content != "null")
                     {
-                        var data = JObject.Parse(content);
-                        var studyTimeData = new StudyTimeData
-                        {
-                            TotalMinutes = data["totalMinutes"]?.Value<double>() ?? 0,
-                            LastUpdated = data["lastUpdated"]?.ToString(),
-                            Sessions = new List<StudySession>()
-                        };
-
-                        var sessions = data["sessions"] as JObject;
-                        if (sessions != null)
-                        {
-                            foreach (var session in sessions)
-                            {
-                                studyTimeData.Sessions.Add(new StudySession
-                                {
-                                    Duration = session.Value["duration"]?.Value<double>() ?? 0,
-                                    Timestamp = session.Value["timestamp"]?.ToString()
-                                });
-                            }
-                        }
-
-                        return studyTimeData;
+                        var logs = JsonConvert.DeserializeObject<Dictionary<string, StudyLog>>(content);
+                        return logs.Values.ToList();
                     }
                 }
-                return null;
+                return new List<StudyLog>();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error getting study time data: {ex.Message}");
-                return null;
+                Debug.WriteLine($"Error getting study logs: {ex.Message}");
+                return new List<StudyLog>();
             }
         }
 
-        public async Task<List<StudyLog>> GetUserStudyLogsAsync(string userId)
+        public async Task<bool> SaveStudyLogAsync(string userId, StudyLog log)
         {
-            var logs = new List<StudyLog>();
-            var url = GetAuthenticatedUrl($"users/{userId}/studyTime.json");
-            var response = await _httpClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var content = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(content) && content != "null")
-                {
-                    var data = JObject.Parse(content);
-                    var sessions = data["sessions"] as JObject;
-                    if (sessions != null)
-                    {
-                        foreach (var session in sessions)
-                        {
-                            var timestamp = DateTime.Parse(session.Value["timestamp"].ToString());
-                            var duration = session.Value["duration"].Value<double>();
-                            logs.Add(new StudyLog { Date = timestamp, Hours = duration / 60.0 });
-                        }
-                    }
-                }
+                var url = GetAuthenticatedUrl($"users/{userId}/studyLogs.json");
+                var content = new StringContent(JsonConvert.SerializeObject(log));
+                var response = await _httpClient.PostAsync(url, content);
+                return response.IsSuccessStatusCode;
             }
-            return logs;
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error saving study log: {ex.Message}");
+                return false;
+            }
         }
 
         public async Task FixMissingUsernamesAsync()
@@ -460,12 +440,12 @@ namespace Learnify.Services
                             {
                                 var userId = user.Key;
                                 var username = user.Value["username"]?.ToString();
-                                
+
                                 // Kiểm tra nếu username không tồn tại hoặc không hợp lệ
                                 if (string.IsNullOrEmpty(username) || username == "null" || username == userId)
                                 {
                                     Debug.WriteLine($"Fixing username for user {userId}");
-                                    
+
                                     // Thử lấy email từ AuthService nếu có
                                     var email = AuthService.GetUsername();
                                     if (!string.IsNullOrEmpty(email) && email.Contains("@"))
@@ -477,7 +457,7 @@ namespace Learnify.Services
                                         // Nếu không có email, tạo username từ userId
                                         username = $"user_{userId.Substring(0, Math.Min(8, userId.Length))}";
                                     }
-                                    
+
                                     // Lưu username
                                     var saveResult = await SaveUsernameAsync(userId, username);
                                     if (!saveResult)
@@ -522,5 +502,390 @@ namespace Learnify.Services
             }
             return null;
         }
+
+        public async Task<User> GetUserInfoAsync(string userId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"users/{userId}.json");
+                var response = await _httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    System.Diagnostics.Debug.WriteLine($"[FIREBASE] GetUserInfoAsync content: {content}");
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var userData = JObject.Parse(content);
+
+                        var user = new User
+                        {
+                            Id = userId,
+                            Username = userData["username"]?.Value<string>() ?? userId,
+                            Email = userData["email"]?.Value<string>() ?? "",
+                            PhoneNumber = userData["phoneNumber"]?.Value<string>() ?? "",
+                            Country = userData["country"]?.Value<string>() ?? "Việt Nam",
+                            AvatarUrl = userData["avatarUrl"]?.Value<string>() ?? "",
+                            CreatedAt = DateTime.TryParse(userData["createdAt"]?.Value<string>(), out var created) ? created : DateTime.Now,
+                            LastLoginAt = DateTime.TryParse(userData["lastLoginAt"]?.Value<string>(), out var lastLogin) ? lastLogin : DateTime.Now
+                        };
+
+                        return user;
+                    }
+                }
+
+                // Nếu không có dữ liệu, tạo user mới với thông tin cơ bản
+                return new User
+                {
+                    Id = userId,
+                    Username = userId,
+                    Email = "",
+                    PhoneNumber = "",
+                    Country = "Việt Nam",
+                    AvatarUrl = "",
+                    CreatedAt = DateTime.Now,
+                    LastLoginAt = DateTime.Now
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting user info: {ex.Message}");
+                // Trả về user với thông tin cơ bản
+                return new User
+                {
+                    Id = userId,
+                    Username = userId,
+                    Email = "",
+                    PhoneNumber = "",
+                    Country = "Việt Nam",
+                    AvatarUrl = "",
+                    CreatedAt = DateTime.Now,
+                    LastLoginAt = DateTime.Now
+                };
+            }
+        }
+
+        public async Task<bool> UpdateUserInfoAsync(string userId, User user)
+        {
+            try
+            {
+                var userData = new
+                {
+                    username = user.Username,
+                    email = user.Email,
+                    phoneNumber = user.PhoneNumber,
+                    country = user.Country,
+                    avatarUrl = user.AvatarUrl,
+                    lastLoginAt = DateTime.UtcNow.ToString("o")
+                };
+
+                var url = GetAuthenticatedUrl($"users/{userId}.json");
+                var json = JsonConvert.SerializeObject(userData);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync(url, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating user info: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SaveUserAuthInfoAsync(string userId, string email, string username = null)
+        {
+            try
+            {
+                var userData = new
+                {
+                    email = email
+                };
+
+                var url = GetAuthenticatedUrl($"users/{userId}.json");
+                var json = JsonConvert.SerializeObject(userData);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                // Sử dụng PATCH thay vì PUT để chỉ cập nhật trường email
+                var response = await _httpClient.PatchAsync(url, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error saving user auth info: {ex.Message}");
+                return false;
+            }
+        }
+        public async Task<bool> ChangePasswordAsync(string newPassword)
+        {
+            try
+            {
+                const string apiKey = "AIzaSyAhTPGYk6qxu_t-RXT3F3LOxgBk65LicIY";
+                var url = $"https://identitytoolkit.googleapis.com/v1/accounts:update?key={apiKey}";
+
+                var payload = new
+                {
+                    idToken = AuthService.GetToken(),
+                    password = newPassword,
+                    returnSecureToken = true
+                };
+
+                using (var client = new HttpClient())
+                {
+                    var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                    var response = await client.PostAsync(url, content);
+                    var responseString = await response.Content.ReadAsStringAsync();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Update token if returned
+                        try
+                        {
+                            dynamic resultObj = JsonConvert.DeserializeObject(responseString);
+                            if (resultObj?.idToken != null)
+                            {
+                                AuthService.SetToken((string)resultObj.idToken);
+                            }
+                        }
+                        catch
+                        {
+                            // Token update failed but password change succeeded
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Password change failed: {responseString}");
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error changing password: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> ChangePasswordAsync(string currentPassword, string newPassword)
+        {
+            try
+            {
+                // First verify the current password by attempting to sign in
+                const string apiKey = "AIzaSyAhTPGYk6qxu_t-RXT3F3LOxgBk65LicIY";
+                var verifyUrl = $"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={apiKey}";
+
+                // Get current user email from AuthService (not from database)
+                var email = AuthService.GetUsername();
+                if (string.IsNullOrEmpty(email) || !email.Contains("@"))
+                {
+                    Debug.WriteLine("Could not get current user email for password verification");
+                    return false;
+                }
+
+                var verifyPayload = new
+                {
+                    email = email,
+                    password = currentPassword,
+                    returnSecureToken = true
+                };
+
+                using (var client = new HttpClient())
+                {
+                    var verifyContent = new StringContent(JsonConvert.SerializeObject(verifyPayload), Encoding.UTF8, "application/json");
+                    var verifyResponse = await client.PostAsync(verifyUrl, verifyContent);
+                    var verifyResponseString = await verifyResponse.Content.ReadAsStringAsync();
+
+                    if (!verifyResponse.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"Current password verification failed: {verifyResponseString}");
+                        return false;
+                    }
+
+                    // If verification successful, proceed with password change
+                    return await ChangePasswordAsync(newPassword);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error verifying current password: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<List<UserRanking>> GetTopUsersAsync(int count)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl("users.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var users = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(content);
+                        var rankings = new List<UserRanking>();
+
+                        foreach (var user in users)
+                        {
+                            var displayName = user.Value["displayName"]?.ToString();
+                            var points = user.Value["points"]?.Value<int>() ?? 0;
+
+                            if (!string.IsNullOrEmpty(displayName))
+                            {
+                                rankings.Add(new UserRanking
+                                {
+                                    UserId = user.Key,
+                                    DisplayName = displayName,
+                                    Points = points
+                                });
+                            }
+                        }
+
+                        return rankings.OrderByDescending(r => r.Points).Take(count).ToList();
+                    }
+                }
+                return new List<UserRanking>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting top users: {ex.Message}");
+                return new List<UserRanking>();
+            }
+        }
+
+        public async Task<List<(string UserId, TimeSpan Time)>> GetStudyTimeRankingsAsync()
+        {
+            try
+            {
+                Debug.WriteLine("[FIREBASE] Getting weekly study time rankings...");
+                // Tính toán tuần hiện tại (thứ 2 đến chủ nhật) theo giờ Việt Nam (UTC+7)
+                var nowVN = DateTime.UtcNow.AddHours(7);
+                var today = nowVN.Date;
+                int dayOfWeek = (int)today.DayOfWeek;
+                if (dayOfWeek == 0) dayOfWeek = 7; // Chủ nhật = 7 thay vì 0
+                var startOfWeek = today.AddDays(-(dayOfWeek - 1)); // Lùi về thứ 2
+                var endOfWeek = startOfWeek.AddDays(6); // Chủ nhật của tuần
+                Debug.WriteLine($"[FIREBASE] Current week (VN): {startOfWeek:yyyy-MM-dd} to {endOfWeek:yyyy-MM-dd}");
+                var url = GetAuthenticatedUrl("users.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[FIREBASE] Response content length: {content?.Length ?? 0}");
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var users = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(content);
+                        var rankings = new List<(string UserId, TimeSpan Time)>();
+                        Debug.WriteLine($"[FIREBASE] Found {users.Count} users");
+                        foreach (var user in users)
+                        {
+                            try
+                            {
+                                var userId = user.Key;
+                                var userData = user.Value;
+                                var studyTimeData = userData["studyTime"] as JObject;
+                                if (studyTimeData != null)
+                                {
+                                    var sessions = studyTimeData["sessions"] as JObject;
+                                    double weeklyMinutes = 0;
+                                    if (sessions != null)
+                                    {
+                                        Debug.WriteLine($"[FIREBASE] User {userId}: Processing {sessions.Count} sessions");
+                                        foreach (var session in sessions)
+                                        {
+                                            try
+                                            {
+                                                var sessionData = session.Value as JObject;
+                                                var timestampStr = sessionData?["timestamp"]?.Value<string>();
+                                                var duration = sessionData?["duration"]?.Value<double>() ?? 0;
+                                                DateTime sessionTimeVN = DateTime.MinValue;
+                                                bool parsed = false;
+                                                if (!string.IsNullOrEmpty(timestampStr))
+                                                {
+                                                    // Try ISO format first (for new sessions)
+                                                    parsed = DateTime.TryParseExact(
+                                                        timestampStr,
+                                                        "yyyy-MM-ddTHH:mm:ss.fffffff",
+                                                        CultureInfo.InvariantCulture,
+                                                        DateTimeStyles.None,
+                                                        out sessionTimeVN
+                                                    );
+                                                    // Try legacy format if ISO fails
+                                                    if (!parsed)
+                                                    {
+                                                        parsed = DateTime.TryParseExact(
+                                                            timestampStr,
+                                                            "MM/dd/yyyy HH:mm:ss",
+                                                            CultureInfo.InvariantCulture,
+                                                            DateTimeStyles.None,
+                                                            out sessionTimeVN
+                                                        );
+                                                    }
+                                                }
+                                                if (parsed)
+                                                {
+                                                    var sessionDate = sessionTimeVN.Date;
+                                                    Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Session raw timestamp = '{timestampStr}', parsed = {sessionTimeVN:yyyy-MM-dd HH:mm:ss} (Kind={sessionTimeVN.Kind}), sessionDate = {sessionDate:yyyy-MM-dd}, week = {startOfWeek:yyyy-MM-dd} to {endOfWeek:yyyy-MM-dd}");
+                                                    if (sessionDate >= startOfWeek && sessionDate <= endOfWeek)
+                                                    {
+                                                        weeklyMinutes += duration;
+                                                        Debug.WriteLine($"[FIREBASE] User {userId}: Session {sessionDate:yyyy-MM-dd} = {duration} minutes (weekly total: {weeklyMinutes})");
+                                                    }
+                                                    else
+                                                    {
+                                                        Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Session {sessionDate:yyyy-MM-dd} is OUTSIDE week");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Could not parse timestamp '{timestampStr}'");
+                                                }
+                                            }
+                                            catch (Exception sessionEx)
+                                            {
+                                                Debug.WriteLine($"[FIREBASE] Error processing session for user {userId}: {sessionEx.Message}");
+                                            }
+                                        }
+                                    }
+                                    Debug.WriteLine($"[FIREBASE] User {userId}: Weekly total = {weeklyMinutes} minutes");
+                                    if (weeklyMinutes > 0)
+                                    {
+                                        rankings.Add((userId, TimeSpan.FromMinutes(weeklyMinutes)));
+                                    }
+                                }
+                                else
+                                {
+                                    Debug.WriteLine($"[FIREBASE] User {userId}: No study time data");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"[FIREBASE] Error processing user {user.Key}: {ex.Message}");
+                            }
+                        }
+                        Debug.WriteLine($"[FIREBASE] Final weekly rankings count: {rankings.Count}");
+                        return rankings.OrderByDescending(r => r.Time.TotalMinutes).ToList();
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[FIREBASE] Empty or null response content");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine($"[FIREBASE] HTTP error: {response.StatusCode}");
+                }
+                return new List<(string UserId, TimeSpan Time)>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[FIREBASE] Error getting weekly study time rankings: {ex.Message}");
+                Debug.WriteLine($"[FIREBASE] StackTrace: {ex.StackTrace}");
+                return new List<(string UserId, TimeSpan Time)>();
+            }
+        }
     }
-} 
+}
+

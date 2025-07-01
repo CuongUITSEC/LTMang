@@ -106,6 +106,7 @@
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationFramework.Aero2" />
     <Reference Include="SharpVectors.Converters.Wpf, Version=1.8.4.2, Culture=neutral, PublicKeyToken=b532964b8548be77, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpVectors.Wpf.1.8.4.2\lib\net47\SharpVectors.Converters.Wpf.dll</HintPath>
     </Reference>
@@ -187,10 +188,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Comands\BooleanToVisibilityConverter.cs" />
     <Compile Include="Comands\RelayCommand.cs" />
     <Compile Include="Converters\BooleanToBackgroundConverter.cs" />
     <Compile Include="Converters\DayToLeftConverter.cs" />
+    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
+    <Compile Include="Converters\CountToBoolConverter.cs" />
     <Compile Include="Converters\StringToColorConverter.cs" />
     <Compile Include="Converters\TimeRangeToHeightConverter.cs" />
     <Compile Include="Converters\TimeToTopConverter.cs" />
@@ -200,9 +202,11 @@
     <Compile Include="Models\StudyLog.cs" />
     <Compile Include="Models\StudySession.cs" />
     <Compile Include="Models\TaskItem.cs" />
+    <Compile Include="Models\User.cs" />
     <Compile Include="Models\UserRanking.cs" />
     <Compile Include="Services\AuthService.cs" />
     <Compile Include="Services\FirebaseService.cs" />
+    <Compile Include="Services\HttpClientExtensions.cs" />
     <Compile Include="Utils\ButtonEffects.cs" />
     <Compile Include="Services\StudyTimeService.cs" />
     <Compile Include="ViewModels\AnalystViewModel.cs" />
@@ -237,6 +241,9 @@
     </Compile>
     <Compile Include="Views\Start.xaml.cs">
       <DependentUpon>Start.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ChangePasswordWindow.xaml.cs">
+      <DependentUpon>ChangePasswordWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\UserControls\AnalystView.xaml.cs">
       <DependentUpon>AnalystView.xaml</DependentUpon>
@@ -329,6 +336,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Start.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ChangePasswordWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

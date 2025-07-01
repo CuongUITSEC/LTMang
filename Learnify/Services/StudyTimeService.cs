@@ -25,6 +25,7 @@ namespace Learnify.Services
         // Lấy thời gian học của người dùng
         public static TimeSpan GetStudyTime(string userId)
         {
+            if (string.IsNullOrEmpty(userId)) return TimeSpan.Zero;
             return _userTimes.TryGetValue(userId, out var time) ? time : TimeSpan.Zero;
         }
 
@@ -46,9 +47,11 @@ namespace Learnify.Services
             var loaded = JsonConvert.DeserializeObject<Dictionary<string, double>>(json);
             if (loaded != null)
             {
-                _userTimes = loaded.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => TimeSpan.FromMinutes(kvp.Value));
+                _userTimes = loaded
+                    .Where(kvp => !string.IsNullOrEmpty(kvp.Key))
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => TimeSpan.FromMinutes(kvp.Value));
             }
         }
 
