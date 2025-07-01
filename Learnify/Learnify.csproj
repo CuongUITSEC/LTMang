@@ -190,9 +190,13 @@
     <Compile Include="Comands\BooleanToVisibilityConverter.cs" />
     <Compile Include="Comands\RelayCommand.cs" />
     <Compile Include="Converters\BooleanToBackgroundConverter.cs" />
+    <Compile Include="Converters\DayToLeftConverter.cs" />
     <Compile Include="Converters\StringToColorConverter.cs" />
+    <Compile Include="Converters\TimeRangeToHeightConverter.cs" />
+    <Compile Include="Converters\TimeToTopConverter.cs" />
     <Compile Include="Models\Friend.cs" />
     <Compile Include="Models\Notification.cs" />
+    <Compile Include="Models\ScheduleItem.cs" />
     <Compile Include="Models\StudyLog.cs" />
     <Compile Include="Models\StudySession.cs" />
     <Compile Include="Models\TaskItem.cs" />
@@ -219,6 +223,7 @@
     <Compile Include="ViewModels\RankingViewModel.cs" />
     <Compile Include="ViewModels\RewardViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
+    <Compile Include="ViewModels\TableTimeViewModel.cs" />
     <Compile Include="ViewModels\TaskItemViewModel.cs" />
     <Compile Include="ViewModels\TimerModeViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
