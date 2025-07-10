@@ -43,13 +43,13 @@
 
             <ItemsControl.ItemsSource>
                 <x:Array Type="{x:Type sys:String}">
-                    <sys:String>Sunday</sys:String>
                     <sys:String>Monday</sys:String>
                     <sys:String>Tuesday</sys:String>
                     <sys:String>Wednesday</sys:String>
                     <sys:String>Thursday</sys:String>
                     <sys:String>Friday</sys:String>
                     <sys:String>Saturday</sys:String>
+                    <sys:String>Sunday</sys:String>
                 </x:Array>
             </ItemsControl.ItemsSource>
         </ItemsControl>
@@ -90,7 +90,13 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border BorderThickness="0.5" BorderBrush="Black" Background="{Binding Color}">
-                        <TextBlock Text="{Binding Subject}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Grid>
+                            <TextBlock Text="{Binding Subject}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Button Content="X" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Command="{Binding DataContext.RemoveScheduleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" Margin="2"
+                                    Background="Transparent" BorderThickness="0"/>
+                        </Grid>
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
@@ -107,20 +113,7 @@
                     <TextBlock Text="Thêm môn học mới" FontWeight="Bold" FontSize="16" Margin="0 0 0 10" />
                     <StackPanel Orientation="Horizontal" Margin="0 0 0 10">
                         <TextBlock Text="Ngày:" VerticalAlignment="Center" Width="50" />
-                        <ComboBox ItemsSource="{Binding DaysOfWeek}" SelectedItem="{Binding NewItemDay}" Width="200">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock>
-                                        <TextBlock.Text>
-                                            <MultiBinding StringFormat="{}{0}">
-                                                <Binding />
-                                                <Binding RelativeSource="{RelativeSource AncestorType=UserControl}" />
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                        <ComboBox ItemsSource="{Binding DaysOfWeek}" SelectedItem="{Binding NewItemDay}" Width="200" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0 0 0 10">
