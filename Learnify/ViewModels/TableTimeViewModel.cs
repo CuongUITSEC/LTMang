@@ -7,6 +7,9 @@ using System.Windows.Media;
 using System.Linq;
 using System.Collections.Generic;
 using Learnify.Commands;
+using System.Windows;
+using Learnify.Services;
+using System.Threading.Tasks;
 
 namespace Learnify.ViewModels
 {
@@ -88,6 +91,8 @@ namespace Learnify.ViewModels
         public ICommand AddScheduleCommand { get; }
         // Command xóa tiết học
         public ICommand RemoveScheduleCommand { get; }
+        // Command lưu thời khóa biểu
+        public ICommand SaveScheduleCommand { get; }
 
         public TableTimeViewModel()
         {
@@ -101,6 +106,10 @@ namespace Learnify.ViewModels
             AddScheduleCommand = new RelayCommand(AddSchedule, CanAddSchedule);
             // Command xóa tiết học
             RemoveScheduleCommand = new RelayCommand<ScheduleItem>(RemoveSchedule);
+            SaveScheduleCommand = new RelayCommand(async () => await SaveScheduleToFirebaseAsync());
+
+            // Tự động tải thời khóa biểu khi khởi tạo ViewModel
+            _ = LoadScheduleFromFirebaseAsync();
         }
 
         private void AddSchedule()
@@ -128,6 +137,31 @@ namespace Learnify.ViewModels
             if (item != null && ScheduleItems.Contains(item))
             {
                 ScheduleItems.Remove(item);
+            }
+        }
+
+        private async Task SaveScheduleToFirebaseAsync()
+        {
+            var firebaseService = new FirebaseService();
+            string userId = AuthService.GetUserId();
+            var scheduleList = ScheduleItems.ToList();
+            bool result = await firebaseService.SaveScheduleAsync(userId, scheduleList);
+            if (result)
+                MessageBox.Show("Lưu thời khóa biểu thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            else
+                MessageBox.Show("Lưu thời khóa biểu thất bại!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        public async Task LoadScheduleFromFirebaseAsync()
+        {
+            var firebaseService = new FirebaseService();
+            string userId = AuthService.GetUserId();
+            var scheduleList = await firebaseService.GetScheduleAsync(userId);
+            ScheduleItems.Clear();
+            if (scheduleList != null)
+            {
+                foreach (var item in scheduleList)
+                    ScheduleItems.Add(item);
             }
         }
 

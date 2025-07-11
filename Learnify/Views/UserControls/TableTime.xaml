@@ -105,6 +105,8 @@
         <!-- Nút mở Popup thêm -->
         <Button Grid.Row="2" Content="Thêm môn học" HorizontalAlignment="Right" Margin="10"
                 Command="{Binding OpenAddPopupCommand}" />
+        <Button Grid.Row="2" Content="Lưu thời khóa biểu" HorizontalAlignment="Left" Margin="10"
+               Command="{Binding SaveScheduleCommand}" />
 
         <!-- Popup thêm mới môn học -->
         <Popup IsOpen="{Binding IsAddPopupOpen}" Placement="Center" StaysOpen="False">

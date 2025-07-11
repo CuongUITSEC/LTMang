@@ -188,6 +188,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Models\CalendarEvent.cs" />
     <Compile Include="Comands\RelayCommand.cs" />
     <Compile Include="Converters\BooleanToBackgroundConverter.cs" />
     <Compile Include="Converters\DayToLeftConverter.cs" />
