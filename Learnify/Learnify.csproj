@@ -208,10 +208,14 @@
     <Compile Include="Services\AuthService.cs" />
     <Compile Include="Services\FirebaseService.cs" />
     <Compile Include="Services\HttpClientExtensions.cs" />
+    <Compile Include="Views\ShareCampaignWindow.xaml.cs">
+      <DependentUpon>ShareCampaignWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Utils\ButtonEffects.cs" />
     <Compile Include="Services\StudyTimeService.cs" />
     <Compile Include="ViewModels\AnalystViewModel.cs" />
     <Compile Include="ViewModels\CampaignViewModel.cs" />
+    <Compile Include="ViewModels\ShareCampaignViewModel.cs" />
     <Compile Include="ViewModels\CartesianChartViewModel.cs" />
     <Compile Include="ViewModels\CalendarViewModel.cs" />
     <Compile Include="ViewModels\HomeViewModel.cs" />
@@ -413,6 +417,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\UserControls\TimerModeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ShareCampaignWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

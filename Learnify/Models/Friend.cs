@@ -25,6 +25,8 @@ namespace Learnify.Models
         public FriendStatus Status { get; set; } = FriendStatus.None;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastInteraction { get; set; } = DateTime.Now;
+        // Thuộc tính chỉ dùng cho UI, không lưu DB
+        public bool IsSelected { get; set; } = false;
     }
 
     public class FriendRequest

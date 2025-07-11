@@ -2,6 +2,12 @@
 using System.Windows.Input;
 using System.Windows.Threading;
 using Learnify.Commands;
+using System.Collections.ObjectModel;
+using System.Windows;
+using Learnify.Models;
+using Learnify.Views;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Learnify.ViewModels
 {
@@ -119,6 +125,9 @@ namespace Learnify.ViewModels
             }
         }
 
+        public ObservableCollection<Friend> Friends { get; set; } = new ObservableCollection<Friend>();
+        public ICommand OpenShareWindowCommand { get; }
+
         // Lệnh
         public ICommand AddEventCommand { get; }
         public ICommand CancelEventCommand { get; }
@@ -135,6 +144,12 @@ namespace Learnify.ViewModels
             CancelEventCommand = new RelayCommand(CancelEvent);
             ShowInputCommand = new RelayCommand(ShowInput);
             ClearCountdownCommand = new RelayCommand(ClearCountdown);
+            OpenShareWindowCommand = new RelayCommand(OpenShareWindow);
+
+            // Dummy data bạn bè (bạn thay bằng lấy từ service thực tế)
+            Friends.Add(new Friend { Id = "1", Name = "Phương Tuấn", Email = "tuan@example.com" });
+            Friends.Add(new Friend { Id = "2", Name = "Minh Anh", Email = "anh@example.com" });
+            Friends.Add(new Friend { Id = "3", Name = "Hà My", Email = "my@example.com" });
 
             // Khởi tạo bộ đếm thời gian
             _timer = new DispatcherTimer
@@ -202,6 +217,23 @@ namespace Learnify.ViewModels
             Hours = timeRemaining.Hours;
             Minutes = timeRemaining.Minutes;
             Seconds = timeRemaining.Seconds;
+        }
+
+        private void OpenShareWindow()
+        {
+            var win = new ShareCampaignWindow(Friends);
+            if (win.ShowDialog() == true)
+            {
+                // Lấy danh sách bạn bè đã chọn
+                var selected = Friends.Where(f => f.IsSelected).ToList();
+                if (selected.Count > 0)
+                {
+                    // TODO: Gửi chiến dịch cho các bạn này (ví dụ: lưu DB, gửi server, ...)
+                    MessageBox.Show($"Đã chia sẻ chiến dịch cho: {string.Join(", ", selected.Select(f => f.Name))}", "Chia sẻ thành công");
+                    // Reset trạng thái chọn
+                    foreach (var f in Friends) f.IsSelected = false;
+                }
+            }
         }
     }
 }
