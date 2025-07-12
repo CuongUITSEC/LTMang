@@ -26,6 +26,30 @@ namespace Learnify.Services
             };
         }
 
+        // Lưu thông tin chia sẻ chiến dịch cho bạn bè lên Firebase
+        public async Task<bool> ShareCampaignToFriendsAsync(string ownerId, string campaignName, DateTime? campaignDate, List<Friend> friends)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"sharedCampaigns/{ownerId}.json");
+                var data = new
+                {
+                    campaignName = campaignName,
+                    campaignDate = campaignDate?.ToString("yyyy-MM-dd"),
+                    sharedTo = friends.Select(f => new { f.Id, f.Name, f.Email }).ToList(),
+                    sharedAt = DateTime.UtcNow.ToString("o")
+                };
+                var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(url, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error sharing campaign: {ex.Message}");
+                return false;
+            }
+        }
+
         private const string FirebaseUrl = "https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/";
 
         public FirebaseService()

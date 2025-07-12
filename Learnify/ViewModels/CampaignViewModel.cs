@@ -157,9 +157,63 @@ namespace Learnify.ViewModels
                 Interval = TimeSpan.FromSeconds(1)
             };
             _timer.Tick += Timer_Tick;
+            // Tự động load chiến dịch đã lưu (nếu có)
+            LoadMyCampaignFromFirebase();
         }
 
-        private void AddEvent()
+
+        // Lưu và tải chiến dịch cá nhân
+        private async void LoadMyCampaignFromFirebase()
+        {
+            var firebase = new Learnify.Services.FirebaseService();
+            string userId = Learnify.Services.AuthService.GetUserId();
+            var url = $"users/{userId}/myCampaign.json";
+            var httpClient = new System.Net.Http.HttpClient();
+            var token = Learnify.Services.AuthService.GetToken();
+            var fullUrl = $"https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/{url}?auth={token}";
+            var response = await httpClient.GetAsync(fullUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(content) && content != "null")
+                {
+                    var data = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(content);
+                    EventTitle = data.campaignName;
+                    string dateIso = data.campaignDate;
+                    if (DateTime.TryParse(dateIso, out DateTime parsedDate))
+                    {
+                        EventDate = parsedDate;
+                        EventDateText = parsedDate.ToString("dd/MM/yyyy");
+                    }
+                    else
+                    {
+                        EventDateText = dateIso;
+                    }
+                    IsInputPanelVisible = false;
+                    IsCountdownVisible = true;
+                    UpdateCountdown();
+                    _timer.Start();
+                }
+            }
+        }
+
+        private async void SaveMyCampaignToFirebase()
+        {
+            var firebase = new Learnify.Services.FirebaseService();
+            string userId = Learnify.Services.AuthService.GetUserId();
+            var url = $"users/{userId}/myCampaign.json";
+            var httpClient = new System.Net.Http.HttpClient();
+            var token = Learnify.Services.AuthService.GetToken();
+            var fullUrl = $"https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/{url}?auth={token}";
+            var data = new
+            {
+                campaignName = EventName,
+                campaignDate = EventDate?.ToString("yyyy-MM-ddTHH:mm:ss")
+            };
+            var content = new System.Net.Http.StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(data), System.Text.Encoding.UTF8, "application/json");
+            await httpClient.PutAsync(fullUrl, content);
+        }
+        private async void AddEvent()
         {
             if (string.IsNullOrWhiteSpace(EventName) || EventDate == null)
                 return;
@@ -171,6 +225,9 @@ namespace Learnify.ViewModels
 
             UpdateCountdown();
             _timer.Start();
+
+            // Lưu chiến dịch cá nhân lên Firebase
+            await System.Threading.Tasks.Task.Run(() => SaveMyCampaignToFirebase());
         }
 
         private void CancelEvent()
@@ -187,13 +244,26 @@ namespace Learnify.ViewModels
             IsCountdownVisible = false;
         }
 
-        private void ClearCountdown()
+        private async void ClearCountdown()
         {
             _timer.Stop();
             EventTitle = string.Empty;
             EventDateText = string.Empty;
             Days = Hours = Minutes = Seconds = 0;
             ShowInput();
+
+            // Xóa dữ liệu chiến dịch cá nhân trên Firebase
+            await DeleteMyCampaignFromFirebase();
+        }
+
+        private async System.Threading.Tasks.Task DeleteMyCampaignFromFirebase()
+        {
+            string userId = Learnify.Services.AuthService.GetUserId();
+            var url = $"users/{userId}/myCampaign.json";
+            var httpClient = new System.Net.Http.HttpClient();
+            var token = Learnify.Services.AuthService.GetToken();
+            var fullUrl = $"https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/{url}?auth={token}";
+            await httpClient.DeleteAsync(fullUrl);
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -228,12 +298,33 @@ namespace Learnify.ViewModels
                 var selected = Friends.Where(f => f.IsSelected).ToList();
                 if (selected.Count > 0)
                 {
-                    // TODO: Gửi chiến dịch cho các bạn này (ví dụ: lưu DB, gửi server, ...)
-                    MessageBox.Show($"Đã chia sẻ chiến dịch cho: {string.Join(", ", selected.Select(f => f.Name))}", "Chia sẻ thành công");
-                    // Reset trạng thái chọn
-                    foreach (var f in Friends) f.IsSelected = false;
+                    // Gửi chiến dịch cho các bạn này (lưu lên Firebase)
+                    ShareCampaignToFriends(selected);
                 }
             }
+        }
+
+        private async void ShareCampaignToFriends(List<Friend> selectedFriends)
+        {
+            var firebase = new Learnify.Services.FirebaseService();
+            // Lấy userId hiện tại, ví dụ từ AuthService
+            string userId = Learnify.Services.AuthService.GetUserId();
+            bool result = await firebase.ShareCampaignToFriendsAsync(
+                ownerId: userId,
+                campaignName: EventTitle,
+                campaignDate: EventDate,
+                friends: selectedFriends
+            );
+            if (result)
+            {
+                MessageBox.Show($"Đã chia sẻ chiến dịch cho: {string.Join(", ", selectedFriends.Select(f => f.Name))}", "Chia sẻ thành công");
+            }
+            else
+            {
+                MessageBox.Show("Có lỗi khi chia sẻ chiến dịch!", "Lỗi");
+            }
+            // Reset trạng thái chọn
+            foreach (var f in Friends) f.IsSelected = false;
         }
     }
 }
