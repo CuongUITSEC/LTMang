@@ -735,6 +735,7 @@ namespace Learnify.Services
                             Id = uid,
                             Email = email
                         };
+                        Debug.WriteLine($"[GetUserByUid] Friend object: Id={friend.Id}, Name={friend.Name}, Email={friend.Email}, Avatar={friend.Avatar}, IsOnline={friend.IsOnline}");
                         
                         Debug.WriteLine($"[GetUserByUid] Found user in publicUsers: {username} ({uid})");
                         return friend;
@@ -770,6 +771,7 @@ namespace Learnify.Services
                                 Id = uid,
                                 Email = data["email"]?.ToString() ?? ""
                             };
+                            Debug.WriteLine($"[GetUserByUid] Friend object (private): Id={friend.Id}, Name={friend.Name}, Email={friend.Email}, Avatar={friend.Avatar}, IsOnline={friend.IsOnline}");
                             
                             Debug.WriteLine($"[GetUserByUid] Found user in users: {username} ({uid})");
                             return friend;
@@ -1242,8 +1244,6 @@ namespace Learnify.Services
             public int Period { get; set; }
             public string Subject { get; set; }
             public string Color { get; set; }
-        }
-    }
         }
 
         public async Task<bool> UpdateUserOnlineStatusAsync(string userId, bool isOnline)
@@ -2100,6 +2100,11 @@ namespace Learnify.Services
                 Debug.WriteLine($"[RemoveFriendAsync] 📍 Step 2: Creating unfriend marker for {userId2}...");
                 await CreateUnfriendMarkerAsync(userId1, userId2);
                 Debug.WriteLine($"[RemoveFriendAsync] ✅ Step 2 COMPLETED: Created unfriend marker for {userId2}");
+
+                // 2b. Thông báo thay đổi cho user bị hủy kết bạn (đồng bộ UI)
+                Debug.WriteLine($"[RemoveFriendAsync] 🔄 Step 2b: Notifying friends list change for {userId2}...");
+                await NotifyFriendsListChangeWithRetryAsync(userId2);
+                Debug.WriteLine($"[RemoveFriendAsync] ✅ Step 2b COMPLETED: Notified friends list change for {userId2}");
 
                 // 3. Xóa tất cả friendRequests liên quan (cả 2 chiều) để tránh auto-re-add
                 Debug.WriteLine($"[RemoveFriendAsync] 🧹 Step 3: Cleaning up friend requests...");

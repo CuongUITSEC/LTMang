@@ -70,8 +70,6 @@
                 </Setter>
             </Style>
 
-            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-
             <DataTemplate DataType="{x:Type viewModel:HomeViewModel}">
                 <view:HomeView/>
             </DataTemplate>

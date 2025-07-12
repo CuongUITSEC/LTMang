@@ -203,6 +203,10 @@
     <Compile Include="Converters\StatusToTextConverter.cs" />
     <Compile Include="Converters\StringToBoolConverter.cs" />
     <Compile Include="Converters\StringToColorConverter.cs" />
+    <Compile Include="Converters\StringToImageSourceConverter.cs" />
+    <Compile Include="Converters\StringToVisibilityConverter.cs" />
+    <Compile Include="Converters\TimeRangeToHeightConverter.cs" />
+    <Compile Include="Converters\TimeToTopConverter.cs" />
     <Compile Include="Models\Friend.cs" />
     <Compile Include="Models\FriendRequestNotification.cs" />
     <Compile Include="Models\Notification.cs" />
