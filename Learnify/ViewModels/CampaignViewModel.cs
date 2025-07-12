@@ -2,6 +2,12 @@
 using System.Windows.Input;
 using System.Windows.Threading;
 using Learnify.Commands;
+using System.Collections.ObjectModel;
+using System.Windows;
+using Learnify.Models;
+using Learnify.Views;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Learnify.ViewModels
 {
@@ -119,6 +125,9 @@ namespace Learnify.ViewModels
             }
         }
 
+        public ObservableCollection<Friend> Friends { get; set; } = new ObservableCollection<Friend>();
+        public ICommand OpenShareWindowCommand { get; }
+
         // Lệnh
         public ICommand AddEventCommand { get; }
         public ICommand CancelEventCommand { get; }
@@ -135,6 +144,12 @@ namespace Learnify.ViewModels
             CancelEventCommand = new RelayCommand(CancelEvent);
             ShowInputCommand = new RelayCommand(ShowInput);
             ClearCountdownCommand = new RelayCommand(ClearCountdown);
+            OpenShareWindowCommand = new RelayCommand(OpenShareWindow);
+
+            // Dummy data bạn bè (bạn thay bằng lấy từ service thực tế)
+            Friends.Add(new Friend { Id = "1", Name = "Phương Tuấn", Email = "tuan@example.com" });
+            Friends.Add(new Friend { Id = "2", Name = "Minh Anh", Email = "anh@example.com" });
+            Friends.Add(new Friend { Id = "3", Name = "Hà My", Email = "my@example.com" });
 
             // Khởi tạo bộ đếm thời gian
             _timer = new DispatcherTimer
@@ -142,9 +157,63 @@ namespace Learnify.ViewModels
                 Interval = TimeSpan.FromSeconds(1)
             };
             _timer.Tick += Timer_Tick;
+            // Tự động load chiến dịch đã lưu (nếu có)
+            LoadMyCampaignFromFirebase();
         }
 
-        private void AddEvent()
+
+        // Lưu và tải chiến dịch cá nhân
+        private async void LoadMyCampaignFromFirebase()
+        {
+            var firebase = new Learnify.Services.FirebaseService();
+            string userId = Learnify.Services.AuthService.GetUserId();
+            var url = $"users/{userId}/myCampaign.json";
+            var httpClient = new System.Net.Http.HttpClient();
+            var token = Learnify.Services.AuthService.GetToken();
+            var fullUrl = $"https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/{url}?auth={token}";
+            var response = await httpClient.GetAsync(fullUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(content) && content != "null")
+                {
+                    var data = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(content);
+                    EventTitle = data.campaignName;
+                    string dateIso = data.campaignDate;
+                    if (DateTime.TryParse(dateIso, out DateTime parsedDate))
+                    {
+                        EventDate = parsedDate;
+                        EventDateText = parsedDate.ToString("dd/MM/yyyy");
+                    }
+                    else
+                    {
+                        EventDateText = dateIso;
+                    }
+                    IsInputPanelVisible = false;
+                    IsCountdownVisible = true;
+                    UpdateCountdown();
+                    _timer.Start();
+                }
+            }
+        }
+
+        private async void SaveMyCampaignToFirebase()
+        {
+            var firebase = new Learnify.Services.FirebaseService();
+            string userId = Learnify.Services.AuthService.GetUserId();
+            var url = $"users/{userId}/myCampaign.json";
+            var httpClient = new System.Net.Http.HttpClient();
+            var token = Learnify.Services.AuthService.GetToken();
+            var fullUrl = $"https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/{url}?auth={token}";
+            var data = new
+            {
+                campaignName = EventName,
+                campaignDate = EventDate?.ToString("yyyy-MM-ddTHH:mm:ss")
+            };
+            var content = new System.Net.Http.StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(data), System.Text.Encoding.UTF8, "application/json");
+            await httpClient.PutAsync(fullUrl, content);
+        }
+        private async void AddEvent()
         {
             if (string.IsNullOrWhiteSpace(EventName) || EventDate == null)
                 return;
@@ -156,6 +225,9 @@ namespace Learnify.ViewModels
 
             UpdateCountdown();
             _timer.Start();
+
+            // Lưu chiến dịch cá nhân lên Firebase
+            await System.Threading.Tasks.Task.Run(() => SaveMyCampaignToFirebase());
         }
 
         private void CancelEvent()
@@ -172,13 +244,26 @@ namespace Learnify.ViewModels
             IsCountdownVisible = false;
         }
 
-        private void ClearCountdown()
+        private async void ClearCountdown()
         {
             _timer.Stop();
             EventTitle = string.Empty;
             EventDateText = string.Empty;
             Days = Hours = Minutes = Seconds = 0;
             ShowInput();
+
+            // Xóa dữ liệu chiến dịch cá nhân trên Firebase
+            await DeleteMyCampaignFromFirebase();
+        }
+
+        private async System.Threading.Tasks.Task DeleteMyCampaignFromFirebase()
+        {
+            string userId = Learnify.Services.AuthService.GetUserId();
+            var url = $"users/{userId}/myCampaign.json";
+            var httpClient = new System.Net.Http.HttpClient();
+            var token = Learnify.Services.AuthService.GetToken();
+            var fullUrl = $"https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/{url}?auth={token}";
+            await httpClient.DeleteAsync(fullUrl);
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -202,6 +287,44 @@ namespace Learnify.ViewModels
             Hours = timeRemaining.Hours;
             Minutes = timeRemaining.Minutes;
             Seconds = timeRemaining.Seconds;
+        }
+
+        private void OpenShareWindow()
+        {
+            var win = new ShareCampaignWindow(Friends);
+            if (win.ShowDialog() == true)
+            {
+                // Lấy danh sách bạn bè đã chọn
+                var selected = Friends.Where(f => f.IsSelected).ToList();
+                if (selected.Count > 0)
+                {
+                    // Gửi chiến dịch cho các bạn này (lưu lên Firebase)
+                    ShareCampaignToFriends(selected);
+                }
+            }
+        }
+
+        private async void ShareCampaignToFriends(List<Friend> selectedFriends)
+        {
+            var firebase = new Learnify.Services.FirebaseService();
+            // Lấy userId hiện tại, ví dụ từ AuthService
+            string userId = Learnify.Services.AuthService.GetUserId();
+            bool result = await firebase.ShareCampaignToFriendsAsync(
+                ownerId: userId,
+                campaignName: EventTitle,
+                campaignDate: EventDate,
+                friends: selectedFriends
+            );
+            if (result)
+            {
+                MessageBox.Show($"Đã chia sẻ chiến dịch cho: {string.Join(", ", selectedFriends.Select(f => f.Name))}", "Chia sẻ thành công");
+            }
+            else
+            {
+                MessageBox.Show("Có lỗi khi chia sẻ chiến dịch!", "Lỗi");
+            }
+            // Reset trạng thái chọn
+            foreach (var f in Friends) f.IsSelected = false;
         }
     }
 }

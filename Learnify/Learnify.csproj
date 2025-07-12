@@ -188,9 +188,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Models\CalendarEvent.cs" />
     <Compile Include="Comands\RelayCommand.cs" />
     <Compile Include="Converters\BooleanInverterConverter.cs" />
     <Compile Include="Converters\BooleanToBackgroundConverter.cs" />
+    <Compile Include="Converters\DayToLeftConverter.cs" />
     <Compile Include="Converters\BooleanToColorConverter.cs" />
     <Compile Include="Converters\BooleanToStatusConverter.cs" />
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
@@ -201,11 +203,10 @@
     <Compile Include="Converters\StatusToTextConverter.cs" />
     <Compile Include="Converters\StringToBoolConverter.cs" />
     <Compile Include="Converters\StringToColorConverter.cs" />
-    <Compile Include="Converters\StringToImageSourceConverter.cs" />
-    <Compile Include="Converters\StringToVisibilityConverter.cs" />
     <Compile Include="Models\Friend.cs" />
     <Compile Include="Models\FriendRequestNotification.cs" />
     <Compile Include="Models\Notification.cs" />
+    <Compile Include="Models\ScheduleItem.cs" />
     <Compile Include="Models\StudyLog.cs" />
     <Compile Include="Models\StudySession.cs" />
     <Compile Include="Models\TaskItem.cs" />
@@ -214,10 +215,14 @@
     <Compile Include="Services\AuthService.cs" />
     <Compile Include="Services\FirebaseService.cs" />
     <Compile Include="Services\HttpClientExtensions.cs" />
+    <Compile Include="Views\ShareCampaignWindow.xaml.cs">
+      <DependentUpon>ShareCampaignWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Utils\ButtonEffects.cs" />
     <Compile Include="Services\StudyTimeService.cs" />
     <Compile Include="ViewModels\AnalystViewModel.cs" />
     <Compile Include="ViewModels\CampaignViewModel.cs" />
+    <Compile Include="ViewModels\ShareCampaignViewModel.cs" />
     <Compile Include="ViewModels\CartesianChartViewModel.cs" />
     <Compile Include="ViewModels\CalendarViewModel.cs" />
     <Compile Include="ViewModels\FriendInfoWindowViewModel.cs" />
@@ -236,6 +241,7 @@
     <Compile Include="ViewModels\RankingViewModel.cs" />
     <Compile Include="ViewModels\RewardViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
+    <Compile Include="ViewModels\TableTimeViewModel.cs" />
     <Compile Include="ViewModels\TaskItemViewModel.cs" />
     <Compile Include="ViewModels\TimerModeViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
@@ -427,6 +433,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\UserControls\TimerModeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ShareCampaignWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

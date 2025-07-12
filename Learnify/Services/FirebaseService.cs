@@ -10,6 +10,7 @@ using System.Text;
 using System.Globalization;
 using Learnify.Models;
 using Learnify.Services;
+using System.Windows.Media;
 using Learnify.ViewModels;
 
 namespace Learnify.Services
@@ -32,6 +33,30 @@ namespace Learnify.Services
             {
                 Timeout = TimeSpan.FromSeconds(30)
             };
+        }
+
+        // Lưu thông tin chia sẻ chiến dịch cho bạn bè lên Firebase
+        public async Task<bool> ShareCampaignToFriendsAsync(string ownerId, string campaignName, DateTime? campaignDate, List<Friend> friends)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"sharedCampaigns/{ownerId}.json");
+                var data = new
+                {
+                    campaignName = campaignName,
+                    campaignDate = campaignDate?.ToString("yyyy-MM-dd"),
+                    sharedTo = friends.Select(f => new { f.Id, f.Name, f.Email }).ToList(),
+                    sharedAt = DateTime.UtcNow.ToString("o")
+                };
+                var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(url, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error sharing campaign: {ex.Message}");
+                return false;
+            }
         }
 
         private const string FirebaseUrl = "https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/";
@@ -1150,6 +1175,75 @@ namespace Learnify.Services
                 Debug.WriteLine($"[FIREBASE] StackTrace: {ex.StackTrace}");
                 return new List<(string UserId, TimeSpan Time)>();
             }
+        }
+
+        // Lưu thời khóa biểu cho user
+        public async Task<bool> SaveScheduleAsync(string userId, List<ScheduleItem> schedule)
+        {
+            try
+            {
+                // Chuyển đổi Color (Brush) sang string để lưu
+                var serializableSchedule = schedule.Select(item => new
+                {
+                    item.DayOfWeek,
+                    item.Period,
+                    item.Subject,
+                    Color = item.Color is SolidColorBrush brush ? brush.Color.ToString() : item.Color?.ToString()
+                }).ToList();
+
+                var url = GetAuthenticatedUrl($"users/{userId}/schedule.json");
+                var json = JsonConvert.SerializeObject(serializableSchedule);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PutAsync(url, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error saving schedule: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Lấy thời khóa biểu cho user
+        public async Task<List<ScheduleItem>> GetScheduleAsync(string userId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"users/{userId}/schedule.json");
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var rawList = JsonConvert.DeserializeObject<List<ScheduleItemRaw>>(content);
+                        return rawList.Select(item => new ScheduleItem
+                        {
+                            DayOfWeek = item.DayOfWeek,
+                            Period = item.Period,
+                            Subject = item.Subject,
+                            Color = (SolidColorBrush)(new BrushConverter().ConvertFromString(item.Color))
+                        }).ToList();
+                    }
+                }
+                return new List<ScheduleItem>();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading schedule: {ex.Message}");
+                return new List<ScheduleItem>();
+            }
+        }
+
+        // Lớp phụ trợ để deserialize
+        private class ScheduleItemRaw
+        {
+            public int DayOfWeek { get; set; }
+            public int Period { get; set; }
+            public string Subject { get; set; }
+            public string Color { get; set; }
+        }
+    }
         }
 
         public async Task<bool> UpdateUserOnlineStatusAsync(string userId, bool isOnline)

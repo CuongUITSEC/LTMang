@@ -18,6 +18,11 @@
                 <ResourceDictionary Source="/Styles/styles.xaml"/>
                 <ResourceDictionary Source="/Styles/button-style.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            
+            <converters:DayToLeftConverter x:Key="DayToLeftConverter"/>
+            <converters:TimeToTopConverter x:Key="TimeToTopConverter"/>
+            <converters:TimeRangeToHeightConverter x:Key="TimeRangeToHeightConverter"/>
+
             <converters:BooleanToBackgroundConverter x:Key="BooleanToBackgroundConverter"/>
             <converters:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
@@ -64,6 +69,8 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
             <DataTemplate DataType="{x:Type viewModel:HomeViewModel}">
                 <view:HomeView/>
