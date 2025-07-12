@@ -16,6 +16,7 @@ using System.Runtime;
 using SharpVectors.Woffs;
 using System.Windows.Interop;
 using Learnify.Properties;
+using Learnify.ViewModels;
 
 namespace Learnify.Views
 {
@@ -24,9 +25,21 @@ namespace Learnify.Views
     /// </summary>
     public partial class MainView : Window
     {
+        private MainViewModel _viewModel;
+
         public MainView()
         {
             InitializeComponent();
+            _viewModel = new MainViewModel();
+            DataContext = _viewModel;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            
+            // Dừng polling khi đóng cửa sổ
+            _viewModel?.Dispose();
         }
 
         private void btnExit_Click(object sender, RoutedEventArgs e)
@@ -61,6 +74,48 @@ namespace Learnify.Views
         private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
+        }
+
+        private void btnClearSearch_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Xóa nội dung tìm kiếm
+                _viewModel.SearchText = string.Empty;
+                
+                // Focus lại vào TextBox
+                txtBoxSearch.Focus();
+                
+                // System.Diagnostics.Debug.WriteLine("[MainView] Search text cleared");
+            }
+            catch (Exception ex)
+            {
+                // System.Diagnostics.Debug.WriteLine($"[MainView] btnClearSearch_Click error: {ex.Message}");
+            }
+        }
+
+        private void txtBoxSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                // Nếu nhấn Ctrl+A, xóa toàn bộ text
+                if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control)
+                {
+                    txtBoxSearch.SelectAll();
+                    e.Handled = true;
+                }
+                // Nếu nhấn Escape, xóa text và focus
+                else if (e.Key == Key.Escape)
+                {
+                    _viewModel.SearchText = string.Empty;
+                    txtBoxSearch.Focus();
+                    e.Handled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                // System.Diagnostics.Debug.WriteLine($"[MainView] txtBoxSearch_KeyDown error: {ex.Message}");
+            }
         }
     }
 }

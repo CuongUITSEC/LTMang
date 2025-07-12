@@ -32,12 +32,12 @@ namespace Learnify.ViewModels
         public ICommand ToggleNotificationCommand { get; }
         public ICommand MarkAsReadCommand { get; }
         public ICommand ClearAllCommand { get; }        private readonly FirebaseService _firebaseService = new FirebaseService();
-        private readonly object _mainViewModel; // Tham chiếu để reload FriendsList
+        private readonly MainViewModel _mainViewModel; // Tham chiếu để reload FriendsList
 
         private System.Threading.CancellationTokenSource _pollingCts;
         private HashSet<string> _notifiedFriendRequests = new HashSet<string>();
 
-        public NotificationViewModel(object mainViewModel = null)
+        public NotificationViewModel(MainViewModel mainViewModel = null)
         {
             _mainViewModel = mainViewModel;
             Notifications = new ObservableCollection<Notification>();
@@ -49,20 +49,46 @@ namespace Learnify.ViewModels
 
         public void AddNotification(Notification notification)
         {
-            System.Diagnostics.Debug.WriteLine($"[Notification] AddNotification called: {notification?.Title} - {notification?.Message}");
+            // System.Diagnostics.Debug.WriteLine($"[Notification] AddNotification called: {notification?.Title} - {notification?.Message}");
             App.Current.Dispatcher.Invoke(() =>
             {
                 Notifications.Insert(0, notification);
                 OnPropertyChanged(nameof(UnreadCount));
-                System.Diagnostics.Debug.WriteLine($"[Notification] Notifications count: {Notifications.Count}");
+                // System.Diagnostics.Debug.WriteLine($"[Notification] Notifications count: {Notifications.Count}");
+                
                 // Hiển thị panel nếu có thông báo mới
-                if (!notification.IsRead) IsPanelVisible = true;
+                if (!notification.IsRead) 
+                {
+                    IsPanelVisible = true;
+                    
+                    // Phát âm thanh thông báo cho kết bạn thành công
+                    if (notification is FriendAcceptedNotification)
+                    {
+                        try
+                        {
+                            System.Media.SystemSounds.Asterisk.Play();
+                        }
+                        catch
+                        {
+                            // Ignore sound errors
+                        }
+                    }
+                }
             });
         }
 
         private void ToggleNotification(object parameter)
         {
-            IsPanelVisible = !IsPanelVisible;
+            // Thông báo cho MainViewModel để ẩn/hiện notification panel
+            if (_mainViewModel != null)
+            {
+                _mainViewModel.IsNotificationVisible = !_mainViewModel.IsNotificationVisible;
+            }
+            else
+            {
+                // Fallback nếu không có MainViewModel
+                IsPanelVisible = !IsPanelVisible;
+            }
         }
 
         private void MarkAsRead(Notification notification)
@@ -86,13 +112,24 @@ namespace Learnify.ViewModels
 
         private void ClearAllNotifications(object parameter)
         {
-            Notifications.Clear();
-            OnPropertyChanged(nameof(UnreadCount));
+            // Hiển thị dialog xác nhận trước khi xóa
+            var result = System.Windows.MessageBox.Show(
+                "Bạn có chắc chắn muốn xóa tất cả thông báo?", 
+                "Xác nhận xóa", 
+                System.Windows.MessageBoxButton.YesNo, 
+                System.Windows.MessageBoxImage.Question);
+            
+            if (result == System.Windows.MessageBoxResult.Yes)
+            {
+                Notifications.Clear();
+                OnPropertyChanged(nameof(UnreadCount));
+                // System.Diagnostics.Debug.WriteLine("[NotificationViewModel] Cleared all notifications");
+            }
         }
 
         public void AddFriendRequestNotification(string senderId, string senderName, string requestId)
         {
-            System.Diagnostics.Debug.WriteLine($"[Notification] AddFriendRequestNotification called: senderId={senderId}, senderName={senderName}, requestId={requestId}");
+            // System.Diagnostics.Debug.WriteLine($"[Notification] AddFriendRequestNotification called: senderId={senderId}, senderName={senderName}, requestId={requestId}");
             var notification = new FriendRequestNotification
             {
                 Title = "Lời mời kết bạn",
@@ -107,20 +144,66 @@ namespace Learnify.ViewModels
             AddNotification(notification);
         }        private async Task AcceptFriendRequest(string senderId, string requestId)
         {
-            var receiverId = AuthService.GetUserId();
-            var result = await _firebaseService.AcceptFriendRequestAsync(senderId, receiverId, requestId);
-            RemoveNotificationByRequestId(requestId);
-            
-            // Reload FriendsList sau khi chấp nhận kết bạn thành công
-            if (result && _mainViewModel != null)
+            try
             {
-                // Sử dụng reflection để gọi ReloadFriendsListAsync
-                var method = _mainViewModel.GetType().GetMethod("ReloadFriendsListAsync");
-                if (method != null)
+                var receiverId = AuthService.GetUserId();
+                // System.Diagnostics.Debug.WriteLine($"[NotificationViewModel] Accepting friend request from {senderId} to {receiverId}");
+                
+                var result = await _firebaseService.AcceptFriendRequestAsync(senderId, receiverId, requestId);
+                
+                if (result)
                 {
-                    var task = (Task)method.Invoke(_mainViewModel, null);
-                    await task;
+                    // Xóa thông báo khỏi danh sách
+                    RemoveNotificationByRequestId(requestId);
+                    
+                    // Hiển thị thông báo thành công với thông tin chi tiết
+                    var senderName = Notifications.OfType<FriendRequestNotification>()
+                        .FirstOrDefault(n => n.SenderId == senderId)?.SenderName ?? "Bạn";
+                    
+                    System.Windows.MessageBox.Show(
+                        $"🎉 Bạn và {senderName} đã trở thành bạn bè!\n\nBây giờ các bạn có thể:\n• Theo dõi tiến độ học tập của nhau\n• Cùng tham gia các thử thách học tập\n• Chia sẻ thành tích và động lực học tập", 
+                        "Kết bạn thành công!", 
+                        System.Windows.MessageBoxButton.OK, 
+                        System.Windows.MessageBoxImage.Information);
+
+                    // Phát âm thanh thành công
+                    try
+                    {
+                        System.Media.SystemSounds.Exclamation.Play();
+                    }
+                    catch
+                    {
+                        // Ignore sound errors
+                    }
+
+                    // Gửi thông báo đã chấp nhận kết bạn cho sender (sau khi ấn OK)
+                    await _firebaseService.NotifyFriendAcceptedAsync(receiverId, senderId);
+                    
+                    // Reload FriendsList ngay lập tức sau khi chấp nhận kết bạn thành công
+                    if (_mainViewModel != null)
+                    {
+                        // System.Diagnostics.Debug.WriteLine("[NotificationViewModel] Force reloading friends list after accepting friend request");
+                        // Sử dụng ForceReloadFriendsListAsync để đảm bảo cập nhật ngay lập tức
+                        await _mainViewModel.ForceReloadFriendsListAsync();
+                        // System.Diagnostics.Debug.WriteLine("[NotificationViewModel] FriendsList force reloaded successfully after accepting friend request");
+                    }
+                    else
+                    {
+                        // System.Diagnostics.Debug.WriteLine("[NotificationViewModel] _mainViewModel is null, cannot reload friends list");
+                    }
                 }
+                else
+                {
+                    System.Windows.MessageBox.Show("Có lỗi xảy ra khi chấp nhận lời mời kết bạn!", "Lỗi", 
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                // System.Diagnostics.Debug.WriteLine($"[NotificationViewModel] AcceptFriendRequest error: {ex.Message}");
+                // System.Diagnostics.Debug.WriteLine($"[NotificationViewModel] StackTrace: {ex.StackTrace}");
+                System.Windows.MessageBox.Show("Có lỗi xảy ra khi chấp nhận lời mời kết bạn!", "Lỗi", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -158,27 +241,27 @@ namespace Learnify.ViewModels
         }        private async Task PollFriendRequestsAsync(System.Threading.CancellationToken token)
         {
             var userId = AuthService.GetUserId();
-            System.Diagnostics.Debug.WriteLine($"[Notification] Start polling friend requests for user: {userId}");
-            System.Diagnostics.Debug.WriteLine($"[Notification] Current token: {AuthService.GetToken()?.Substring(0, 50)}...");
+            // System.Diagnostics.Debug.WriteLine($"[Notification] Start polling friend requests for user: {userId}");
+            // System.Diagnostics.Debug.WriteLine($"[Notification] Current token: {AuthService.GetToken()?.Substring(0, 50)}...");
             while (!token.IsCancellationRequested)
             {
                 try
                 {
                     var url = GetAuthenticatedUrl($"friendRequests/{userId}.json");
-                    System.Diagnostics.Debug.WriteLine($"[Notification] Polling URL: {url}");                    // Sử dụng HttpClient static từ FirebaseService
+                    // System.Diagnostics.Debug.WriteLine($"[Notification] Polling URL: {url}");                    // Sử dụng HttpClient static từ FirebaseService
                     var response = await Learnify.Services.FirebaseService.SharedHttpClient.GetAsync(url);
-                    System.Diagnostics.Debug.WriteLine($"[Notification] Polling response status: {response.StatusCode}");
+                    // System.Diagnostics.Debug.WriteLine($"[Notification] Polling response status: {response.StatusCode}");
                     
                     if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     {
-                        System.Diagnostics.Debug.WriteLine("[Notification] Token expired or invalid, stopping polling");
+                        // System.Diagnostics.Debug.WriteLine("[Notification] Token expired or invalid, stopping polling");
                         break; // Dừng polling khi token hết hạn
                     }
                     
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
-                        System.Diagnostics.Debug.WriteLine($"[Notification] Polling response content: {content}");
+                        // System.Diagnostics.Debug.WriteLine($"[Notification] Polling response content: {content}");
                         var dict = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
                         if (dict != null)
                         {
@@ -188,24 +271,24 @@ namespace Learnify.ViewModels
                                 string reqId = kv.Key;
                                 string senderId = req.senderId;
                                 string senderName = req.senderName;
-                                string status = req.status;                                System.Diagnostics.Debug.WriteLine($"[Notification] Found request: reqId={reqId}, senderId={senderId}, senderName={senderName}, status={status}");
+                                string status = req.status;                                // System.Diagnostics.Debug.WriteLine($"[Notification] Found request: reqId={reqId}, senderId={senderId}, senderName={senderName}, status={status}");
                                 if (status == "Pending" && !_notifiedFriendRequests.Contains(reqId))
                                 {
                                     _notifiedFriendRequests.Add(reqId);
-                                    System.Diagnostics.Debug.WriteLine($"[Notification] Adding notification for Pending request: {reqId}");
+                                    // System.Diagnostics.Debug.WriteLine($"[Notification] Adding notification for Pending request: {reqId}");
                                     App.Current.Dispatcher.Invoke(() =>
                                     {
-                                        System.Diagnostics.Debug.WriteLine($"[Notification] AddFriendRequestNotification: senderId={senderId}, senderName={senderName}, requestId={reqId}");
+                                        // System.Diagnostics.Debug.WriteLine($"[Notification] AddFriendRequestNotification: senderId={senderId}, senderName={senderName}, requestId={reqId}");
                                         AddFriendRequestNotification(senderId, senderName, reqId);
                                     });
                                 }
                                 else if (status == "Pending")
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"[Notification] Request {reqId} already notified, skipping");
+                                    // System.Diagnostics.Debug.WriteLine($"[Notification] Request {reqId} already notified, skipping");
                                 }
                                 else
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"[Notification] Request {reqId} has status {status}, skipping notification");
+                                    // System.Diagnostics.Debug.WriteLine($"[Notification] Request {reqId} has status {status}, skipping notification");
                                 }
                             }
                         }
@@ -213,9 +296,97 @@ namespace Learnify.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[Notification] PollFriendRequestsAsync error: {ex.Message}");
+                    // System.Diagnostics.Debug.WriteLine($"[Notification] PollFriendRequestsAsync error: {ex.Message}");
                 }
                 await Task.Delay(5000, token); // Poll every 5 seconds
+            }
+        }
+
+        public void AddFriendAcceptedNotification(string friendId, string friendName)
+        {
+            // System.Diagnostics.Debug.WriteLine($"[Notification] AddFriendAcceptedNotification called: friendId={friendId}, friendName={friendName}");
+            var notification = new FriendAcceptedNotification(friendId, friendName);
+            AddNotification(notification);
+            
+            // Hiển thị thông báo toast/popup cho người gửi
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Hiển thị MessageBox với thông tin rõ ràng
+                    System.Windows.MessageBox.Show(
+                        $"🎉 {friendName} đã chấp nhận lời mời kết bạn của bạn!\n\nBây giờ các bạn đã là bạn bè và có thể theo dõi tiến độ học tập của nhau.",
+                        "Kết bạn thành công!",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information
+                    );
+                }
+                catch (Exception ex)
+                {
+                    // System.Diagnostics.Debug.WriteLine($"[Notification] Error showing friend accepted popup: {ex.Message}");
+                }
+            });
+        }
+
+        public void AddUnfriendNotification(string friendId, string friendName)
+        {
+            // System.Diagnostics.Debug.WriteLine($"[Notification] AddUnfriendNotification called: friendId={friendId}, friendName={friendName}");
+            
+            // Tạo notification object cho unfriend
+            var now = DateTime.Now;
+            var notification = new Notification
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "Unfriend",
+                Title = "Hủy kết bạn",
+                Message = $"{friendName} đã xóa bạn khỏi danh sách bạn bè",
+                Time = now.ToString("HH:mm"),
+                Timestamp = now,
+                IsRead = false
+            };
+            
+            AddNotification(notification);
+            
+            // Hiển thị thông báo toast/popup
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    System.Windows.MessageBox.Show(
+                        $"💔 {friendName} đã xóa bạn khỏi danh sách bạn bè.\n\nBạn sẽ không còn thể xem tiến độ học tập của họ nữa.",
+                        "Đã bị hủy kết bạn",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information
+                    );
+                }
+                catch (Exception ex)
+                {
+                    // System.Diagnostics.Debug.WriteLine($"[Notification] Error showing unfriend popup: {ex.Message}");
+                }
+            });
+        }
+
+        /// <summary>
+        /// Trigger reload of friends list through MainViewModel
+        /// </summary>
+        public async void TriggerFriendsListReload()
+        {
+            try
+            {
+                if (_mainViewModel != null)
+                {
+                    // System.Diagnostics.Debug.WriteLine("[NotificationViewModel] TriggerFriendsListReload called - reloading friends list");
+                    await _mainViewModel.ForceReloadFriendsListAsync();
+                    // System.Diagnostics.Debug.WriteLine("[NotificationViewModel] TriggerFriendsListReload completed successfully");
+                }
+                else
+                {
+                    // System.Diagnostics.Debug.WriteLine("[NotificationViewModel] TriggerFriendsListReload failed: _mainViewModel is null");
+                }
+            }
+            catch (Exception ex)
+            {
+                // System.Diagnostics.Debug.WriteLine($"[NotificationViewModel] TriggerFriendsListReload error: {ex.Message}");
             }
         }
     }

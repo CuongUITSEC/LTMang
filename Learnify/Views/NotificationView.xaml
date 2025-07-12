@@ -1,0 +1,234 @@
+<UserControl x:Class="Learnify.Views.NotificationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600"
+        d:DesignWidth="400">
+
+    <Grid Background="#F8F9FA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="#2196F3"
+                Padding="20,15"
+                CornerRadius="8,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="🔔 Thông báo"
+                           Foreground="White"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+
+                <Button Grid.Column="1"
+                        Content="🗑️"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Foreground="White"
+                        FontSize="16"
+                        Padding="8"
+                        ToolTip="Xóa tất cả thông báo"
+                        Click="ClearAllButton_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Scrollable Notifications List -->
+        <ScrollViewer Grid.Row="1"
+                      x:Name="NotificationScrollViewer"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="15"
+                      Background="#F8F9FA">
+
+            <ItemsControl x:Name="NotificationsList"
+                          ItemsSource="{Binding Notifications}">
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="White"
+                                Margin="0,0,0,12"
+                                Padding="16"
+                                CornerRadius="12"
+                                BorderBrush="#E1E8ED"
+                                BorderThickness="1">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000"
+                                                  Opacity="0.08"
+                                                  ShadowDepth="2"
+                                                  BlurRadius="8"/>
+                            </Border.Effect>
+
+                            <!-- Hover effect -->
+                            <Border.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#F0F8FF"
+                                                    Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="White"
+                                                    Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Border.Triggers>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Icon -->
+                                <Border Grid.Column="0"
+                                        Width="48"
+                                        Height="48"
+                                        Margin="0,0,16,0"
+                                        VerticalAlignment="Top"
+                                        CornerRadius="24">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="{Binding NotificationColor}"/>
+                                    </Border.Background>
+
+                                    <TextBlock Text="{Binding NotificationIcon}"
+                                               Foreground="White"
+                                               FontSize="24"
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Content -->
+                                <StackPanel Grid.Column="1"
+                                        VerticalAlignment="Top">
+                                    <TextBlock Text="{Binding Title}"
+                                               FontWeight="SemiBold"
+                                               FontSize="15"
+                                               Foreground="#1A202C"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,6"/>
+
+                                    <TextBlock Text="{Binding Message}"
+                                               FontSize="13"
+                                               Foreground="#4A5568"
+                                               TextWrapping="Wrap"
+                                               LineHeight="18"/>
+                                </StackPanel>
+
+                                <!-- Timestamp -->
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding Timestamp}"
+                                           FontSize="11"
+                                           Foreground="#A0AEC0"
+                                           VerticalAlignment="Top"
+                                           Margin="16,0,0,0"
+                                           FontWeight="Medium"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+
+                <!-- Empty state -->
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Notifications.Count}"
+                                    Value="0">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate>
+                                            <Border Background="White"
+                                                    Padding="40"
+                                                    CornerRadius="12"
+                                                    BorderBrush="#E1E8ED"
+                                                    BorderThickness="1"
+                                                    Margin="0,20">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📭"
+                                                               FontSize="64"
+                                                               HorizontalAlignment="Center"
+                                                               Margin="0,0,0,16"/>
+                                                    <TextBlock Text="Không có thông báo nào"
+                                                               FontSize="16"
+                                                               Foreground="#718096"
+                                                               HorizontalAlignment="Center"
+                                                               FontWeight="Medium"/>
+                                                    <TextBlock Text="Các thông báo mới sẽ xuất hiện ở đây"
+                                                               FontSize="13"
+                                                               Foreground="#A0AEC0"
+                                                               HorizontalAlignment="Center"
+                                                               Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
+
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Footer với test buttons -->
+        <Border Grid.Row="2"
+                Background="#F1F5F9"
+                Padding="15,10"
+                CornerRadius="0,0,8,8"
+                BorderBrush="#E1E8ED"
+                BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Center">
+                <Button Content="📝 Test Scroll"
+                        Background="#4299E1"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Padding="12,8"
+                        Margin="0,0,8,0"
+                        CornerRadius="6"
+                        FontSize="12"
+                        Click="TestScrollButton_Click"/>
+
+                <Button Content="🎯 Test All Types"
+                        Background="#48BB78"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Padding="12,8"
+                        Margin="0,0,8,0"
+                        CornerRadius="6"
+                        FontSize="12"
+                        Click="TestAllTypesButton_Click"/>
+
+                <Button Content="📊 Stats"
+                        Background="#805AD5"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Padding="12,8"
+                        CornerRadius="6"
+                        FontSize="12"
+                        Click="StatsButton_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -16,7 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Learnify.Views
+namespace Learnify.Views.UserControls
 {
     /// <summary>
     /// Interaction logic for PomodoroView.xaml

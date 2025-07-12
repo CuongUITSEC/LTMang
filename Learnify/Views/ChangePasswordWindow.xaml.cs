@@ -114,7 +114,7 @@ namespace Learnify.Views
                 // Call the Firebase service to change password
                 bool success = await _firebaseService.ChangePasswordAsync(currentPassword, newPassword);
                 
-                System.Diagnostics.Debug.WriteLine($"Password change result: {success}");
+                // System.Diagnostics.Debug.WriteLine($"Password change result: {success}");
                 
                 if (success)
                 {
@@ -130,8 +130,8 @@ namespace Learnify.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ChangePasswordButton_Click: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                // System.Diagnostics.Debug.WriteLine($"Error in ChangePasswordButton_Click: {ex.Message}");
+                // System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 ShowError($"Đã xảy ra lỗi: {ex.Message}");
             }
             finally

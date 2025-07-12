@@ -189,11 +189,20 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Comands\RelayCommand.cs" />
+    <Compile Include="Converters\BooleanInverterConverter.cs" />
     <Compile Include="Converters\BooleanToBackgroundConverter.cs" />
+    <Compile Include="Converters\BooleanToColorConverter.cs" />
     <Compile Include="Converters\BooleanToStatusConverter.cs" />
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\CountToBoolConverter.cs" />
+    <Compile Include="Converters\CountToVisibilityConverter.cs" />
+    <Compile Include="Converters\SearchTextToVisibilityConverter.cs" />
+    <Compile Include="Converters\StatusToColorConverter.cs" />
+    <Compile Include="Converters\StatusToTextConverter.cs" />
+    <Compile Include="Converters\StringToBoolConverter.cs" />
     <Compile Include="Converters\StringToColorConverter.cs" />
+    <Compile Include="Converters\StringToImageSourceConverter.cs" />
+    <Compile Include="Converters\StringToVisibilityConverter.cs" />
     <Compile Include="Models\Friend.cs" />
     <Compile Include="Models\FriendRequestNotification.cs" />
     <Compile Include="Models\Notification.cs" />
@@ -223,7 +232,7 @@
     <Compile Include="ViewModels\NotificationViewModel.cs" />
     <Compile Include="ViewModels\PieChartViewModel.cs" />
     <Compile Include="ViewModels\PomodoroModeViewModel.cs" />
-    <Compile Include="ViewModels\PomodoroViewMoldel.cs" />
+    <Compile Include="ViewModels\PomodoroViewModel.cs" />
     <Compile Include="ViewModels\RankingViewModel.cs" />
     <Compile Include="ViewModels\RewardViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />

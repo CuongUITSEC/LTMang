@@ -88,7 +88,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Learnify.ViewModels;
 
-namespace Learnify.Views
+namespace Learnify.Views.UserControls
 {
     public partial class CampaignView : UserControl
     {

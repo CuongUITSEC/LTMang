@@ -74,15 +74,15 @@ namespace Learnify.ViewModels
             try
             {
                 IsLoading = true;
-                Debug.WriteLine("[RANKING] Starting to load rankings...");
+                // Debug.WriteLine("[RANKING] Starting to load rankings...");
 
-                Debug.WriteLine("[RANKING] Getting rankings from Firebase...");
+                // Debug.WriteLine("[RANKING] Getting rankings from Firebase...");
                 var rankings = await _firebaseService.GetStudyTimeRankingsAsync();
-                Debug.WriteLine($"[RANKING] Received {rankings.Count} rankings");
+                // Debug.WriteLine($"[RANKING] Received {rankings.Count} rankings");
 
                 if (rankings.Count == 0)
                 {
-                    Debug.WriteLine("[RANKING] No rankings found");
+                    // Debug.WriteLine("[RANKING] No rankings found");
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         Leaderboard = new ObservableCollection<UserRanking>();
@@ -97,7 +97,7 @@ namespace Learnify.ViewModels
                     .ThenBy(r => r.UserId) // Sắp xếp phụ theo UserId để đảm bảo tính nhất quán
                     .ToList();
 
-                Debug.WriteLine($"[RANKING] Found {validRankings.Count} users with study time > 0");
+                // Debug.WriteLine($"[RANKING] Found {validRankings.Count} users with study time > 0");
 
                 var userRankings = new ObservableCollection<UserRanking>();
                 int currentRank = 1;
@@ -108,7 +108,7 @@ namespace Learnify.ViewModels
                 {
                     try
                     {
-                        Debug.WriteLine($"[RANKING] Processing user {ranking.UserId}...");
+                        // Debug.WriteLine($"[RANKING] Processing user {ranking.UserId}...");
                         
                         // Lấy tên người dùng từ Firebase
                         string username = await _firebaseService.GetUsernameAsync(ranking.UserId);
@@ -145,7 +145,7 @@ namespace Learnify.ViewModels
                             timeDisplay = $"{Math.Round(totalMinutes, 1)}m";
                         }
 
-                        Debug.WriteLine($"[RANKING] Username: {username}, Time: {timeDisplay}, Rank: {currentRank}");
+                        // Debug.WriteLine($"[RANKING] Username: {username}, Time: {timeDisplay}, Rank: {currentRank}");
 
                         // Xác định icon sao dựa trên thứ hạng
                         string starIcon;
@@ -177,18 +177,18 @@ namespace Learnify.ViewModels
                         };
 
                         userRankings.Add(userRanking);
-                        Debug.WriteLine($"[RANKING] Added ranking for {username}: Rank {currentRank}, Time {timeDisplay}");
+                        // Debug.WriteLine($"[RANKING] Added ranking for {username}: Rank {currentRank}, Time {timeDisplay}");
                         
                         previousTime = currentTime;
                         actualPosition++;
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"[RANKING] Error processing ranking for user {ranking.UserId}: {ex.Message}");
+                        // Debug.WriteLine($"[RANKING] Error processing ranking for user {ranking.UserId}: {ex.Message}");
                     }
                 }
 
-                Debug.WriteLine($"[RANKING] Setting leaderboard with {userRankings.Count} entries");
+                // Debug.WriteLine($"[RANKING] Setting leaderboard with {userRankings.Count} entries");
                 
                 // Cập nhật UI trên Main Thread
                 Application.Current.Dispatcher.Invoke(() =>
@@ -198,8 +198,8 @@ namespace Learnify.ViewModels
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading rankings: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                // Debug.WriteLine($"Error loading rankings: {ex.Message}");
+                // Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 MessageBox.Show($"Không thể tải bảng xếp hạng: {ex.Message}", 
                     "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }

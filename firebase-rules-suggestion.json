@@ -24,6 +24,18 @@
         ".read": "$userId === auth.uid",
         ".write": "$userId === auth.uid"
       }
+    },
+    "friendsListChanges": {
+      "$userId": {
+        ".read": "$userId === auth.uid",
+        ".write": "$userId === auth.uid"
+      }
+    },
+    "friendAcceptedNotifications": {
+      "$userId": {
+        ".read": "$userId === auth.uid",
+        ".write": true
+      }
     }
   }
 }

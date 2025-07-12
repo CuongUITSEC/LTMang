@@ -10,6 +10,7 @@ using System.Text;
 using System.Globalization;
 using Learnify.Models;
 using Learnify.Services;
+using Learnify.ViewModels;
 
 namespace Learnify.Services
 {
@@ -17,6 +18,13 @@ namespace Learnify.Services
     {
         private static readonly HttpClient _httpClient;
         public static HttpClient SharedHttpClient => _httpClient;
+        
+        // Cache để tránh loop vô hạn trong CheckAndSyncFriendsListAsync
+        private static readonly HashSet<string> _syncCache = new HashSet<string>();
+        
+        // Cache user IDs từ successful operations để fallback khi cần
+        private static readonly HashSet<string> _processedMarkers = new HashSet<string>();
+        private static readonly HashSet<string> _userIdCache = new HashSet<string>();
 
         static FirebaseService()
         {
@@ -58,7 +66,7 @@ namespace Learnify.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error getting user data: {ex.Message}");
+                // Debug.WriteLine($"Error getting user data: {ex.Message}");
                 return null;
             }
         }
@@ -74,7 +82,7 @@ namespace Learnify.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error updating user data: {ex.Message}");
+                // Debug.WriteLine($"Error updating user data: {ex.Message}");
                 return false;
             }
         }
@@ -97,7 +105,7 @@ namespace Learnify.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error saving study time: {ex.Message}");
+                // Debug.WriteLine($"Error saving study time: {ex.Message}");
                 return false;
             }
         }
@@ -141,7 +149,7 @@ namespace Learnify.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error getting study time data: {ex.Message}");
+                // Debug.WriteLine($"Error getting study time data: {ex.Message}");
                 return null;
             }
         }
@@ -168,7 +176,7 @@ namespace Learnify.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error getting username: {ex.Message}");
+                // Debug.WriteLine($"Error getting username: {ex.Message}");
                 // Nếu có lỗi, trả về UID
                 return userId;
             }
@@ -185,7 +193,7 @@ namespace Learnify.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error saving username: {ex.Message}");
+                // Debug.WriteLine($"Error saving username: {ex.Message}");
                 return false;
             }
         }
@@ -197,7 +205,7 @@ namespace Learnify.Services
             {
                 if (string.IsNullOrEmpty(userId))
                 {
-                    Debug.WriteLine("Error: User ID is null or empty");
+                    // Debug.WriteLine("Error: User ID is null or empty");
                     return false;
                 }
 
@@ -205,12 +213,12 @@ namespace Learnify.Services
                 var token = AuthService.GetToken();
                 if (string.IsNullOrEmpty(token))
                 {
-                    Debug.WriteLine("Error: Authentication token is missing");
+                    // Debug.WriteLine("Error: Authentication token is missing");
                     return false;
                 }
 
-                Debug.WriteLine($"Attempting to save study time for user {userId}");
-                Debug.WriteLine($"Current study time: {studyTime.TotalMinutes} minutes");
+                // Debug.WriteLine($"Attempting to save study time for user {userId}");
+                // Debug.WriteLine($"Current study time: {studyTime.TotalMinutes} minutes");
 
                 // Kiểm tra và cập nhật username nếu chưa có
                 var username = await GetUsernameAsync(userId);
@@ -234,10 +242,10 @@ namespace Learnify.Services
 
                 // Lấy dữ liệu hiện tại từ Firebase
                 var url = GetAuthenticatedUrl($"users/{userId}/studyTime.json");
-                Debug.WriteLine($"Fetching current data from: {url}");
+                // Debug.WriteLine($"Fetching current data from: {url}");
 
                 var getResponse = await _httpClient.GetAsync(url);
-                Debug.WriteLine($"GET Response Status: {getResponse.StatusCode}");
+                // Debug.WriteLine($"GET Response Status: {getResponse.StatusCode}");
 
                 var totalMinutes = studyTime.TotalMinutes;
                 var sessions = new Dictionary<string, object>();
@@ -245,7 +253,7 @@ namespace Learnify.Services
                 if (getResponse.IsSuccessStatusCode)
                 {
                     var responseContent = await getResponse.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"Current data: {responseContent}");
+                    // Debug.WriteLine($"Current data: {responseContent}");
 
                     if (!string.IsNullOrEmpty(responseContent) && responseContent != "null")
                     {
@@ -253,15 +261,15 @@ namespace Learnify.Services
                         {
                             var existingData = JObject.Parse(responseContent);
                             var existingTotalMinutes = existingData["totalMinutes"]?.Value<double>() ?? 0;
-                            Debug.WriteLine($"Existing total minutes: {existingTotalMinutes}");
+                            // Debug.WriteLine($"Existing total minutes: {existingTotalMinutes}");
                             totalMinutes += existingTotalMinutes;
-                            Debug.WriteLine($"New total minutes: {totalMinutes}");
+                            // Debug.WriteLine($"New total minutes: {totalMinutes}");
 
                             var existingSessions = existingData["sessions"] as JObject;
                             if (existingSessions != null)
                             {
                                 sessions = existingSessions.ToObject<Dictionary<string, object>>();
-                                Debug.WriteLine($"Existing sessions count: {sessions.Count}");
+                                // Debug.WriteLine($"Existing sessions count: {sessions.Count}");
                             }
                         }
                         catch (Exception ex)
@@ -320,6 +328,188 @@ namespace Learnify.Services
                 Debug.WriteLine($"Error saving study time: {ex.Message}");
                 Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Cleanup expired friend requests để tránh spam database
+        /// </summary>
+        public async Task<int> CleanupExpiredFriendRequestsAsync(int maxAgeDays = 30)
+        {
+            try
+            {
+                Debug.WriteLine($"[CleanupExpiredFriendRequests] Starting cleanup of requests older than {maxAgeDays} days");
+                
+                var cutoffDate = DateTime.UtcNow.AddDays(-maxAgeDays);
+                var cleanedCount = 0;
+                
+                // Lấy tất cả friendRequests
+                var url = GetAuthenticatedUrl("friendRequests.json");
+                var response = await _httpClient.GetAsync(url);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[CleanupExpiredFriendRequests] Failed to get friendRequests: {response.StatusCode}");
+                    return 0;
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(content) || content == "null")
+                {
+                    Debug.WriteLine("[CleanupExpiredFriendRequests] No friend requests found");
+                    return 0;
+                }
+                
+                var allRequests = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, dynamic>>>(content);
+                Debug.WriteLine($"[CleanupExpiredFriendRequests] Found {allRequests.Count} receivers with requests");
+                
+                foreach (var receiverData in allRequests)
+                {
+                    var receiverId = receiverData.Key;
+                    var requests = receiverData.Value;
+                    
+                    var requestsToDelete = new List<string>();
+                    
+                    foreach (var requestData in requests)
+                    {
+                        try
+                        {
+                            var requestId = requestData.Key;
+                            var request = requestData.Value;
+                            
+                            var sentAtStr = request.sentAt?.ToString();
+                            DateTime sentAt = DateTime.UtcNow;
+                            if (!string.IsNullOrEmpty(sentAtStr))
+                            {
+                                DateTime parsedSentAt;
+                                if (DateTime.TryParse(sentAtStr, out parsedSentAt))
+                                {
+                                    sentAt = parsedSentAt;
+                                }
+                            }
+                            var status = request.status?.ToString();
+                            
+                            if (!string.IsNullOrEmpty(sentAtStr))
+                            {
+                                // Xóa request cũ hoặc đã declined/accepted
+                                if (sentAt < cutoffDate || status == "Declined")
+                                {
+                                    requestsToDelete.Add(requestId);
+                                }
+                            }
+                            else if (status == "Declined")
+                            {
+                                // Xóa request declined ngay cả khi không parse được timestamp
+                                requestsToDelete.Add(requestId);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"[CleanupExpiredFriendRequests] Error processing request: {ex.Message}");
+                        }
+                    }
+                    
+                    // Xóa các requests cũ
+                    foreach (var requestId in requestsToDelete)
+                    {
+                        try
+                        {
+                            var deleteUrl = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
+                            var deleteResponse = await _httpClient.DeleteAsync(deleteUrl);
+                            
+                            if (deleteResponse.IsSuccessStatusCode)
+                            {
+                                cleanedCount++;
+                                Debug.WriteLine($"[CleanupExpiredFriendRequests] Deleted request {requestId} for receiver {receiverId}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"[CleanupExpiredFriendRequests] Error deleting request {requestId}: {ex.Message}");
+                        }
+                        
+                        // Small delay để tránh spam
+                        await Task.Delay(50);
+                    }
+                }
+                
+                Debug.WriteLine($"[CleanupExpiredFriendRequests] Cleaned up {cleanedCount} expired requests");
+                return cleanedCount;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CleanupExpiredFriendRequests] Exception: {ex.Message}");
+                Debug.WriteLine($"[CleanupExpiredFriendRequests] StackTrace: {ex.StackTrace}");
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra và fix data consistency cho friends list
+        /// </summary>
+        public async Task<int> ValidateAndFixFriendsConsistencyAsync()
+        {
+            try
+            {
+                Debug.WriteLine("[ValidateAndFixFriendsConsistency] Starting friends data consistency check");
+                var fixedCount = 0;
+                
+                // Lấy tất cả users
+                var userIds = await GetAllUserIdsAsync();
+                Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Checking {userIds.Count} users");
+                
+                foreach (var userId in userIds)
+                {
+                    try
+                    {
+                        var friends = await GetFriendsAsync(userId);
+                        
+                        foreach (var friend in friends)
+                        {
+                            // Kiểm tra tính nhất quán 2 chiều
+                            var isFriendBack = await AreAlreadyFriendsAsync(friend.Id, userId);
+                            
+                            if (!isFriendBack)
+                            {
+                                Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Inconsistency found: {userId} has {friend.Id} as friend but not vice versa");
+                                
+                                // Fix bằng cách thêm lại mối quan hệ 2 chiều
+                                var friendData = new Dictionary<string, object> 
+                                { 
+                                    ["status"] = "Friends", 
+                                    ["since"] = DateTime.UtcNow.ToString("o"),
+                                    ["fixedAt"] = DateTime.UtcNow.ToString("o")
+                                };
+                                
+                                var friendUrl = GetAuthenticatedUrl($"friends/{friend.Id}/{userId}.json");
+                                var friendContent = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                                var friendResponse = await _httpClient.PutAsync(friendUrl, friendContent);
+                                friendContent.Dispose();
+                                
+                                if (friendResponse.IsSuccessStatusCode)
+                                {
+                                    fixedCount++;
+                                    Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Fixed: Added {userId} to {friend.Id}'s friends list");
+                                }
+                            }
+                        }
+                        
+                        // Small delay để tránh spam requests
+                        await Task.Delay(100);
+                    }
+                    catch (Exception userEx)
+                    {
+                        Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Error processing user {userId}: {userEx.Message}");
+                    }
+                }
+                
+                Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Fixed {fixedCount} consistency issues");
+                return fixedCount;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Exception: {ex.Message}");
+                return 0;
             }
         }
 
@@ -978,49 +1168,81 @@ namespace Learnify.Services
             }
         }
 
-        // Chấp nhận lời mời kết bạn (đồng bộ bạn bè 2 phía)
+        // Chấp nhận lời mời kết bạn - CẢI THIỆN: Single-side accept + Acceptance marker strategy
         public async Task<bool> AcceptFriendRequestAsync(string senderId, string receiverId, string requestId)
         {
             try
             {
-                Debug.WriteLine($"[AcceptFriendRequest] Starting accept process: {senderId} -> {receiverId}, requestId: {requestId}");
+                Debug.WriteLine($"[AcceptFriendRequest] 🎯 STARTING FRIEND ACCEPTANCE: {senderId} -> {receiverId}");
+                Debug.WriteLine($"[AcceptFriendRequest] 📋 Request ID: {requestId}");
+                Debug.WriteLine($"[AcceptFriendRequest] 🕐 Current time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
+                
                 // 1. Cập nhật trạng thái FriendRequest thành Accepted
-                var requestUpdate = new Dictionary<string, object> { ["status"] = "Accepted" };
+                var requestUpdate = new Dictionary<string, object> { 
+                    ["status"] = "Accepted",
+                    ["acceptedAt"] = DateTime.UtcNow.ToString("o")
+                };
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
                 var content = new StringContent(JsonConvert.SerializeObject(requestUpdate), Encoding.UTF8, "application/json");
+                
+                Debug.WriteLine($"[AcceptFriendRequest] 📍 Step 1: Updating request status to Accepted...");
+                Debug.WriteLine($"[AcceptFriendRequest] 🌐 URL: {url}");
+                
                 var res1 = await _httpClient.PatchAsync(url, content);
                 content.Dispose();
-                Debug.WriteLine($"[AcceptFriendRequest] Step 1 - Update status: {res1.StatusCode}");
+                Debug.WriteLine($"[AcceptFriendRequest] ✅ Step 1 Result: {res1.StatusCode}");
+                
                 if (!res1.IsSuccessStatusCode)
                 {
                     var error1 = await res1.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"[AcceptFriendRequest] Step 1 failed: {error1}");
+                    Debug.WriteLine($"[AcceptFriendRequest] ❌ Step 1 FAILED: {error1}");
+                    return false; // Fail fast nếu không update được request status
                 }
-                // 2. Thêm vào danh sách bạn bè của cả receiver và sender
-                var friendData = new Dictionary<string, object> { ["status"] = "Friends", ["since"] = DateTime.UtcNow.ToString("o") };
+                
+                // 2. CHỈ thêm vào danh sách của receiver (người chấp nhận) - có quyền write
+                var friendData = new Dictionary<string, object> { 
+                    ["status"] = "Friends", 
+                    ["since"] = DateTime.UtcNow.ToString("o"),
+                    ["acceptedAt"] = DateTime.UtcNow.ToString("o"),
+                    ["acceptedBy"] = receiverId
+                };
+                
                 var urlFriendReceiver = GetAuthenticatedUrl($"friends/{receiverId}/{senderId}.json");
-                var urlFriendSender = GetAuthenticatedUrl($"friends/{senderId}/{receiverId}.json");
-                Debug.WriteLine($"[AcceptFriendRequest] Step 2 - Creating friend URLs: {urlFriendReceiver} | {urlFriendSender}");
                 var contentReceiver = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
-                var contentSender = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                
+                Debug.WriteLine($"[AcceptFriendRequest] 📍 Step 2: Adding {senderId} to {receiverId}'s friends list...");
+                Debug.WriteLine($"[AcceptFriendRequest] 🌐 URL: {urlFriendReceiver}");
+                
                 var res2 = await _httpClient.PutAsync(urlFriendReceiver, contentReceiver);
-                var res3 = await _httpClient.PutAsync(urlFriendSender, contentSender);
                 contentReceiver.Dispose();
-                contentSender.Dispose();
-                Debug.WriteLine($"[AcceptFriendRequest] Step 2 - Add to friends: {res2.StatusCode}, {res3.StatusCode}");
+                Debug.WriteLine($"[AcceptFriendRequest] ✅ Step 2 Result: {res2.StatusCode}");
+                
                 if (!res2.IsSuccessStatusCode)
                 {
                     var error2 = await res2.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"[AcceptFriendRequest] Step 2a failed: {error2}");
+                    Debug.WriteLine($"[AcceptFriendRequest] ❌ Step 2 FAILED: {error2}");
+                    // Rollback request status
+                    var rollbackUpdate = new Dictionary<string, object> { ["status"] = "Pending" };
+                    var rollbackContent = new StringContent(JsonConvert.SerializeObject(rollbackUpdate), Encoding.UTF8, "application/json");
+                    await _httpClient.PatchAsync(url, rollbackContent);
+                    rollbackContent.Dispose();
+                    return false;
                 }
-                if (!res3.IsSuccessStatusCode)
-                {
-                    var error3 = await res3.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"[AcceptFriendRequest] Step 2b failed: {error3}");
-                }
-                var success = res1.IsSuccessStatusCode && res2.IsSuccessStatusCode && res3.IsSuccessStatusCode;
-                Debug.WriteLine($"[AcceptFriendRequest] Overall result: {success}");
-                return success;
+                
+                // 3. Tạo acceptance marker để sender có thể detect và tự thêm mình qua polling
+                Debug.WriteLine($"[AcceptFriendRequest] 📍 Step 3: Creating acceptance marker for {senderId}...");
+                await CreateFriendAcceptanceMarkerAsync(senderId, receiverId);
+                Debug.WriteLine($"[AcceptFriendRequest] ✅ Step 3 COMPLETED: Created acceptance marker for {senderId}");
+                
+                // 4. Thông báo thay đổi cho receiver
+                Debug.WriteLine($"[AcceptFriendRequest] 📍 Step 4: Notifying friends list change for {receiverId}...");
+                await NotifyFriendsListChangeWithRetryAsync(receiverId);
+                Debug.WriteLine($"[AcceptFriendRequest] ✅ Step 4 COMPLETED: Notified {receiverId}");
+                
+                Debug.WriteLine($"[AcceptFriendRequest] 🎉 SUCCESS: {receiverId} accepted {senderId}'s request");
+                Debug.WriteLine($"[AcceptFriendRequest] 📌 {senderId} should detect acceptance marker via polling and update their friends list");
+                
+                return true;
             }
             catch (Exception ex)
             {
@@ -1030,23 +1252,176 @@ namespace Learnify.Services
             }
         }
 
-        // Từ chối lời mời kết bạn (cấu trúc mới)
-        public async Task<bool> DeclineFriendRequestAsync(string receiverId, string requestId)
+        /// <summary>
+        /// Tạo acceptance marker để sender có thể detect qua polling (alternative to blocked notifications)
+        /// </summary>
+        private async Task CreateFriendAcceptanceMarkerAsync(string senderId, string receiverId)
         {
-            // Cập nhật trạng thái FriendRequest thành Declined
-            var requestUpdate = new Dictionary<string, object> { ["status"] = "Declined" };
-            var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
-            var content = new StringContent(JsonConvert.SerializeObject(requestUpdate), Encoding.UTF8, "application/json");
-            var res = await _httpClient.PatchAsync(url, content);
-            content.Dispose();
-            return res.IsSuccessStatusCode;
+            try
+            {
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 🎯 CREATING ACCEPTANCE MARKER");
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 👤 Sender (will receive marker): {senderId}");
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 👤 Receiver (who accepted): {receiverId}");
+                
+                // Tạo marker trong friendRequests của sender với special status
+                var markerData = new Dictionary<string, object>
+                {
+                    ["senderId"] = receiverId, // Reverse - ai accept
+                    ["receiverId"] = senderId, // Ai được thông báo
+                    ["status"] = "NotifyAccepted", // Special status để detect
+                    ["acceptedAt"] = DateTime.UtcNow.ToString("o"),
+                    ["markerType"] = "FriendAcceptance"
+                };
+                
+                // Tạo unique marker ID
+                var markerId = $"acceptance_{receiverId}_{DateTime.UtcNow.Ticks}";
+                var markerUrl = GetAuthenticatedUrl($"friendRequests/{senderId}/{markerId}.json");
+                
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 📋 Marker ID: {markerId}");
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 🌐 Target URL: {markerUrl}");
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 📄 Marker data: {JsonConvert.SerializeObject(markerData)}");
+                
+                var markerContent = new StringContent(JsonConvert.SerializeObject(markerData), Encoding.UTF8, "application/json");
+                var markerResponse = await _httpClient.PutAsync(markerUrl, markerContent);
+                markerContent.Dispose();
+                
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 🌐 HTTP Response: {markerResponse.StatusCode}");
+                
+                if (markerResponse.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[CreateFriendAcceptanceMarker] ✅ SUCCESS: Marker {markerId} created for {senderId}");
+                    Debug.WriteLine($"[CreateFriendAcceptanceMarker] 📌 {senderId} should detect this via polling friendRequests");
+                }
+                else
+                {
+                    var error = await markerResponse.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[CreateFriendAcceptanceMarker] ❌ FAILED: {markerResponse.StatusCode} - {error}");
+                    Debug.WriteLine($"[CreateFriendAcceptanceMarker] 🚨 CRITICAL: {senderId} will NOT be notified of acceptance!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 💥 EXCEPTION: {ex.Message}");
+                Debug.WriteLine($"[CreateFriendAcceptanceMarker] 🚨 CRITICAL: Acceptance marker creation failed!");
+            }
         }
 
-        // Gửi lời mời kết bạn (theo cấu trúc mới)
+        /// <summary>
+        /// Tạo unfriend marker để target user có thể detect qua polling (alternative to blocked notifications)
+        /// </summary>
+        private async Task CreateUnfriendMarkerAsync(string removerId, string targetUserId)
+        {
+            try
+            {
+                Debug.WriteLine($"[CreateUnfriendMarker] 🎯 CREATING MARKER: {removerId} unfriended {targetUserId}");
+                
+                // Tạo marker trong friendRequests của target user với special status
+                var markerData = new Dictionary<string, object>
+                {
+                    ["senderId"] = removerId, // Ai unfriend
+                    ["receiverId"] = targetUserId, // Ai được thông báo
+                    ["status"] = "NotifyUnfriend", // Special status để detect
+                    ["unfriendedAt"] = DateTime.UtcNow.ToString("o"),
+                    ["markerType"] = "UnfriendNotification"
+                };
+                
+                // Tạo unique marker ID
+                var markerId = $"unfriend_{removerId}_{DateTime.UtcNow.Ticks}";
+                var markerUrl = GetAuthenticatedUrl($"friendRequests/{targetUserId}/{markerId}.json");
+                
+                Debug.WriteLine($"[CreateUnfriendMarker] 📍 Target URL: {markerUrl}");
+                Debug.WriteLine($"[CreateUnfriendMarker] 📄 Marker data: {JsonConvert.SerializeObject(markerData)}");
+                
+                var markerContent = new StringContent(JsonConvert.SerializeObject(markerData), Encoding.UTF8, "application/json");
+                var markerResponse = await _httpClient.PutAsync(markerUrl, markerContent);
+                markerContent.Dispose();
+                
+                Debug.WriteLine($"[CreateUnfriendMarker] 🌐 HTTP response: {markerResponse.StatusCode}");
+                
+                if (markerResponse.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[CreateUnfriendMarker] ✅ SUCCESS: Marker {markerId} created for {targetUserId}");
+                    Debug.WriteLine($"[CreateUnfriendMarker] 📌 {targetUserId} should detect this marker via polling friendRequests");
+                }
+                else
+                {
+                    var error = await markerResponse.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[CreateUnfriendMarker] ❌ FAILED: {markerResponse.StatusCode} - {error}");
+                    Debug.WriteLine($"[CreateUnfriendMarker] 🚨 CRITICAL: {targetUserId} will NOT be notified of unfriend!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CreateUnfriendMarker] 💥 EXCEPTION: {ex.Message}");
+                Debug.WriteLine($"[CreateUnfriendMarker] 🚨 CRITICAL: Unfriend marker creation failed!");
+            }
+        }
+
+        // Từ chối lời mời kết bạn - CẢI THIỆN: Better error handling và logging
+        public async Task<bool> DeclineFriendRequestAsync(string receiverId, string requestId)
+        {
+            try
+            {
+                Debug.WriteLine($"[DeclineFriendRequest] Declining request {requestId} for receiver {receiverId}");
+                
+                // Validation
+                if (string.IsNullOrWhiteSpace(receiverId) || string.IsNullOrWhiteSpace(requestId))
+                {
+                    Debug.WriteLine($"[DeclineFriendRequest] Invalid input parameters");
+                    return false;
+                }
+                
+                // Cập nhật trạng thái FriendRequest thành Declined
+                var requestUpdate = new Dictionary<string, object> 
+                { 
+                    ["status"] = "Declined",
+                    ["declinedAt"] = DateTime.UtcNow.ToString("o")
+                };
+                
+                var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
+                var content = new StringContent(JsonConvert.SerializeObject(requestUpdate), Encoding.UTF8, "application/json");
+                var res = await _httpClient.PatchAsync(url, content);
+                content.Dispose();
+                
+                var success = res.IsSuccessStatusCode;
+                Debug.WriteLine($"[DeclineFriendRequest] Decline result: {success} ({res.StatusCode})");
+                
+                if (!success)
+                {
+                    var errorContent = await res.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[DeclineFriendRequest] Error: {errorContent}");
+                }
+                
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[DeclineFriendRequest] Exception: {ex.Message}");
+                Debug.WriteLine($"[DeclineFriendRequest] StackTrace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        // Gửi lời mời kết bạn - CẢI THIỆN: Thêm better validation và error handling
         public async Task<SendFriendRequestResult> SendFriendRequestAsync(string senderId, string senderName, string receiverId, string receiverName)
         {
             try
             {
+                Debug.WriteLine($"[SendFriendRequest] Starting send process: {senderId} -> {receiverId}");
+                
+                // Validation đầu vào
+                if (string.IsNullOrWhiteSpace(senderId) || string.IsNullOrWhiteSpace(receiverId))
+                {
+                    Debug.WriteLine($"[SendFriendRequest] Invalid user IDs");
+                    return SendFriendRequestResult.Error;
+                }
+                
+                if (senderId == receiverId)
+                {
+                    Debug.WriteLine($"[SendFriendRequest] Cannot send friend request to self");
+                    return SendFriendRequestResult.Error;
+                }
+
                 // 1. Kiểm tra đã là bạn bè chưa
                 if (await AreAlreadyFriendsAsync(senderId, receiverId))
                 {
@@ -1054,10 +1429,10 @@ namespace Learnify.Services
                     return SendFriendRequestResult.AlreadyFriends;
                 }
 
-                // 2. Kiểm tra đã có lời mời Pending chưa
-                if (await HasPendingRequestAsync(senderId, receiverId))
+                // 2. Kiểm tra đã có lời mời Pending chưa (cả 2 chiều)
+                if (await HasPendingRequestAsync(senderId, receiverId) || await HasPendingRequestAsync(receiverId, senderId))
                 {
-                    Debug.WriteLine($"[SendFriendRequest] Already has pending request from {senderId} to {receiverId}");
+                    Debug.WriteLine($"[SendFriendRequest] Already has pending request between {senderId} and {receiverId}");
                     return SendFriendRequestResult.HasPending;
                 }
 
@@ -1076,11 +1451,13 @@ namespace Learnify.Services
                     receiverId = receiverId,
                     receiverName = receiverName,
                     status = "Pending",
-                    sentAt = DateTime.UtcNow.ToString("o")
+                    sentAt = DateTime.UtcNow.ToString("o"),
+                    requestId = requestId
                 };
+                
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
-                var json = Newtonsoft.Json.JsonConvert.SerializeObject(request);
-                var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var json = JsonConvert.SerializeObject(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
                 var res = await _httpClient.PutAsync(url, content);
                 content.Dispose();
                 
@@ -1091,13 +1468,15 @@ namespace Learnify.Services
                 }
                 else
                 {
-                    Debug.WriteLine($"[SendFriendRequest] Failed to send request: {res.StatusCode}");
+                    var errorContent = await res.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[SendFriendRequest] Failed to send request: {res.StatusCode}, Error: {errorContent}");
                     return SendFriendRequestResult.Error;
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[SendFriendRequest] Error: {ex.Message}");
+                Debug.WriteLine($"[SendFriendRequest] Exception: {ex.Message}");
+                Debug.WriteLine($"[SendFriendRequest] StackTrace: {ex.StackTrace}");
                 return SendFriendRequestResult.Error;
             }
         }
@@ -1122,81 +1501,135 @@ namespace Learnify.Services
             }
         }
 
-        // Kiểm tra vượt quá giới hạn 5 lời mời/30 phút
+        // Kiểm tra vượt quá giới hạn 5 lời mời/30 phút - CẢI THIỆN: Better error handling và logging
         private async Task<bool> ExceedsRequestLimitAsync(string senderId, string receiverId)
         {
             try
             {
+                Debug.WriteLine($"[ExceedsRequestLimit] Checking limit for {senderId} -> {receiverId}");
+                
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}.json");
                 var response = await _httpClient.GetAsync(url);
-                if (response.IsSuccessStatusCode)
+                
+                if (!response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(content) && content != "null")
-                    {
-                        var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
-                        var thirtyMinutesAgo = DateTime.UtcNow.AddMinutes(-30);
-                        var recentRequestsCount = 0;
-
-                        foreach (var kv in requests)
+                    Debug.WriteLine($"[ExceedsRequestLimit] HTTP Error: {response.StatusCode}");
+                    return false; // Cho phép gửi nếu không check được
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(content) || content == "null")
+                {
+                    Debug.WriteLine($"[ExceedsRequestLimit] No requests found, allowing send");
+                    return false;
+                }
+                
+                var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                var thirtyMinutesAgo = DateTime.UtcNow.AddMinutes(-30);
+                var recentRequestsCount = 0;                        foreach (var kv in requests)
                         {
-                            var request = kv.Value;
-                            if (request.senderId?.ToString() == senderId)
+                            try
                             {
+                                var request = kv.Value;
+                                var requestSenderId = request.senderId?.ToString();
                                 var sentAtStr = request.sentAt?.ToString();
-                                if (DateTime.TryParse(sentAtStr, out DateTime sentAt))
+                                DateTime sentAt = DateTime.UtcNow;
+                                if (!string.IsNullOrEmpty(sentAtStr))
                                 {
-                                    if (sentAt >= thirtyMinutesAgo)
+                                    DateTime parsedSentAt;
+                                    if (DateTime.TryParse(sentAtStr, out parsedSentAt))
                                     {
-                                        recentRequestsCount++;
+                                        sentAt = parsedSentAt;
+                                    }
+                                }
+                                
+                                if (requestSenderId == senderId)
+                                {
+                                    if (!string.IsNullOrEmpty(sentAtStr))
+                                    {
+                                        if (sentAt >= thirtyMinutesAgo)
+                                        {
+                                            recentRequestsCount++;
+                                            Debug.WriteLine($"[ExceedsRequestLimit] Found recent request at {sentAt} (count: {recentRequestsCount})");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Debug.WriteLine($"[ExceedsRequestLimit] Could not parse timestamp '{sentAtStr}' for request from {senderId}");
                                     }
                                 }
                             }
-                        }
-
-                        Debug.WriteLine($"[ExceedsRequestLimit] User {senderId} sent {recentRequestsCount} requests to {receiverId} in last 30 minutes");
-                        return recentRequestsCount >= 5;
+                    catch (Exception requestEx)
+                    {
+                        Debug.WriteLine($"[ExceedsRequestLimit] Error processing request {kv.Key}: {requestEx.Message}");
                     }
                 }
-                return false;
+
+                var exceeds = recentRequestsCount >= 5;
+                Debug.WriteLine($"[ExceedsRequestLimit] User {senderId} sent {recentRequestsCount}/5 requests to {receiverId} in last 30 minutes. Exceeds: {exceeds}");
+                return exceeds;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[ExceedsRequestLimit] Error: {ex.Message}");
-                return false;
+                Debug.WriteLine($"[ExceedsRequestLimit] Exception: {ex.Message}");
+                Debug.WriteLine($"[ExceedsRequestLimit] StackTrace: {ex.StackTrace}");
+                return false; // Cho phép gửi nếu có lỗi trong việc check
             }
         }
 
-        // Kiểm tra đã có lời mời Pending chưa
+        // Kiểm tra đã có lời mời Pending chưa - CẢI THIỆN: Better performance và error handling
         public async Task<bool> HasPendingRequestAsync(string senderId, string receiverId)
         {
             try
             {
+                Debug.WriteLine($"[HasPendingRequest] Checking pending request: {senderId} -> {receiverId}");
+                
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}.json");
                 var response = await _httpClient.GetAsync(url);
-                if (response.IsSuccessStatusCode)
+                
+                if (!response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    Debug.WriteLine($"[HasPendingRequest] HTTP Error: {response.StatusCode}");
+                    return false;
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(content) || content == "null")
+                {
+                    Debug.WriteLine($"[HasPendingRequest] No requests found for receiver {receiverId}");
+                    return false;
+                }
+                
+                var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                Debug.WriteLine($"[HasPendingRequest] Found {requests.Count} requests for receiver {receiverId}");
+                
+                foreach (var kv in requests)
+                {
+                    try
                     {
-                        var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
-                        foreach (var kv in requests)
+                        var request = kv.Value;
+                        var requestSenderId = request.senderId?.ToString();
+                        var status = request.status?.ToString();
+                        
+                        if (requestSenderId == senderId && status == "Pending")
                         {
-                            var request = kv.Value;
-                            if (request.senderId?.ToString() == senderId && 
-                                request.status?.ToString() == "Pending")
-                            {
-                                Debug.WriteLine($"[HasPendingRequest] Found pending request from {senderId} to {receiverId}");
-                                return true;
-                            }
+                            Debug.WriteLine($"[HasPendingRequest] Found pending request from {senderId} to {receiverId}");
+                            return true;
                         }
                     }
+                    catch (Exception requestEx)
+                    {
+                        Debug.WriteLine($"[HasPendingRequest] Error processing request {kv.Key}: {requestEx.Message}");
+                    }
                 }
+                
+                Debug.WriteLine($"[HasPendingRequest] No pending request found from {senderId} to {receiverId}");
                 return false;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[HasPendingRequest] Error: {ex.Message}");
+                Debug.WriteLine($"[HasPendingRequest] Exception: {ex.Message}");
+                Debug.WriteLine($"[HasPendingRequest] StackTrace: {ex.StackTrace}");
                 return false;
             }
         }
@@ -1294,7 +1727,16 @@ namespace Learnify.Services
                         if (status == "Accepted")
                         {
                             var senderId = request.senderId?.ToString();
-                            var sentAt = request.sentAt?.ToString();
+                            var sentAtStr = request.sentAt?.ToString();
+                            DateTime sentAt = DateTime.UtcNow;
+                            if (!string.IsNullOrEmpty(sentAtStr))
+                            {
+                                DateTime parsedSentAt;
+                                if (DateTime.TryParse(sentAtStr, out parsedSentAt))
+                                {
+                                    sentAt = parsedSentAt;
+                                }
+                            }
                             
                             Debug.WriteLine($"[FixMissingFriendsData] Found accepted request: {senderId} -> {receiverId}");
                             
@@ -1307,7 +1749,7 @@ namespace Learnify.Services
                                 var friendData = new Dictionary<string, object> 
                                 { 
                                     ["status"] = "Friends", 
-                                    ["since"] = sentAt ?? DateTime.UtcNow.ToString("o") 
+                                    ["since"] = sentAtStr ?? DateTime.UtcNow.ToString("o") 
                                 };
                                 
                                 var urlFriend1 = GetAuthenticatedUrl($"friends/{senderId}/{receiverId}.json");
@@ -1533,6 +1975,1323 @@ namespace Learnify.Services
                 return 0;
             }
         }
+
+        /// <summary>
+        /// Hủy kết bạn - CẢI THIỆN: Single-side remove + Unfriend marker strategy
+        /// </summary>
+        public async Task<bool> RemoveFriendAsync(string userId1, string userId2)
+        {
+            try
+            {
+                Debug.WriteLine($"[RemoveFriendAsync] 🔥 STARTING UNFRIEND: {userId1} removing {userId2}");
+                Debug.WriteLine($"[RemoveFriendAsync] Current time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
+                
+                // 1. CHỈ xóa khỏi danh sách bạn bè của user hiện tại (userId1) - có quyền write
+                var friendsUrl = GetAuthenticatedUrl($"friends/{userId1}/{userId2}.json");
+                Debug.WriteLine($"[RemoveFriendAsync] DELETE friends url: {friendsUrl}");
+                
+                var friendsRes = await _httpClient.DeleteAsync(friendsUrl);
+                Debug.WriteLine($"[RemoveFriendAsync] DELETE friends result: {friendsRes.StatusCode}");
+
+                if (!friendsRes.IsSuccessStatusCode)
+                {
+                    var error = await friendsRes.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[RemoveFriendAsync] ❌ Failed to remove {userId2} from {userId1}'s friends list: {error}");
+                    return false;
+                }
+
+                Debug.WriteLine($"[RemoveFriendAsync] ✅ Step 1 SUCCESS: Removed {userId2} from {userId1}'s friends list");
+
+                // 2. Tạo unfriend marker để userId2 có thể detect và tự xóa mình
+                Debug.WriteLine($"[RemoveFriendAsync] 📍 Step 2: Creating unfriend marker for {userId2}...");
+                await CreateUnfriendMarkerAsync(userId1, userId2);
+                Debug.WriteLine($"[RemoveFriendAsync] ✅ Step 2 COMPLETED: Created unfriend marker for {userId2}");
+
+                // 3. Xóa tất cả friendRequests liên quan (cả 2 chiều) để tránh auto-re-add
+                Debug.WriteLine($"[RemoveFriendAsync] 🧹 Step 3: Cleaning up friend requests...");
+                await CleanupFriendRequestsAsync(userId1, userId2);
+                await CleanupFriendRequestsAsync(userId2, userId1);
+                Debug.WriteLine($"[RemoveFriendAsync] ✅ Step 3 COMPLETED: Cleaned up friend requests");
+
+                // 4. Thông báo thay đổi cho user hiện tại
+                Debug.WriteLine($"[RemoveFriendAsync] 🔄 Step 4: Notifying friends list change for {userId1}...");
+                await NotifyFriendsListChangeWithRetryAsync(userId1);
+                Debug.WriteLine($"[RemoveFriendAsync] ✅ Step 4 COMPLETED: Notified friends list change");
+                
+                Debug.WriteLine($"[RemoveFriendAsync] 🎉 ALL STEPS COMPLETED: {userId1} unfriended {userId2}");
+                Debug.WriteLine($"[RemoveFriendAsync] 📌 {userId2} should detect unfriend marker via polling");
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[RemoveFriendAsync] Exception: {ex.Message}");
+                Debug.WriteLine($"[RemoveFriendAsync] StackTrace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cleanup friendRequests giữa 2 users để tránh auto-re-add sau khi unfriend
+        /// </summary>
+        private async Task CleanupFriendRequestsAsync(string fromUserId, string toUserId)
+        {
+            try
+            {
+                Debug.WriteLine($"[CleanupFriendRequestsAsync] Cleaning up requests from {fromUserId} to {toUserId}");
+                
+                // Lấy tất cả requests của toUserId
+                var url = GetAuthenticatedUrl($"friendRequests/{toUserId}.json");
+                var response = await _httpClient.GetAsync(url);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                        Debug.WriteLine($"[CleanupFriendRequestsAsync] Found {requests.Count} requests for {toUserId}");
+                        
+                        // Tìm và xóa tất cả requests từ fromUserId
+                        foreach (var kv in requests)
+                        {
+                            var requestId = kv.Key;
+                            var request = kv.Value;
+                            var senderId = request.senderId?.ToString();
+                            var status = request.status?.ToString();
+                            
+                            if (senderId == fromUserId)
+                            {
+                                Debug.WriteLine($"[CleanupFriendRequestsAsync] Found request {requestId} from {senderId} with status {status}, deleting...");
+                                
+                                var deleteUrl = GetAuthenticatedUrl($"friendRequests/{toUserId}/{requestId}.json");
+                                var deleteResponse = await _httpClient.DeleteAsync(deleteUrl);
+                                
+                                Debug.WriteLine($"[CleanupFriendRequestsAsync] Delete request result: {deleteResponse.StatusCode}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[CleanupFriendRequestsAsync] No requests found for {toUserId}");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine($"[CleanupFriendRequestsAsync] Failed to get requests for {toUserId}: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CleanupFriendRequestsAsync] Exception: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Thông báo thay đổi trong danh sách bạn bè để cập nhật real-time
+        /// </summary>
+        public async Task<bool> NotifyFriendsListChangeAsync(string userId)
+        {
+            try
+            {
+                Debug.WriteLine($"[NotifyFriendsListChange] Notifying friends list change for user: {userId}");
+                
+                // Kiểm tra token trước
+                var token = AuthService.GetToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    Debug.WriteLine($"[NotifyFriendsListChange] Error: No authentication token for user {userId}");
+                    return false;
+                }
+                
+                // Tạo một marker thời gian để thông báo thay đổi
+                var changeMarker = new Dictionary<string, object>
+                {
+                    ["lastUpdated"] = DateTime.UtcNow.ToString("o"),
+                    ["userId"] = userId
+                };
+                
+                var url = GetAuthenticatedUrl($"friendsListChanges/{userId}.json");
+                Debug.WriteLine($"[NotifyFriendsListChange] URL: {url}");
+                
+                var content = new StringContent(JsonConvert.SerializeObject(changeMarker), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PutAsync(url, content);
+                content.Dispose();
+                
+                var success = response.IsSuccessStatusCode;
+                Debug.WriteLine($"[NotifyFriendsListChange] Response status: {response.StatusCode}");
+                
+                if (!success)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[NotifyFriendsListChange] Error response: {errorContent}");
+                }
+                
+                Debug.WriteLine($"[NotifyFriendsListChange] Notification result: {success}");
+                
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[NotifyFriendsListChange] Exception: {ex.Message}");
+                Debug.WriteLine($"[NotifyFriendsListChange] Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra xem có thay đổi nào trong danh sách bạn bè không
+        /// </summary>
+        public async Task<bool> HasFriendsListChangedAsync(string userId, DateTime lastCheck)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"friendsListChanges/{userId}.json");
+                var response = await _httpClient.GetAsync(url);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var changeData = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                        if (changeData.ContainsKey("lastUpdated"))
+                        {
+                            var lastUpdatedStr = changeData["lastUpdated"].ToString();
+                            if (DateTime.TryParse(lastUpdatedStr, out DateTime lastUpdated))
+                            {
+                                return lastUpdated > lastCheck;
+                            }
+                        }
+                    }
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[HasFriendsListChanged] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Thông báo thay đổi với retry mechanism để đảm bảo thông báo được gửi
+        /// </summary>
+        private async Task NotifyFriendsListChangeWithRetryAsync(string userId, int maxRetries = 3)
+        {
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Attempt {attempt} for user: {userId}");
+                    
+                    // Kiểm tra kết nối internet trước
+                    if (!await CheckInternetConnectionAsync())
+                    {
+                        Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] No internet connection on attempt {attempt}");
+                        if (attempt < maxRetries)
+                        {
+                            await Task.Delay(2000); // Delay dài hơn nếu không có internet
+                            continue;
+                        }
+                    }
+                    
+                    var success = await NotifyFriendsListChangeAsync(userId);
+                    if (success)
+                    {
+                        Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Successfully notified user {userId} on attempt {attempt}");
+                        return;
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Failed to notify user {userId} on attempt {attempt}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Exception on attempt {attempt} for user {userId}: {ex.Message}");
+                    Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Stack trace: {ex.StackTrace}");
+                }
+                
+                // Delay trước khi retry (exponential backoff)
+                if (attempt < maxRetries)
+                {
+                    var delay = Math.Min(1000 * attempt, 3000); // 1s, 2s, 3s
+                    Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Waiting {delay}ms before retry...");
+                    await Task.Delay(delay);
+                }
+            }
+            
+            Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Failed to notify user {userId} after {maxRetries} attempts");
+        }
+
+        /// <summary>
+        /// Test notification để debug
+        /// </summary>
+        public async Task<bool> TestNotificationAsync(string userId)
+        {
+            try
+            {
+                Debug.WriteLine($"[TestNotification] Testing notification for user: {userId}");
+                
+                // Kiểm tra token
+                var token = AuthService.GetToken();
+                Debug.WriteLine($"[TestNotification] Token: {(string.IsNullOrEmpty(token) ? "NULL" : "EXISTS")}");
+                
+                // Test URL
+                var url = GetAuthenticatedUrl($"friendsListChanges/{userId}.json");
+                Debug.WriteLine($"[TestNotification] Test URL: {url}");
+                
+                // Test GET request trước
+                var getResponse = await _httpClient.GetAsync(url);
+                Debug.WriteLine($"[TestNotification] GET response: {getResponse.StatusCode}");
+                
+                if (!getResponse.IsSuccessStatusCode)
+                {
+                    var getError = await getResponse.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[TestNotification] GET error: {getError}");
+                }
+                
+                // Test PUT request
+                var testData = new Dictionary<string, object>
+                {
+                    ["test"] = true,
+                    ["timestamp"] = DateTime.UtcNow.ToString("o")
+                };
+                
+                var content = new StringContent(JsonConvert.SerializeObject(testData), Encoding.UTF8, "application/json");
+                var putResponse = await _httpClient.PutAsync(url, content);
+                content.Dispose();
+                
+                Debug.WriteLine($"[TestNotification] PUT response: {putResponse.StatusCode}");
+                
+                if (!putResponse.IsSuccessStatusCode)
+                {
+                    var putError = await putResponse.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[TestNotification] PUT error: {putError}");
+                }
+                
+                var success = putResponse.IsSuccessStatusCode;
+                Debug.WriteLine($"[TestNotification] Test result: {success}");
+                
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[TestNotification] Exception: {ex.Message}");
+                Debug.WriteLine($"[TestNotification] Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// DEPRECATED: Gửi notification hủy kết bạn cho user kia (Firebase có thể block endpoint này)
+        /// Replaced by CreateUnfriendMarkerAsync + polling detection
+        /// </summary>
+        [Obsolete("Use CreateUnfriendMarkerAsync instead for Firebase security compliance")]
+        public Task NotifyUnfriendAsync(string fromUserId, string toUserId)
+        {
+            // Không sử dụng nữa - replaced by marker system
+            Debug.WriteLine($"[NotifyUnfriendAsync] ⚠️ DEPRECATED: Use CreateUnfriendMarkerAsync instead");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// DEPRECATED: Polling kiểm tra notification hủy kết bạn (Firebase có thể block unfriendNotifications endpoint)
+        /// Replaced by unified SyncFromAcceptedRequestsAsync with unfriend marker detection
+        /// </summary>
+        [Obsolete("Unfriend detection now handled by SyncFromAcceptedRequestsAsync with markers")]
+        public Task CheckUnfriendNotificationsAsync(string myUserId)
+        {
+            // Không sử dụng nữa - unfriend detection được handle trong SyncFromAcceptedRequestsAsync
+            Debug.WriteLine($"[CheckUnfriendNotificationsAsync] ⚠️ DEPRECATED: Unfriend detection now in SyncFromAcceptedRequestsAsync");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Gửi notification chấp nhận kết bạn cho user kia
+        /// </summary>
+        public async Task NotifyFriendAcceptedAsync(string fromUserId, string toUserId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"friendAcceptedNotifications/{toUserId}/{fromUserId}.json");
+                var data = new { timestamp = DateTime.UtcNow.ToString("o") };
+                var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PutAsync(url, content);
+                content.Dispose();
+                System.Diagnostics.Debug.WriteLine($"[NotifyFriendAcceptedAsync] Sent friend accepted notification from {fromUserId} to {toUserId}: {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[NotifyFriendAcceptedAsync] Exception: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Polling kiểm tra notification chấp nhận kết bạn và tự động thêm bạn vào danh sách của mình
+        /// DISABLED: Firebase security rules block friendAcceptedNotifications endpoint
+        /// </summary>
+        public Task CheckFriendAcceptedNotificationsAsync(string myUserId)
+        {
+            try
+            {
+                // SKIP: Firebase blocks friendAcceptedNotifications endpoint
+                System.Diagnostics.Debug.WriteLine($"[CheckFriendAcceptedNotificationsAsync] ⚠️ SKIPPED: Firebase blocks friendAcceptedNotifications endpoint");
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CheckFriendAcceptedNotificationsAsync] Exception: {ex.Message}");
+                return Task.CompletedTask;
+            }
+        }
+
+        /// <summary>
+        /// Force sync toàn bộ friend list - gọi khi cần đồng bộ ngay lập tức
+        /// </summary>
+        public async Task<string> ForceSyncAllFriendsAsync(string myUserId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[ForceSyncAllFriends] Starting force sync for {myUserId}");
+                
+                var report = new List<string>();
+                var totalChanges = 0;
+
+                // Clear cache để force sync
+                _syncCache.Clear();
+
+                // Phase 1: Sync from accepted requests
+                var changes1 = await SyncFromAcceptedRequestsAsync(myUserId);
+                if (changes1) 
+                {
+                    totalChanges++;
+                    report.Add("✅ Synced from accepted requests");
+                }
+
+                // Phase 2: Bidirectional sync
+                var changes2 = await SyncBidirectionalFriendsAsync(myUserId);
+                if (changes2) 
+                {
+                    totalChanges++;
+                    report.Add("✅ Fixed bidirectional links");
+                }
+
+                // Phase 3: Cross-check consistency
+                var changes3 = await CrossCheckFriendsConsistencyAsync(myUserId);
+                if (changes3) 
+                {
+                    totalChanges++;
+                    report.Add("✅ Cross-synced missing friends");
+                }
+
+                // Phase 4: Bidirectional unfriend cleanup
+                var changes4 = await SyncBidirectionalUnfriendAsync(myUserId);
+                if (changes4) 
+                {
+                    totalChanges++;
+                    report.Add("✅ Cleaned up bidirectional unfriends");
+                }
+
+                // Phase 5: Fix missing friends data from all accepted requests
+                var fixedCount = await FixMissingFriendsDataAsync();
+                if (fixedCount > 0)
+                {
+                    totalChanges++;
+                    report.Add($"✅ Fixed {fixedCount} missing friend relationships");
+                }
+
+                // Force UI reload
+                if (totalChanges > 0 && NotificationVM != null)
+                {
+                    NotificationVM.TriggerFriendsListReload();
+                    report.Add("🔄 UI reloaded");
+                }
+
+                var summary = totalChanges > 0 ? 
+                    $"🎉 Force sync completed! {totalChanges} improvements made:\n" + string.Join("\n", report) :
+                    "✨ Friend list is already in perfect sync!";
+
+                System.Diagnostics.Debug.WriteLine($"[ForceSyncAllFriends] {summary}");
+                return summary;
+            }
+            catch (Exception ex)
+            {
+                var error = $"❌ Force sync failed: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[ForceSyncAllFriends] {error}");
+                return error;
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra và đồng bộ danh sách bạn bè khi polling - ENHANCED VERSION với Acceptance Markers
+        /// Focus vào Phase 1 với acceptance marker detection để notify sender
+        /// </summary>
+        public async Task CheckAndSyncFriendsListAsync(string myUserId)
+        {
+            try
+            {
+                // Simplified debouncing - chỉ tránh spam trong cùng 1 giây
+                var cacheKey = $"sync_{myUserId}_{DateTime.UtcNow.Second}";
+                if (_syncCache.Contains(cacheKey))
+                {
+                    return;
+                }
+                _syncCache.Add(cacheKey);
+                
+                // Cleanup cache mỗi 30 giây
+                if (DateTime.UtcNow.Second % 30 == 0)
+                {
+                    _syncCache.Clear();
+                    // Cleanup processed markers cache để tránh memory leak
+                    if (_processedMarkers.Count > 100)
+                    {
+                        _processedMarkers.Clear();
+                        System.Diagnostics.Debug.WriteLine($"[CheckAndSyncFriendsListAsync] 🧹 Cleaned up processed markers cache");
+                    }
+                }
+
+                var hasChanges = false;
+                System.Diagnostics.Debug.WriteLine($"[CheckAndSyncFriendsListAsync] 🔥 ENHANCED sync for {myUserId} - with acceptance markers");
+
+                // === ONLY PHASE 1: Sync từ Accepted Requests + Acceptance Markers ===
+                // Phase này bây giờ có thể detect khi ai đó accept request của mình
+                hasChanges |= await SyncFromAcceptedRequestsAsync(myUserId);
+
+                // === SKIP Phase 2, 3, 4 vì cần bulk user scanning (bị block) ===
+                System.Diagnostics.Debug.WriteLine($"[CheckAndSyncFriendsListAsync] ⚠️ Skipping Phase 2-4 due to Firebase security restrictions");
+                System.Diagnostics.Debug.WriteLine($"[CheckAndSyncFriendsListAsync] 📌 Phase 1 enhanced with acceptance markers for sender notifications");
+
+                // Reload UI if any changes
+                if (hasChanges)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CheckAndSyncFriendsListAsync] ✅ Changes detected, triggering UI reload for {myUserId}");
+                    if (NotificationVM != null)
+                    {
+                        NotificationVM.TriggerFriendsListReload();
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CheckAndSyncFriendsListAsync] ℹ️ No changes detected for {myUserId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CheckAndSyncFriendsListAsync] Exception: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// PHASE 1: Đồng bộ từ các requests đã Accepted - ENHANCED VERSION với Acceptance Markers
+        /// Chỉ focus vào những gì work được: individual friendRequests endpoints + acceptance markers
+        /// </summary>
+        private async Task<bool> SyncFromAcceptedRequestsAsync(string myUserId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ENHANCED: Checking accepted requests for {myUserId}");
+                
+                var hasChanges = false;
+                
+                // === 1. Check requests TO me (received) ===
+                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] Checking requests TO {myUserId}");
+                var toMeUrl = GetAuthenticatedUrl($"friendRequests/{myUserId}.json");
+                var toMeResponse = await _httpClient.GetAsync(toMeUrl);
+
+                if (toMeResponse.IsSuccessStatusCode)
+                {
+                    var toMeContent = await toMeResponse.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(toMeContent) && toMeContent != "null")
+                    {
+                        var toMeRequests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(toMeContent);
+                        System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 📨 Found {toMeRequests.Count} requests/markers TO {myUserId}");
+
+                        foreach (var kv in toMeRequests)
+                        {
+                            var requestId = kv.Key;
+                            var request = kv.Value;
+                            var status = request.status?.ToString();
+                            var senderId = request.senderId?.ToString();
+                            var markerType = request.markerType?.ToString();
+
+                            System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🔍 Processing: {requestId} | status={status} | sender={senderId} | type={markerType}");
+
+                            // Cache user ID khi tìm thấy
+                            if (!string.IsNullOrEmpty(senderId))
+                            {
+                                _userIdCache.Add(senderId);
+                            }
+
+                            // === CASE 1: Normal Accepted Request (RECEIVER SIDE) ===
+                            if (status == "Accepted" && !string.IsNullOrEmpty(senderId) && markerType != "FriendAcceptance")
+                            {
+                                // Kiểm tra đã có trong friends chưa
+                                if (!await AreAlreadyFriendsAsync(myUserId, senderId))
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ⭐ Found ACCEPTED request: {senderId} -> {myUserId}, adding friendship (RECEIVER SIDE)");
+                                    
+                                    // Chỉ add friend cho receiver (người accept), KHÔNG show notification
+                                    // Notification sẽ được hiển thị ở CASE 2 cho sender
+                                    if (await AddSingleSideFriendshipAsync(myUserId, senderId))
+                                    {
+                                        hasChanges = true;
+                                        System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ✅ SUCCESS: Added {senderId} as friend for {myUserId} (RECEIVER SIDE)");
+                                    }
+                                }
+                                else
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ℹ️ Already friends: {myUserId} <-> {senderId}");
+                                }
+                            }
+                            // === CASE 2: Friend Acceptance Marker (SENDER SIDE) ===
+                            else if (status == "NotifyAccepted" && markerType == "FriendAcceptance")
+                            {
+                                var accepterId = senderId; // senderId in marker = who accepted
+                                var markerKey = $"accept_{accepterId}_{myUserId}_{requestId}";
+                                
+                                // Kiểm tra đã process marker này chưa để tránh duplicate
+                                if (_processedMarkers.Contains(markerKey))
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ⚠️ SKIP: Already processed acceptance marker {requestId}");
+                                    continue;
+                                }
+                                _processedMarkers.Add(markerKey);
+                                
+                                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🎉 Found ACCEPTANCE MARKER: {accepterId} accepted my request! (SENDER SIDE)");
+                                
+                                // Add friendship cho sender (Firebase chỉ cho phép write vào friends của chính mình)
+                                if (!await AreAlreadyFriendsAsync(myUserId, accepterId))
+                                {
+                                    var friendData = new Dictionary<string, object> { 
+                                        ["status"] = "Friends", 
+                                        ["since"] = DateTime.UtcNow.ToString("o"),
+                                        ["acceptedAt"] = DateTime.UtcNow.ToString("o"),
+                                        ["acceptedBy"] = accepterId
+                                    };
+                                    
+                                    var friendUrl = GetAuthenticatedUrl($"friends/{myUserId}/{accepterId}.json");
+                                    var friendContent = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                                    var friendResponse = await _httpClient.PutAsync(friendUrl, friendContent);
+                                    friendContent.Dispose();
+                                    
+                                    if (friendResponse.IsSuccessStatusCode)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ✅ Added {accepterId} to my friends list (SENDER SIDE)");
+                                        hasChanges = true;
+                                        
+                                        // Trigger friends list reload for sender
+                                        if (NotificationVM != null)
+                                        {
+                                            NotificationVM.TriggerFriendsListReload();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        var error = await friendResponse.Content.ReadAsStringAsync();
+                                        System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ❌ Failed to add friend: {error}");
+                                    }
+                                }
+                                
+                                // Show notification for successful acceptance (CHỈ CHO SENDER)
+                                if (NotificationVM != null)
+                                {
+                                    var friend = await GetUserByUidAsync(accepterId);
+                                    var friendName = friend?.Name ?? accepterId;
+                                    NotificationVM.AddFriendAcceptedNotification(accepterId, friendName);
+                                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 📱 Showed acceptance notification: {friendName} accepted your request (SENDER SIDE)");
+                                }
+                                
+                                // Xóa marker sau khi process
+                                var deleteMarkerUrl = GetAuthenticatedUrl($"friendRequests/{myUserId}/{requestId}.json");
+                                await _httpClient.DeleteAsync(deleteMarkerUrl);
+                                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🗑️ Cleaned up acceptance marker {requestId}");
+                            }
+                            // === CASE 3: Unfriend Marker (SOMEONE REMOVED ME) ===
+                            else if (status == "NotifyUnfriend" && markerType == "UnfriendNotification")
+                            {
+                                var removerId = senderId; // senderId in marker = who removed me
+                                var markerKey = $"unfriend_{removerId}_{myUserId}_{requestId}";
+                                
+                                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🔥 DETECTED UNFRIEND MARKER! {removerId} unfriended {myUserId}");
+                                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 📋 Marker details: requestId={requestId}, removerId={removerId}");
+                                
+                                // Kiểm tra đã process marker này chưa để tránh duplicate
+                                if (_processedMarkers.Contains(markerKey))
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ⚠️ SKIP: Already processed unfriend marker {requestId}");
+                                    continue;
+                                }
+                                _processedMarkers.Add(markerKey);
+                                
+                                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 💔 PROCESSING UNFRIEND: {removerId} removed me from friends!");
+                                
+                                // DEBUG: Check current friends list status
+                                var isFriend = await AreAlreadyFriendsAsync(myUserId, removerId);
+                                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🔍 DEBUG: Is {removerId} still in my friends? {isFriend}");
+                                
+                                // Tự xóa removerId khỏi friends list của mình
+                                if (await AreAlreadyFriendsAsync(myUserId, removerId))
+                                {
+                                    var removeFriendUrl = GetAuthenticatedUrl($"friends/{myUserId}/{removerId}.json");
+                                    var removeResponse = await _httpClient.DeleteAsync(removeFriendUrl);
+                                    
+                                    if (removeResponse.IsSuccessStatusCode)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ✅ Removed {removerId} from my friends list");
+                                        hasChanges = true;
+                                        
+                                        // FORCE UI refresh ngay lập tức để user thấy friend đã bị xóa
+                                        if (NotificationVM != null)
+                                        {
+                                            System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🔄 Force refreshing friends list after unfriend");
+                                            NotificationVM.TriggerFriendsListReload();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        var error = await removeResponse.Content.ReadAsStringAsync();
+                                        System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ❌ Failed to remove friend: {error}");
+                                    }
+                                }
+                                else
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ⚠️ {removerId} was not in friends list (already removed?)");
+                                }
+                                
+                                // Cleanup friendRequests để tránh auto-re-add
+                                await CleanupFriendRequestsAsync(removerId, myUserId);
+                                await CleanupFriendRequestsAsync(myUserId, removerId);
+                                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🧹 Cleaned up friend requests with {removerId}");
+                                
+                                // Show notification for unfriend AFTER removing from friends list
+                                if (NotificationVM != null)
+                                {
+                                    var friend = await GetUserByUidAsync(removerId);
+                                    var friendName = friend?.Name ?? removerId;
+                                    
+                                    // Delay nhỏ để đảm bảo UI đã refresh friends list trước khi hiện notification
+                                    await Task.Delay(500);
+                                    
+                                    NotificationVM.AddUnfriendNotification(removerId, friendName);
+                                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 📱 Showed unfriend notification: {friendName} removed you from friends (after UI refresh)");
+                                }
+                                
+                                // Xóa marker sau khi process
+                                var deleteUnfriendMarkerUrl = GetAuthenticatedUrl($"friendRequests/{myUserId}/{requestId}.json");
+                                await _httpClient.DeleteAsync(deleteUnfriendMarkerUrl);
+                                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🗑️ Cleaned up unfriend marker {requestId}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 📭 No requests/markers found for {myUserId} (content: {toMeContent?.Substring(0, Math.Min(50, toMeContent.Length))})");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🚨 Failed to get requests for {myUserId}: {toMeResponse.StatusCode}");
+                    var errorContent = await toMeResponse.Content.ReadAsStringAsync();
+                    System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🚨 Error details: {errorContent}");
+                }
+
+                // === 2. SKIP scanning FROM me vì tất cả bulk endpoints đều bị block ===
+                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ⚠️ Skipping FROM-me scanning due to Firebase restrictions");
+
+                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ENHANCED scan completed, hasChanges: {hasChanges}");
+                return hasChanges;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// PHASE 2: Đồng bộ 2 chiều - nếu A có B làm bạn thì B cũng phải có A
+        /// </summary>
+        private async Task<bool> SyncBidirectionalFriendsAsync(string myUserId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalFriends] Checking bidirectional sync for {myUserId}");
+                
+                var hasChanges = false;
+                var myFriends = await GetFriendsAsync(myUserId);
+
+                foreach (var friend in myFriends)
+                {
+                    // Kiểm tra xem friend có mình trong danh sách không
+                    if (!await AreAlreadyFriendsAsync(friend.Id, myUserId))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalFriends] Missing bidirectional link: {friend.Id} doesn't have {myUserId}");
+                        
+                        // Thêm mình vào danh sách của friend
+                        var friendData = new Dictionary<string, object> { 
+                            ["status"] = "Friends", 
+                            ["since"] = DateTime.UtcNow.ToString("o"),
+                            ["syncedAt"] = DateTime.UtcNow.ToString("o")
+                        };
+
+                        var url = GetAuthenticatedUrl($"friends/{friend.Id}/{myUserId}.json");
+                        var content = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                        var response = await _httpClient.PutAsync(url, content);
+                        content.Dispose();
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            hasChanges = true;
+                            System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalFriends] Fixed bidirectional link: Added {myUserId} to {friend.Id}'s friends");
+                        }
+                    }
+                }
+
+                return hasChanges;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalFriends] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// PHASE 3: Cross-check với other users để tìm missing friends
+        /// </summary>
+        private async Task<bool> CrossCheckFriendsConsistencyAsync(string myUserId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Cross-checking friends consistency for {myUserId}");
+                
+                var hasChanges = false;
+                
+                // Lấy sample users thông qua GetLimitedUserIdsAsync (có nhiều fallback strategies)
+                var sampleUsers = await GetLimitedUserIdsAsync(10); // Limit để tránh quá tải
+                
+                if (sampleUsers.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] ⚠️ No users available for cross-check, skipping phase");
+                    return false;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Cross-checking with {sampleUsers.Count} users");
+                
+                foreach (var otherUserId in sampleUsers)
+                {
+                    if (otherUserId == myUserId) continue;
+                    
+                    try
+                    {
+                        // Kiểm tra xem user khác có mình trong friends list không
+                        if (await AreAlreadyFriendsAsync(otherUserId, myUserId))
+                        {
+                            // Nếu họ có mình nhưng mình không có họ
+                            if (!await AreAlreadyFriendsAsync(myUserId, otherUserId))
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Found missing friend: {otherUserId} has {myUserId} but not vice versa");
+                                
+                                // Thêm họ vào danh sách của mình
+                                var friendData = new Dictionary<string, object> { 
+                                    ["status"] = "Friends", 
+                                    ["since"] = DateTime.UtcNow.ToString("o"),
+                                    ["crossSyncedAt"] = DateTime.UtcNow.ToString("o")
+                                };
+
+                                var url = GetAuthenticatedUrl($"friends/{myUserId}/{otherUserId}.json");
+                                var content = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                                var response = await _httpClient.PutAsync(url, content);
+                                content.Dispose();
+
+                                if (response.IsSuccessStatusCode)
+                                {
+                                    hasChanges = true;
+                                    System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Cross-synced: Added {otherUserId} to {myUserId}'s friends");
+                                    
+                                    // NOTE: KHÔNG hiển thị notification ở đây vì đây chỉ là sync recovery, 
+                                    // không phải acceptance event thực sự từ user
+                                    System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] ℹ️ No notification shown - this is sync recovery, not real acceptance");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Error checking {otherUserId}: {ex.Message}");
+                        // Continue với user khác
+                    }
+                }
+
+                return hasChanges;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// PHASE 4: Bidirectional Unfriend Cleanup - Đồng bộ hủy kết bạn 2 chiều
+        /// Nếu A không có B nhưng B vẫn có A, thì xóa A khỏi danh sách của B
+        /// </summary>
+        private async Task<bool> SyncBidirectionalUnfriendAsync(string myUserId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Checking bidirectional unfriend sync for {myUserId}");
+                
+                var hasChanges = false;
+                
+                // Lấy danh sách users thông qua GetLimitedUserIdsAsync (có nhiều fallback strategies)
+                var sampleUsers = await GetLimitedUserIdsAsync(15); // Limit để tránh quá tải
+                
+                if (sampleUsers.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] ⚠️ No users available for unfriend cleanup, skipping phase");
+                    return false;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Checking unfriend sync with {sampleUsers.Count} users");
+                
+                foreach (var otherUserId in sampleUsers)
+                {
+                    if (otherUserId == myUserId) continue;
+                    
+                    try
+                    {
+                        // Case 1: Nếu user khác có mình làm bạn nhưng mình không có họ
+                        // → Có thể mình đã unfriend họ, cần sync lại
+                        if (await AreAlreadyFriendsAsync(otherUserId, myUserId) && 
+                            !await AreAlreadyFriendsAsync(myUserId, otherUserId))
+                        {
+                            // Kiểm tra xem có phải do unfriend không bằng cách check friendRequests
+                            var hasActiveRequest = await HasActiveRequestBetweenUsersAsync(myUserId, otherUserId);
+                            
+                            if (!hasActiveRequest)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Detected unfriend: {myUserId} unfriended {otherUserId}, removing bidirectional link");
+                                
+                                // Xóa mình khỏi danh sách của user kia
+                                var unfriendUrl = GetAuthenticatedUrl($"friends/{otherUserId}/{myUserId}.json");
+                                var unfriendResponse = await _httpClient.DeleteAsync(unfriendUrl);
+                                
+                                if (unfriendResponse.IsSuccessStatusCode)
+                                {
+                                    hasChanges = true;
+                                    System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Successfully removed {myUserId} from {otherUserId}'s friends list");
+                                    
+                                    // Cleanup friendRequests liên quan
+                                    await CleanupFriendRequestsAsync(myUserId, otherUserId);
+                                    await CleanupFriendRequestsAsync(otherUserId, myUserId);
+                                }
+                            }
+                        }
+                        
+                        // Case 2: Nếu mình có user khác làm bạn nhưng họ không có mình
+                        // → Có thể họ đã unfriend mình, cần sync lại
+                        if (await AreAlreadyFriendsAsync(myUserId, otherUserId) && 
+                            !await AreAlreadyFriendsAsync(otherUserId, myUserId))
+                        {
+                            var hasActiveRequest = await HasActiveRequestBetweenUsersAsync(otherUserId, myUserId);
+                            
+                            if (!hasActiveRequest)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Detected unfriend: {otherUserId} unfriended {myUserId}, removing from my list");
+                                
+                                // Xóa họ khỏi danh sách của mình
+                                var unfriendUrl = GetAuthenticatedUrl($"friends/{myUserId}/{otherUserId}.json");
+                                var unfriendResponse = await _httpClient.DeleteAsync(unfriendUrl);
+                                
+                                if (unfriendResponse.IsSuccessStatusCode)
+                                {
+                                    hasChanges = true;
+                                    System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Successfully removed {otherUserId} from {myUserId}'s friends list");
+                                    
+                                    // Cleanup friendRequests liên quan
+                                    await CleanupFriendRequestsAsync(myUserId, otherUserId);
+                                    await CleanupFriendRequestsAsync(otherUserId, myUserId);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Error checking {otherUserId}: {ex.Message}");
+                        // Continue với user khác
+                    }
+                }
+
+                return hasChanges;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra xem có request đang active (Pending/Accepted) giữa 2 users không
+        /// </summary>
+        private async Task<bool> HasActiveRequestBetweenUsersAsync(string senderId, string receiverId)
+        {
+            try
+            {
+                // Check senderId -> receiverId
+                var hasRequest1 = await HasPendingRequestAsync(senderId, receiverId);
+                
+                // Check receiverId -> senderId  
+                var hasRequest2 = await HasPendingRequestAsync(receiverId, senderId);
+                
+                // Check for accepted requests
+                var hasAccepted1 = await HasAcceptedRequestAsync(senderId, receiverId);
+                var hasAccepted2 = await HasAcceptedRequestAsync(receiverId, senderId);
+                
+                return hasRequest1 || hasRequest2 || hasAccepted1 || hasAccepted2;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HasActiveRequestBetweenUsers] Exception: {ex.Message}");
+                return false; // Safe default
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra có request Accepted giữa 2 users không
+        /// </summary>
+        private async Task<bool> HasAcceptedRequestAsync(string senderId, string receiverId)
+        {
+            try
+            {
+                var url = GetAuthenticatedUrl($"friendRequests/{receiverId}.json");
+                var response = await _httpClient.GetAsync(url);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    {
+                        var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                        
+                        foreach (var kv in requests)
+                        {
+                            var request = kv.Value;
+                            var requestSenderId = request.senderId?.ToString();
+                            var status = request.status?.ToString();
+                            
+                            if (requestSenderId == senderId && status == "Accepted")
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HasAcceptedRequest] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách giới hạn user IDs để scan (fallback khi GetAllUserIds bị block)
+        /// </summary>
+        private async Task<List<string>> GetLimitedUserIdsAsync(int limit = 20)
+        {
+            try
+            {
+                // Thử lấy từ GetAllUserIds trước
+                var allIds = await GetAllUserIdsAsync();
+                if (allIds.Count > 0)
+                {
+                    return allIds.Take(limit).ToList();
+                }
+                
+                // Fallback Strategy 1: Direct scan friendRequests.json (thường ít restrictive hơn)
+                System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Primary GetAllUserIds failed, trying direct friendRequests scan...");
+                var requestsUrl = GetAuthenticatedUrl("friendRequests.json");
+                var requestsResponse = await _httpClient.GetAsync(requestsUrl);
+                
+                if (requestsResponse.IsSuccessStatusCode)
+                {
+                    var requestsContent = await requestsResponse.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(requestsContent) && requestsContent != "null")
+                    {
+                        var allRequests = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, dynamic>>>(requestsContent);
+                        var userIds = new HashSet<string>();
+                        
+                        // Lấy receiver IDs
+                        foreach (var receiverId in allRequests.Keys)
+                        {
+                            userIds.Add(receiverId);
+                            _userIdCache.Add(receiverId); // Cache ngay
+                        }
+                        
+                        // Lấy sender IDs từ requests
+                        foreach (var receiverData in allRequests.Values)
+                        {
+                            foreach (var request in receiverData.Values)
+                            {
+                                var senderId = request.senderId?.ToString();
+                                if (!string.IsNullOrEmpty(senderId))
+                                {
+                                    userIds.Add(senderId);
+                                    _userIdCache.Add(senderId); // Cache ngay
+                                }
+                            }
+                        }
+                        
+                        var extractedIds = userIds.Take(limit).ToList();
+                        System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] SUCCESS: Extracted {extractedIds.Count} user IDs from friendRequests.json");
+                        return extractedIds;
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] friendRequests.json failed: {requestsResponse.StatusCode}");
+                }
+                
+                // Fallback Strategy 2: Lấy từ publicUsers (có thể ít restrictive hơn)
+                System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Trying publicUsers fallback...");
+                var publicUrl = GetAuthenticatedUrl("publicUsers.json");
+                var publicResponse = await _httpClient.GetAsync(publicUrl);
+                
+                if (publicResponse.IsSuccessStatusCode)
+                {
+                    var publicContent = await publicResponse.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(publicContent) && publicContent != "null")
+                    {
+                        var publicUsers = JsonConvert.DeserializeObject<Dictionary<string, object>>(publicContent);
+                        var publicIds = publicUsers.Keys.Take(limit).ToList();
+                        
+                        // Cache ngay
+                        foreach (var id in publicIds)
+                        {
+                            _userIdCache.Add(id);
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Found {publicIds.Count} users from publicUsers");
+                        return publicIds;
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] publicUsers failed: {publicResponse.StatusCode}");
+                }
+                
+                // Fallback Strategy 3: Sử dụng cached user IDs từ previous operations
+                System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Using cached user IDs fallback");
+                if (_userIdCache.Count > 0)
+                {
+                    var cachedIds = _userIdCache.Take(limit).ToList();
+                    System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Found {cachedIds.Count} cached user IDs");
+                    return cachedIds;
+                }
+                
+                // Fallback Strategy 4: Return empty but log the issue
+                System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] ⚠️ ALL FALLBACK STRATEGIES FAILED - No user IDs available for scanning");
+                return new List<string>();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Exception: {ex.Message}");
+                return new List<string>();
+            }
+        }
+
+        /// <summary>
+        /// Thêm friendship bidirectional với proper error handling
+        /// </summary>
+        private async Task<bool> AddBidirectionalFriendshipAsync(string userId1, string userId2)
+        {
+            try
+            {
+                // Cache user IDs for future fallback
+                _userIdCache.Add(userId1);
+                _userIdCache.Add(userId2);
+                
+                var friendData = new Dictionary<string, object> { 
+                    ["status"] = "Friends", 
+                    ["since"] = DateTime.UtcNow.ToString("o"),
+                    ["syncedAt"] = DateTime.UtcNow.ToString("o")
+                };
+
+                // Add to user1's friends
+                var url1 = GetAuthenticatedUrl($"friends/{userId1}/{userId2}.json");
+                var content1 = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                var res1 = await _httpClient.PutAsync(url1, content1);
+                content1.Dispose();
+
+                // Add to user2's friends (bidirectional)
+                var url2 = GetAuthenticatedUrl($"friends/{userId2}/{userId1}.json");
+                var content2 = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                var res2 = await _httpClient.PutAsync(url2, content2);
+                content2.Dispose();
+
+                var success = res1.IsSuccessStatusCode && res2.IsSuccessStatusCode;
+                
+                if (success)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddBidirectionalFriendship] Success: {userId1} <-> {userId2}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddBidirectionalFriendship] Failed: {userId1} <-> {userId2}, Status: {res1.StatusCode}, {res2.StatusCode}");
+                }
+                
+                return success;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddBidirectionalFriendship] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Thêm friendship single-side (chỉ cho 1 user) với proper error handling
+        /// </summary>
+        private async Task<bool> AddSingleSideFriendshipAsync(string userId, string friendId)
+        {
+            try
+            {
+                // Cache user IDs for future fallback
+                _userIdCache.Add(userId);
+                _userIdCache.Add(friendId);
+                
+                var friendData = new Dictionary<string, object> { 
+                    ["status"] = "Friends", 
+                    ["since"] = DateTime.UtcNow.ToString("o"),
+                    ["syncedAt"] = DateTime.UtcNow.ToString("o")
+                };
+
+                // Add ONLY to userId's friends (single-side)
+                var url = GetAuthenticatedUrl($"friends/{userId}/{friendId}.json");
+                var content = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PutAsync(url, content);
+                content.Dispose();
+
+                var success = response.IsSuccessStatusCode;
+                
+                if (success)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddSingleSideFriendship] Success: {userId} -> {friendId}");
+                    if (NotificationVM != null)
+                    {
+                        NotificationVM.TriggerFriendsListReload();
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AddSingleSideFriendship] Failed: {userId} -> {friendId}, Status: {response.StatusCode}");
+                }
+                
+                return success;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddSingleSideFriendship] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Property để inject NotificationViewModel từ MainViewModel
+        /// </summary>
+        /// <summary>
+        /// Debug method: Kiểm tra trạng thái friends list hiện tại
+        /// </summary>
+        public async Task<string> DebugFriendsListAsync(string userId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[DebugFriendsList] Checking friends list for {userId}");
+                
+                var friends = await GetFriendsAsync(userId);
+                var friendNames = new List<string>();
+                
+                foreach (var friend in friends)
+                {
+                    friendNames.Add($"{friend.Name} ({friend.Id})");
+                }
+                
+                var result = $"User {userId} has {friends.Count} friends:\n" + string.Join("\n", friendNames);
+                System.Diagnostics.Debug.WriteLine($"[DebugFriendsList] {result}");
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                var error = $"Debug failed: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[DebugFriendsList] {error}");
+                return error;
+            }
+        }
+
+        /// <summary>
+        /// Debug method: Kiểm tra trạng thái unfriend markers trong friendRequests
+        /// </summary>
+        public async Task<string> DebugUnfriendMarkersAsync(string userId)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[DebugUnfriendMarkers] Checking unfriend markers for {userId}");
+                
+                var url = GetAuthenticatedUrl($"friendRequests/{userId}.json");
+                var response = await _httpClient.GetAsync(url);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    return $"Failed to get friendRequests: {response.StatusCode}";
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(content) || content == "null")
+                {
+                    return $"No friendRequests found for {userId}";
+                }
+                
+                var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                var unfriendMarkers = new List<string>();
+                
+                foreach (var kv in requests)
+                {
+                    var requestId = kv.Key;
+                    var request = kv.Value;
+                    var status = request.status?.ToString();
+                    var markerType = request.markerType?.ToString();
+                    var senderId = request.senderId?.ToString();
+                    
+                    if (status == "NotifyUnfriend" && markerType == "UnfriendNotification")
+                    {
+                        unfriendMarkers.Add($"Marker {requestId}: {senderId} removed {userId}");
+                    }
+                }
+                
+                var result = unfriendMarkers.Count > 0 
+                    ? $"Found {unfriendMarkers.Count} unfriend markers:\n" + string.Join("\n", unfriendMarkers)
+                    : $"No unfriend markers found for {userId}";
+                
+                System.Diagnostics.Debug.WriteLine($"[DebugUnfriendMarkers] {result}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                var error = $"Debug unfriend markers failed: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"[DebugUnfriendMarkers] {error}");
+                return error;
+            }
+        }
+
+        public NotificationViewModel NotificationVM { get; set; }
     }
 }
 

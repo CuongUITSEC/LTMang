@@ -5,20 +5,14 @@ using System.Windows.Data;
 
 namespace Learnify.Converters
 {
-    public class StringToVisibilityConverter : IValueConverter
+    public class SearchTextToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is string stringValue)
             {
+                // Hiển thị khi có text (không rỗng)
                 bool isVisible = !string.IsNullOrEmpty(stringValue);
-                
-                // Nếu có parameter "invert", đảo ngược kết quả
-                if (parameter != null && parameter.ToString().ToLower() == "invert")
-                {
-                    isVisible = !isVisible;
-                }
-                
                 return isVisible ? Visibility.Visible : Visibility.Collapsed;
             }
             return Visibility.Collapsed;
@@ -29,4 +23,4 @@ namespace Learnify.Converters
             throw new NotImplementedException();
         }
     }
-}
+} 

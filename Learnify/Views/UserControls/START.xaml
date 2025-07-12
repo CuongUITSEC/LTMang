@@ -15,7 +15,7 @@
                     <RowDefinition Height="auto"></RowDefinition>
 
                 </Grid.RowDefinitions>
-                <Image Source="/ẢNH BÌA.png" Height="400" Width="400" Margin="0 70 0 70 " HorizontalAlignment="Center"></Image>
+                <Image Source="/%E1%BA%A2NH%20B%C3%8CA.png" Height="400" Width="400" Margin="0 70 0 70 " HorizontalAlignment="Center"></Image>
                 <Border Grid.Row="1" Height="101" Width="563" Margin="0 0 0 36 " CornerRadius="50" Background="#58cc02" HorizontalAlignment="Center">
                     <Button Style="{DynamicResource Button_bodered}" Command="{Binding DataContext.Sign_InCommand, RelativeSource={RelativeSource AncestorType=Window}}" Content="BẮT ĐẦU" FontSize="48"  FontWeight="Bold" Foreground="White" Background="Transparent" BorderThickness="0" />
                 </Border>

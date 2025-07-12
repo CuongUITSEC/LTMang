@@ -8,8 +8,10 @@
         xmlns:viewModel="clr-namespace:Learnify.ViewModels"
         xmlns:local="clr-namespace:Learnify.Views"
         xmlns:userControls="clr-namespace:Learnify.Views.UserControls"
+        xmlns:converters="clr-namespace:Learnify.Converters"
         mc:Ignorable="d"
-        Height="720" Width="1280"
+        Height="720"
+        Width="1280"
         WindowStyle="None"
         WindowStartupLocation="CenterScreen"
         AllowsTransparency="True">
@@ -23,16 +25,16 @@
             <userControls:HomeView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:CalendarViewModel}">
-            <local:CalendarView/>
+            <userControls:CalendarView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:PomodoroViewModel}">
-            <local:PomodoroView/>
+            <userControls:PomodoroView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:RankingViewModel}">
-            <local:RankingView/>
+            <userControls:RankingView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:CampaignViewModel}">
-            <local:CampaignView/>
+            <userControls:CampaignView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModel:AnalystViewModel}">
             <userControls:AnalystView/>
@@ -46,28 +48,19 @@
         <DataTemplate DataType="{x:Type viewModel:NotificationViewModel}">
             <userControls:NotificationPanel/>
         </DataTemplate>
-
-        <Style x:Key="TransparentButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Foreground" Value="Transparent"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <ContentPresenter/>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
     </Window.Resources>
 
-    <Border Background="#E0F3FF" BorderThickness="1">
+    <Border Background="#E0F3FF"
+            BorderThickness="1">
         <Border.BorderBrush>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#5325c9" Offset="0"/>
-                <GradientStop Color="#e538c1" Offset="0.5"/>
-                <GradientStop Color="#5325c9" Offset="1"/>
+            <LinearGradientBrush StartPoint="0,0"
+                                 EndPoint="1,1">
+                <GradientStop Color="#5325c9"
+                              Offset="0"/>
+                <GradientStop Color="#e538c1"
+                              Offset="0.5"/>
+                <GradientStop Color="#5325c9"
+                              Offset="1"/>
             </LinearGradientBrush>
         </Border.BorderBrush>
         <Grid>
@@ -81,9 +74,12 @@
             </Grid.ColumnDefinitions>
 
             <!--menu-->
-            <Border Background="White" Grid.Column="0">
+            <Border Background="White"
+                    Grid.Column="0">
                 <StackPanel>
-                    <StackPanel Orientation="Vertical" Height="70" Margin="20">
+                    <StackPanel Orientation="Vertical"
+                                Height="70"
+                                Margin="20">
                         <svg:SvgViewbox Source="/Images/Logo-DH-Cong-Nghe-Thong-Tin-UIT.svg"
                                         Height="70"
                                         VerticalAlignment="Center"
@@ -95,8 +91,10 @@
                                  IsChecked="True"
                                  Command="{Binding HomeCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="Home" Style="{StaticResource menuButtonIcon}"/>
-                            <TextBlock Text="Trang chủ" Style="{StaticResource menuButtonText}"/>
+                            <fa:IconImage Icon="Home"
+                                          Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Trang chủ"
+                                       Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
 
@@ -104,8 +102,10 @@
                                  Tag="#a057ff"
                                  Command="{Binding CalendarCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="CalendarAlt" Style="{StaticResource menuButtonIcon}"/>
-                            <TextBlock Text="Lịch" Style="{StaticResource menuButtonText}"/>
+                            <fa:IconImage Icon="CalendarAlt"
+                                          Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Lịch"
+                                       Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
 
@@ -113,8 +113,10 @@
                                  Tag="#e538c1"
                                  Command="{Binding PomodoroCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="Clock" Style="{StaticResource menuButtonIcon}"/>
-                            <TextBlock Text="Bấm giờ" Style="{StaticResource menuButtonText}"/>
+                            <fa:IconImage Icon="Clock"
+                                          Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Bấm giờ"
+                                       Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
 
@@ -122,8 +124,10 @@
                                  Tag="#00aeef"
                                  Command="{Binding RankingCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="Medal" Style="{StaticResource menuButtonIcon}"/>
-                            <TextBlock Text="Xếp hạng" Style="{StaticResource menuButtonText}"/>
+                            <fa:IconImage Icon="Medal"
+                                          Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Xếp hạng"
+                                       Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
 
@@ -131,8 +135,10 @@
                                  Tag="#7832df"
                                  Command="{Binding CampaignCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="Bullhorn" Style="{StaticResource menuButtonIcon}"/>
-                            <TextBlock Text="Chiến dịch" Style="{StaticResource menuButtonText}"/>
+                            <fa:IconImage Icon="Bullhorn"
+                                          Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Chiến dịch"
+                                       Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
 
@@ -140,8 +146,10 @@
                                  Tag="#2ee8aa"
                                  Command="{Binding AnalystCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="ChartPie"  Style="{StaticResource menuButtonIcon}"/>
-                            <TextBlock Text="Thống kê" Style="{StaticResource menuButtonText}"/>
+                            <fa:IconImage Icon="ChartPie"
+                                          Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Thống kê"
+                                       Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
 
@@ -149,17 +157,22 @@
                                  Tag="#24bdbd"
                                  Command="{Binding RewardCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="Gem" Style="{StaticResource menuButtonIcon}"/>
-                            <TextBlock Text="Phần thưởng" Style="{StaticResource menuButtonText}"/>
+                            <fa:IconImage Icon="Gem"
+                                          Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Phần thưởng"
+                                       Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
 
                     <RadioButton Style="{StaticResource menuButton}"
                                  Tag="#221fcc"
-                                 Command="{Binding SettingCommand}" Checked="RadioButton_Checked">
+                                 Command="{Binding SettingCommand}"
+                                 Checked="RadioButton_Checked">
                         <StackPanel Orientation="Horizontal">
-                            <fa:IconImage Icon="Gear" Style="{StaticResource menuButtonIcon}"/>
-                            <TextBlock Text="Cài đặt" Style="{StaticResource menuButtonText}"/>
+                            <fa:IconImage Icon="Gear"
+                                          Style="{StaticResource menuButtonIcon}"/>
+                            <TextBlock Text="Cài đặt"
+                                       Style="{StaticResource menuButtonText}"/>
                         </StackPanel>
                     </RadioButton>
                 </StackPanel>
@@ -202,62 +215,107 @@
                                     Orientation="Horizontal"
                                     HorizontalAlignment="Right"
                                     Margin="0,0,20,0">
-                            <Button Height="20" Width="20" Background="Transparent" Command="{Binding ToggleNotificationCommand}"
+                            <Button Height="20"
+                                    Width="20"
+                                    Background="Transparent"
+                                    Command="{Binding TestNotificationCommand}"
+                                    Style="{StaticResource TransparentButtonStyle}"
+                                    ToolTip="Test Notification"
+                                    Margin="0,0,10,0">
+                                <fa:IconImage Icon="Bug"
+                                              Width="20"/>
+                            </Button>
+                            <Button Height="20"
+                                    Width="20"
+                                    Background="Transparent"
+                                    Command="{Binding ToggleNotificationCommand}"
                                     Style="{StaticResource TransparentButtonStyle}"
                                     ToolTip="Thông báo">
-                                <fa:IconImage Icon="Bell" Width="20"/>
+                                <fa:IconImage Icon="Bell"
+                                              Width="20"/>
                             </Button>
                         </StackPanel>
                     </Grid>
 
                     <!--content section-->
-                    <ContentControl Content="{Binding CurrentChildView}" Grid.Row="2"/>
+                    <ContentControl Content="{Binding CurrentChildView}"
+                                    Grid.Row="2"/>
 
                     <!-- Thanh thông báo -->
                     <Border Grid.Row="2"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
-                        Margin="0,10,20,0"
-                        MaxWidth="350"
-                        Visibility="{Binding IsNotificationVisible, Converter={StaticResource BoolToVisibilityConverter}}">     
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="0,10,20,0"
+                            MaxWidth="350"
+                            Visibility="{Binding IsNotificationVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <ContentControl  Content="{Binding NotificationVM}"/>
                     </Border>
                 </Grid>
             </Border>
 
             <!--friend-->
-            <Border Background="White" Grid.Column="2">
+            <Border Background="White"
+                    Grid.Column="2">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" HorizontalAlignment="Right">
+                    <Grid Grid.Row="0"
+                          HorizontalAlignment="Right">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="30"/>
                             <ColumnDefinition Width="30"/>
                         </Grid.ColumnDefinitions>
 
                         <!-- nút thu nhỏ cửa sổ -->
-                        <Button x:Name="btnMinisize" Grid.Column="0" Click="btnMinisize_Click" Background="Transparent" BorderThickness="0">
+                        <Button x:Name="btnMinisize"
+                                Grid.Column="0"
+                                Click="btnMinisize_Click"
+                                Background="Transparent"
+                                BorderThickness="0">
                             <Image Source="/Images/ButtonMinisize.png"/>
                         </Button>
 
                         <!-- nút thoát -->
-                        <Button x:Name="btnExit" Grid.Column="1" Click="btnExit_Click" Background="Transparent" BorderThickness="0">
+                        <Button x:Name="btnExit"
+                                Grid.Column="1"
+                                Click="btnExit_Click"
+                                Background="Transparent"
+                                BorderThickness="0">
                             <Image Source="/Images/ButtonClose.png"/>
                         </Button>
-                    </Grid>                    <StackPanel Grid.Row="1">
+                    </Grid>
+                    <StackPanel Grid.Row="1">
                         <Grid Margin="5">
-                            <TextBox x:Name="txtBoxSearch"
+                            <TextBox Padding="30 10 0 10" x:Name="txtBoxSearch"
                                      Style="{StaticResource textBoxSeerch}"
                                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="35"/>
+                                     Height="35"
+                                     KeyDown="txtBoxSearch_KeyDown"/>
+
+                            <!-- Icon Search -->
                             <fa:IconImage Icon="Search"
                                           Height="15"
-                                          HorizontalAlignment="Right"
-                                          Margin="0 0 10 0"
+                                          HorizontalAlignment="Left"
+                                          Margin="10 0 0 0"
                                           Foreground="#b0b9c6"/>
+
+                            <!-- Icon Clear (Xóa) -->
+                            <Button x:Name="btnClearSearch"
+                                    Width="20"
+                                    Height="20"
+                                    HorizontalAlignment="Right"
+                                    Margin="0 0 10 0"
+                                    Style="{StaticResource ClearSearchButtonStyle}"
+                                    Click="btnClearSearch_Click"
+                                    ToolTip="Xóa tìm kiếm"
+                                    Visibility="{Binding SearchText, Converter={StaticResource StringToVisibilityConverter}}">
+                                <fa:IconImage Icon="Times"
+                                              Width="12"
+                                              Height="12"
+                                              Foreground="#b0b9c6"/>
+                            </Button>
                         </Grid>
 
                         <!-- bạn bè -->
@@ -266,15 +324,19 @@
                                  BorderThickness="0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="10,2,10,2">
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="10,2,10,2">
                                         <!-- Avatar -->
-                                        <Ellipse Width="30" Height="30">
+                                        <Ellipse Width="30"
+                                                 Height="30">
                                             <Ellipse.Fill>
-                                                <ImageBrush ImageSource="{Binding Avatar}" />
+                                                <ImageBrush ImageSource="{Binding Avatar}"/>
                                             </Ellipse.Fill>
                                         </Ellipse>
                                         <!-- Tên bạn bè -->
-                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Margin="20,0,0,0"
+                                        <TextBlock Text="{Binding Name}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="20,0,0,0"
                                                    FontWeight="DemiBold"/>
                                     </StackPanel>
                                 </DataTemplate>

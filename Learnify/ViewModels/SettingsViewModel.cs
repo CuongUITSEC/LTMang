@@ -99,14 +99,14 @@ namespace Learnify.ViewModels
             try
             {
                 IsLoading = true;
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] Loading user info...");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] Loading user info...");
                 
                 var userId = AuthService.GetUserId();
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] userId: {userId}");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] userId: {userId}");
                 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    System.Diagnostics.Debug.WriteLine($"[SETTINGS] No userId found, using guest info");
+                    // System.Diagnostics.Debug.WriteLine($"[SETTINGS] No userId found, using guest info");
                     UserName = "Guest User";
                     Email = "guest@example.com";
                     Phone = "0000000000";
@@ -116,18 +116,18 @@ namespace Learnify.ViewModels
 
                 // Thử lấy username trực tiếp trước
                 var directUsername = await _firebaseService.GetUsernameAsync(userId);
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] Direct username: {directUsername}");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] Direct username: {directUsername}");
 
                 var user = await _firebaseService.GetUserInfoAsync(userId);
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] GetUserInfoAsync result:");
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user is null: {user == null}");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] GetUserInfoAsync result:");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user is null: {user == null}");
                 
                 if (user != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user.Username: '{user.Username}'");
-                    System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user.Email: '{user.Email}'");
-                    System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user.PhoneNumber: '{user.PhoneNumber}'");
-                    System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user.Country: '{user.Country}'");
+                    // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user.Username: '{user.Username}'");
+                    // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user.Email: '{user.Email}'");
+                    // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user.PhoneNumber: '{user.PhoneNumber}'");
+                    // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - user.Country: '{user.Country}'");
                     
                     // Ưu tiên username trực tiếp nếu có
                     if (!string.IsNullOrEmpty(directUsername) && directUsername != "null")
@@ -149,23 +149,23 @@ namespace Learnify.ViewModels
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[SETTINGS] User object is null, setting default values");
+                    // System.Diagnostics.Debug.WriteLine($"[SETTINGS] User object is null, setting default values");
                     UserName = !string.IsNullOrEmpty(directUsername) && directUsername != "null" ? directUsername : "Chưa đặt tên";
                     Email = "N/A";
                     Phone = "N/A";
                     Country = "N/A";
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] Final values:");
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] - UserName: '{UserName}'");
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] - Email: '{Email}'");
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] - Phone: '{Phone}'");
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] - Country: '{Country}'");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] Final values:");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - UserName: '{UserName}'");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - Email: '{Email}'");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - Phone: '{Phone}'");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] - Country: '{Country}'");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] Error loading user info: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] StackTrace: {ex.StackTrace}");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] Error loading user info: {ex.Message}");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] StackTrace: {ex.StackTrace}");
                 UserName = "Error Loading";
                 Email = "N/A";
                 Phone = "N/A";
@@ -174,7 +174,7 @@ namespace Learnify.ViewModels
             finally
             {
                 IsLoading = false;
-                System.Diagnostics.Debug.WriteLine($"[SETTINGS] Loading completed. IsLoading = {IsLoading}");
+                // System.Diagnostics.Debug.WriteLine($"[SETTINGS] Loading completed. IsLoading = {IsLoading}");
             }
         }private void Logout()
         {
@@ -195,11 +195,11 @@ namespace Learnify.ViewModels
                     mainWindow.Close();
                 }
                 
-                System.Diagnostics.Debug.WriteLine("User logged out successfully");
+                // System.Diagnostics.Debug.WriteLine("User logged out successfully");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error during logout: {ex.Message}");
+                // System.Diagnostics.Debug.WriteLine($"Error during logout: {ex.Message}");
                 MessageBox.Show($"Đã xảy ra lỗi khi đăng xuất: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -250,7 +250,7 @@ namespace Learnify.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"Đã xảy ra lỗi: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                System.Diagnostics.Debug.WriteLine($"Error in change password: {ex.Message}");
+                // System.Diagnostics.Debug.WriteLine($"Error in change password: {ex.Message}");
             }
         }
     }

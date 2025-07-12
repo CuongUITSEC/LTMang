@@ -57,4 +57,19 @@ namespace Learnify.Models
         Declined,   // Đã từ chối
         Cancelled   // Đã hủy
     }
+
+    public class FriendAcceptedNotification : Notification
+    {
+        public string FriendId { get; set; }
+        public string FriendName { get; set; }
+        public FriendAcceptedNotification(string friendId, string friendName)
+        {
+            FriendId = friendId;
+            FriendName = friendName;
+            Title = "Kết bạn thành công";
+            Message = $"{friendName} đã chấp nhận lời mời kết bạn của bạn.";
+            Time = DateTime.Now.ToString("HH:mm dd/MM/yyyy");
+            IsRead = false;
+        }
+    }
 }

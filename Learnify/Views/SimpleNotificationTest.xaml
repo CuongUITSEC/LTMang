@@ -1,0 +1,97 @@
+ &lt;Window x:Class="Learnify.Views.SimpleNotificationTest"<TextBlock x:Name="EmptyMessage"
+                                                                     Text="No notifications yet. Click 'Add Test' to create one."
+                                                                     FontSize="12"
+                                                                     Foreground="#606060"
+                                                                     HorizontalAlignment="Center"
+                                                                     Margin="0,20"/> xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Simple Notification Test - Learnify" 
+        Height="500" 
+        Width="400"
+        WindowStartupLocation="CenterScreen"
+        Background="#1a1a2e"&gt;
+
+    &lt;Grid&gt;
+        &lt;Grid.RowDefinitions&gt;
+            &lt;RowDefinition Height="60"/&gt;
+            &lt;RowDefinition Height="*"/&gt;
+            &lt;RowDefinition Height="60"/&gt;
+        &lt;/Grid.RowDefinitions&gt;
+
+        &lt;!-- Header --&gt;
+        &lt;Border Grid.Row="0" Background="#16213e" BorderBrush="#0f3460" BorderThickness="0,0,0,2"&gt;
+            &lt;StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0"&gt;
+                &lt;TextBlock Text="🔔" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/&gt;
+                &lt;TextBlock Text="Simple Notification Test" FontSize="16" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/&gt;
+            &lt;/StackPanel&gt;
+        &lt;/Border&gt;
+
+        &lt;!-- Content --&gt;
+        &lt;ScrollViewer Grid.Row="1" Margin="10" VerticalScrollBarVisibility="Auto"&gt;
+            &lt;StackPanel&gt;
+                &lt;TextBlock Text="Notifications:" FontSize="14" FontWeight="Bold" Foreground="White" Margin="0,10,0,5"/&gt;
+                
+                &lt;ItemsControl ItemsSource="{Binding Notifications}"&gt;
+                    &lt;ItemsControl.ItemTemplate&gt;
+                        &lt;DataTemplate&gt;
+                            &lt;Border Background="#16213e" 
+                                   CornerRadius="8" 
+                                   Margin="0,2" 
+                                   Padding="15,10"
+                                   BorderBrush="#0f3460" 
+                                   BorderThickness="1"&gt;
+                                &lt;StackPanel&gt;
+                                    &lt;TextBlock Text="{Binding Title}" 
+                                              FontWeight="Bold" 
+                                              FontSize="14" 
+                                              Foreground="White" 
+                                              Margin="0,0,0,5"/&gt;
+                                    &lt;TextBlock Text="{Binding Message}" 
+                                              FontSize="12" 
+                                              Foreground="#a0a0a0" 
+                                              TextWrapping="Wrap" 
+                                              Margin="0,0,0,5"/&gt;
+                                    &lt;TextBlock Text="{Binding Time}" 
+                                              FontSize="10" 
+                                              Foreground="#606060" 
+                                              HorizontalAlignment="Right"/&gt;
+                                &lt;/StackPanel&gt;
+                            &lt;/Border&gt;
+                        &lt;/DataTemplate&gt;
+                    &lt;/ItemsControl.ItemTemplate&gt;
+                &lt;/ItemsControl&gt;
+                
+                &lt;TextBlock x:Name="EmptyMessage" 
+                          Text="No notifications yet. Click 'Add Test' to create one." 
+                          FontSize="12" 
+                          Foreground="#606060" 
+                          HorizontalAlignment="Center" 
+                          Margin="0,20"
+                          Visibility="{Binding Notifications.Count, Converter={x:Static local:CountToVisibilityConverter.Instance}}"/&gt;
+            &lt;/StackPanel&gt;
+        &lt;/ScrollViewer&gt;
+
+        &lt;!-- Footer Buttons --&gt;
+        &lt;Border Grid.Row="2" Background="#16213e" BorderBrush="#0f3460" BorderThickness="0,2,0,0"&gt;
+            &lt;StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"&gt;
+                &lt;Button Content="Add Test" 
+                       Width="80" 
+                       Height="30" 
+                       Margin="5" 
+                       Background="#28a745" 
+                       Foreground="White" 
+                       BorderThickness="0" 
+                       Click="TestButton_Click"/&gt;
+                       
+                &lt;Button Content="Close" 
+                       Width="80" 
+                       Height="30" 
+                       Margin="5" 
+                       Background="#dc3545" 
+                       Foreground="White" 
+                       BorderThickness="0" 
+                       Click="CloseButton_Click"/&gt;
+            &lt;/StackPanel&gt;
+        &lt;/Border&gt;
+    &lt;/Grid&gt;
+&lt;/Window&gt;
