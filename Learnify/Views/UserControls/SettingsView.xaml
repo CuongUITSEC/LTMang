@@ -162,6 +162,23 @@
                                      FontWeight="Bold"/>
                                     </Grid>
                                 </Border>
+                                <!-- User ID -->
+                                <Grid Margin="0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="ID người dùng" 
+                                 FontWeight="SemiBold" 
+                                 FontSize="16" 
+                                 Foreground="#FF333333"
+                                 VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding UserId}" 
+                                 Grid.Column="1" 
+                                 FontSize="16" 
+                                 Foreground="#FF666666"
+                                 VerticalAlignment="Center"/>
+                                </Grid>
                                 <!-- Email -->
                                 <Grid Margin="0,10">
                                     <Grid.ColumnDefinitions>

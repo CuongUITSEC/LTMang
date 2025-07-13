@@ -146,10 +146,6 @@ namespace Learnify.ViewModels
             ClearCountdownCommand = new RelayCommand(ClearCountdown);
             OpenShareWindowCommand = new RelayCommand(OpenShareWindow);
 
-            // Dummy data bạn bè (bạn thay bằng lấy từ service thực tế)
-            Friends.Add(new Friend { Id = "1", Name = "Phương Tuấn", Email = "tuan@example.com" });
-            Friends.Add(new Friend { Id = "2", Name = "Minh Anh", Email = "anh@example.com" });
-            Friends.Add(new Friend { Id = "3", Name = "Hà My", Email = "my@example.com" });
 
             // Khởi tạo bộ đếm thời gian
             _timer = new DispatcherTimer
@@ -159,6 +155,22 @@ namespace Learnify.ViewModels
             _timer.Tick += Timer_Tick;
             // Tự động load chiến dịch đã lưu (nếu có)
             LoadMyCampaignFromFirebase();
+
+            // Lấy danh sách bạn bè thực tế từ Firebase (gọi sau khi khởi tạo các thành phần khác)
+            LoadFriends();
+        }
+
+        private async void LoadFriends()
+        {
+            var firebase = new Learnify.Services.FirebaseService();
+            string userId = Learnify.Services.AuthService.GetUserId();
+            var friendsList = await firebase.GetFriendsAsync(userId);
+            Friends.Clear();
+            if (friendsList != null)
+            {
+                foreach (var f in friendsList)
+                    Friends.Add(f);
+            }
         }
 
 
@@ -307,23 +319,35 @@ namespace Learnify.ViewModels
         private async void ShareCampaignToFriends(List<Friend> selectedFriends)
         {
             var firebase = new Learnify.Services.FirebaseService();
-            // Lấy userId hiện tại, ví dụ từ AuthService
             string userId = Learnify.Services.AuthService.GetUserId();
+            string token = Learnify.Services.AuthService.GetToken();
+            if (string.IsNullOrEmpty(token))
+            {
+                MessageBox.Show("Bạn cần đăng nhập lại để chia sẻ chiến dịch!", "Thiếu xác thực", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            // Lưu chiến dịch chia sẻ (nếu cần)
             bool result = await firebase.ShareCampaignToFriendsAsync(
                 ownerId: userId,
                 campaignName: EventTitle,
                 campaignDate: EventDate,
                 friends: selectedFriends
             );
-            if (result)
+            // Gửi request và notification cho bạn bè
+            bool requestResult = await firebase.SendSharedCampaignRequestsAsync(
+                ownerId: userId,
+                campaignName: EventTitle,
+                campaignDate: EventDate,
+                friends: selectedFriends
+            );
+            if (result && requestResult)
             {
                 MessageBox.Show($"Đã chia sẻ chiến dịch cho: {string.Join(", ", selectedFriends.Select(f => f.Name))}", "Chia sẻ thành công");
             }
             else
             {
-                MessageBox.Show("Có lỗi khi chia sẻ chiến dịch!", "Lỗi");
+                MessageBox.Show("Có lỗi khi chia sẻ chiến dịch hoặc gửi lời mời!", "Lỗi");
             }
-            // Reset trạng thái chọn
             foreach (var f in Friends) f.IsSelected = false;
         }
     }

@@ -336,7 +336,7 @@
                                 utils:ButtonEffects.HoverBackground="#fa1131"
                                 utils:ButtonEffects.PressedBackground="#c2001b"
                                 Foreground="White"/>
-                        <Button Style="{StaticResource ModernButtonStyle}"
+                        <!-- <Button Style="{StaticResource ModernButtonStyle}"
                                 Content="Chia sẻ"
                                 FontWeight="Bold"
                                 FontSize="18"
@@ -347,7 +347,7 @@
                                 Background="#4CAF50"
                                 utils:ButtonEffects.HoverBackground="#388E3C"
                                 utils:ButtonEffects.PressedBackground="#1B5E20"
-                                Foreground="White"/>
+                                Foreground="White"/> -->
                     </StackPanel>
                 </StackPanel>
             </Grid>

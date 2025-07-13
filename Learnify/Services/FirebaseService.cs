@@ -1,28 +1,79 @@
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.Linq;
-using System.Diagnostics;
-using System.Text;
-using System.Globalization;
-using Learnify.Models;
-using Learnify.Services;
 using System.Windows.Media;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Diagnostics;
 using Learnify.ViewModels;
+using System.Net.Http;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Learnify.Models;
+
 
 namespace Learnify.Services
 {
     public class FirebaseService
     {
+        // Gửi request chia sẻ chiến dịch cho từng bạn bè và tạo notification
+        public async Task<bool> SendSharedCampaignRequestsAsync(string ownerId, string campaignName, DateTime? campaignDate, List<Friend> friends)
+        {
+            try
+            {
+                var tasks = new List<Task<bool>>();
+                foreach (var friend in friends)
+                {
+                    var requestId = Guid.NewGuid().ToString();
+                    var requestData = new
+                    {
+                        fromUserId = ownerId,
+                        campaignName = campaignName,
+                        campaignDate = campaignDate?.ToString("yyyy-MM-dd"),
+                        sentAt = DateTime.UtcNow.ToString("o"),
+                        status = "Pending"
+                    };
+                    // Ghi request vào sharedCampaignRequests/{friendId}/{requestId}
+                    var requestUrl = GetAuthenticatedUrl($"sharedCampaignRequests/{friend.Id}/{requestId}.json");
+                    var requestContent = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json");
+                    var requestTask = _httpClient.PutAsync(requestUrl, requestContent).ContinueWith(t => t.Result.IsSuccessStatusCode);
+                    tasks.Add(requestTask);
+
+                    // Gửi notification cho bạn bè
+                    var notificationId = Guid.NewGuid().ToString();
+                    var notificationData = new
+                    {
+                        id = notificationId,
+                        type = "SharedCampaign",
+                        title = "Chiến dịch mới được chia sẻ",
+                        message = $"Bạn nhận được lời mời tham gia chiến dịch '{campaignName}' từ bạn bè.",
+                        time = DateTime.Now.ToString("HH:mm"),
+                        timestamp = DateTime.UtcNow.ToString("o"),
+                        isRead = false,
+                        fromUserId = ownerId,
+                        requestId = requestId
+                    };
+                    var notiUrl = GetAuthenticatedUrl($"notifications/{friend.Id}/{notificationId}.json");
+                    var notiContent = new StringContent(JsonConvert.SerializeObject(notificationData), Encoding.UTF8, "application/json");
+                    var notiTask = _httpClient.PutAsync(notiUrl, notiContent).ContinueWith(t => t.Result.IsSuccessStatusCode);
+                    tasks.Add(notiTask);
+                }
+                var results = await Task.WhenAll(tasks);
+                return results.All(r => r);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error sending shared campaign requests: {ex.Message}");
+                return false;
+            }
+        }
         private static readonly HttpClient _httpClient;
         public static HttpClient SharedHttpClient => _httpClient;
-        
+
         // Cache để tránh loop vô hạn trong CheckAndSyncFriendsListAsync
         private static readonly HashSet<string> _syncCache = new HashSet<string>();
-        
+
         // Cache user IDs từ successful operations để fallback khi cần
         private static readonly HashSet<string> _processedMarkers = new HashSet<string>();
         private static readonly HashSet<string> _userIdCache = new HashSet<string>();
@@ -50,10 +101,16 @@ namespace Learnify.Services
                 };
                 var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync(url, content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resp = await response.Content.ReadAsStringAsync();
+                    System.Windows.MessageBox.Show($"Lỗi chia sẻ campaign: {response.StatusCode}\n{resp}", "Lỗi Firebase");
+                }
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
+                System.Windows.MessageBox.Show($"Exception khi chia sẻ campaign: {ex}", "Lỗi Exception");
                 Debug.WriteLine($"Error sharing campaign: {ex.Message}");
                 return false;
             }
@@ -66,7 +123,7 @@ namespace Learnify.Services
             // Không cần thiết lập timeout ở đây nữa vì đã được thiết lập trong static constructor
         }
 
-        private string GetAuthenticatedUrl(string path)
+        public string GetAuthenticatedUrl(string path)
         {
             var token = AuthService.GetToken();
             return $"{FirebaseUrl}{path}?auth={token}";
@@ -78,7 +135,6 @@ namespace Learnify.Services
             {
                 var url = GetAuthenticatedUrl($"users/{userId}.json");
                 var response = await _httpClient.GetAsync(url);
-
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -91,47 +147,9 @@ namespace Learnify.Services
             }
             catch (Exception ex)
             {
-                // Debug.WriteLine($"Error getting user data: {ex.Message}");
+                System.Windows.MessageBox.Show($"Exception khi lấy user data: {ex}", "Lỗi Exception");
+                Debug.WriteLine($"Error getting user data: {ex.Message}");
                 return null;
-            }
-        }
-
-        public async Task<bool> UpdateUserDataAsync(string userId, Dictionary<string, object> data)
-        {
-            try
-            {
-                var url = GetAuthenticatedUrl($"users/{userId}.json");
-                var content = new StringContent(JsonConvert.SerializeObject(data));
-                var response = await _httpClient.PutAsync(url, content);
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                // Debug.WriteLine($"Error updating user data: {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<bool> SaveStudyTimeAsync(string userId, double duration)
-        {
-            try
-            {
-                var timestamp = DateTime.UtcNow.ToString("o");
-                var data = new Dictionary<string, object>
-                {
-                    ["timestamp"] = timestamp,
-                    ["duration"] = duration
-                };
-
-                var url = GetAuthenticatedUrl($"studyTime/{userId}/sessions/{timestamp}.json");
-                var content = new StringContent(JsonConvert.SerializeObject(data));
-                var response = await _httpClient.PutAsync(url, content);
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                // Debug.WriteLine($"Error saving study time: {ex.Message}");
-                return false;
             }
         }
 
@@ -184,23 +202,23 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[GetUsernameAsync] Getting username for user: {userId}");
-                
+
                 // Thử lấy từ publicUsers trước (có thể đọc được)
                 var publicUrl = GetAuthenticatedUrl($"publicUsers/{userId}.json");
                 Debug.WriteLine($"[GetUsernameAsync] Request URL (public): {publicUrl}");
                 var response = await _httpClient.GetAsync(publicUrl);
                 Debug.WriteLine($"[GetUsernameAsync] Response status (public): {response.StatusCode}");
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[GetUsernameAsync] Response content (public): {content}");
-                    
+
                     if (!string.IsNullOrEmpty(content) && content != "null")
                     {
                         var data = JObject.Parse(content);
                         var username = data["username"]?.ToString();
-                        
+
                         if (!string.IsNullOrEmpty(username) && username != "null")
                         {
                             Debug.WriteLine($"[GetUsernameAsync] Found username in publicUsers: {username}");
@@ -208,7 +226,7 @@ namespace Learnify.Services
                         }
                     }
                 }
-                
+
                 // Fallback: Thử lấy từ users (chỉ cho chính mình)
                 if (userId == AuthService.GetUserId())
                 {
@@ -216,7 +234,7 @@ namespace Learnify.Services
                     Debug.WriteLine($"[GetUsernameAsync] Request URL (private): {privateUrl}");
                     var privateResponse = await _httpClient.GetAsync(privateUrl);
                     Debug.WriteLine($"[GetUsernameAsync] Response status (private): {privateResponse.StatusCode}");
-                    
+
                     if (privateResponse.IsSuccessStatusCode)
                     {
                         var content = await privateResponse.Content.ReadAsStringAsync();
@@ -228,7 +246,7 @@ namespace Learnify.Services
                         }
                     }
                 }
-                
+
                 Debug.WriteLine($"[GetUsernameAsync] No username found for {userId}, returning UID");
                 return userId;
             }
@@ -396,44 +414,44 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[CleanupExpiredFriendRequests] Starting cleanup of requests older than {maxAgeDays} days");
-                
+
                 var cutoffDate = DateTime.UtcNow.AddDays(-maxAgeDays);
                 var cleanedCount = 0;
-                
+
                 // Lấy tất cả friendRequests
                 var url = GetAuthenticatedUrl("friendRequests.json");
                 var response = await _httpClient.GetAsync(url);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[CleanupExpiredFriendRequests] Failed to get friendRequests: {response.StatusCode}");
                     return 0;
                 }
-                
+
                 var content = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(content) || content == "null")
                 {
                     Debug.WriteLine("[CleanupExpiredFriendRequests] No friend requests found");
                     return 0;
                 }
-                
+
                 var allRequests = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, dynamic>>>(content);
                 Debug.WriteLine($"[CleanupExpiredFriendRequests] Found {allRequests.Count} receivers with requests");
-                
+
                 foreach (var receiverData in allRequests)
                 {
                     var receiverId = receiverData.Key;
                     var requests = receiverData.Value;
-                    
+
                     var requestsToDelete = new List<string>();
-                    
+
                     foreach (var requestData in requests)
                     {
                         try
                         {
                             var requestId = requestData.Key;
                             var request = requestData.Value;
-                            
+
                             var sentAtStr = request.sentAt?.ToString();
                             DateTime sentAt = DateTime.UtcNow;
                             if (!string.IsNullOrEmpty(sentAtStr))
@@ -445,7 +463,7 @@ namespace Learnify.Services
                                 }
                             }
                             var status = request.status?.ToString();
-                            
+
                             if (!string.IsNullOrEmpty(sentAtStr))
                             {
                                 // Xóa request cũ hoặc đã declined/accepted
@@ -465,7 +483,7 @@ namespace Learnify.Services
                             Debug.WriteLine($"[CleanupExpiredFriendRequests] Error processing request: {ex.Message}");
                         }
                     }
-                    
+
                     // Xóa các requests cũ
                     foreach (var requestId in requestsToDelete)
                     {
@@ -473,7 +491,7 @@ namespace Learnify.Services
                         {
                             var deleteUrl = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
                             var deleteResponse = await _httpClient.DeleteAsync(deleteUrl);
-                            
+
                             if (deleteResponse.IsSuccessStatusCode)
                             {
                                 cleanedCount++;
@@ -484,12 +502,12 @@ namespace Learnify.Services
                         {
                             Debug.WriteLine($"[CleanupExpiredFriendRequests] Error deleting request {requestId}: {ex.Message}");
                         }
-                        
+
                         // Small delay để tránh spam
                         await Task.Delay(50);
                     }
                 }
-                
+
                 Debug.WriteLine($"[CleanupExpiredFriendRequests] Cleaned up {cleanedCount} expired requests");
                 return cleanedCount;
             }
@@ -510,39 +528,39 @@ namespace Learnify.Services
             {
                 Debug.WriteLine("[ValidateAndFixFriendsConsistency] Starting friends data consistency check");
                 var fixedCount = 0;
-                
+
                 // Lấy tất cả users
                 var userIds = await GetAllUserIdsAsync();
                 Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Checking {userIds.Count} users");
-                
+
                 foreach (var userId in userIds)
                 {
                     try
                     {
                         var friends = await GetFriendsAsync(userId);
-                        
+
                         foreach (var friend in friends)
                         {
                             // Kiểm tra tính nhất quán 2 chiều
                             var isFriendBack = await AreAlreadyFriendsAsync(friend.Id, userId);
-                            
+
                             if (!isFriendBack)
                             {
                                 Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Inconsistency found: {userId} has {friend.Id} as friend but not vice versa");
-                                
+
                                 // Fix bằng cách thêm lại mối quan hệ 2 chiều
-                                var friendData = new Dictionary<string, object> 
-                                { 
-                                    ["status"] = "Friends", 
+                                var friendData = new Dictionary<string, object>
+                                {
+                                    ["status"] = "Friends",
                                     ["since"] = DateTime.UtcNow.ToString("o"),
                                     ["fixedAt"] = DateTime.UtcNow.ToString("o")
                                 };
-                                
+
                                 var friendUrl = GetAuthenticatedUrl($"friends/{friend.Id}/{userId}.json");
                                 var friendContent = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
                                 var friendResponse = await _httpClient.PutAsync(friendUrl, friendContent);
                                 friendContent.Dispose();
-                                
+
                                 if (friendResponse.IsSuccessStatusCode)
                                 {
                                     fixedCount++;
@@ -550,7 +568,7 @@ namespace Learnify.Services
                                 }
                             }
                         }
-                        
+
                         // Small delay để tránh spam requests
                         await Task.Delay(100);
                     }
@@ -559,7 +577,7 @@ namespace Learnify.Services
                         Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Error processing user {userId}: {userEx.Message}");
                     }
                 }
-                
+
                 Debug.WriteLine($"[ValidateAndFixFriendsConsistency] Fixed {fixedCount} consistency issues");
                 return fixedCount;
             }
@@ -733,32 +751,32 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[GetUserByUid] Searching for user: {uid}");
-                
+
                 if (string.IsNullOrWhiteSpace(uid))
                 {
                     Debug.WriteLine("[GetUserByUid] UID is null or empty");
                     return null;
                 }
-                
+
                 // Thử tìm trong publicUsers trước (cho phép tìm kiếm tất cả user)
                 var publicUrl = GetAuthenticatedUrl($"publicUsers/{uid}.json");
                 Debug.WriteLine($"[GetUserByUid] Request URL (public): {publicUrl}");
-                
+
                 var response = await _httpClient.GetAsync(publicUrl);
                 Debug.WriteLine($"[GetUserByUid] Response status (public): {response.StatusCode}");
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[GetUserByUid] Response content (public): {content}");
-                    
+
                     if (!string.IsNullOrEmpty(content) && content != "null")
                     {
                         var data = JObject.Parse(content);
                         var username = data["username"]?.ToString() ?? uid;
                         var avatar = data["avatarUrl"]?.ToString() ?? "/Images/avatar1.svg";
                         var email = data["email"]?.ToString() ?? "";
-                        
+
                         var friend = new Friend
                         {
                             Name = username,
@@ -768,33 +786,33 @@ namespace Learnify.Services
                             Email = email
                         };
                         Debug.WriteLine($"[GetUserByUid] Friend object: Id={friend.Id}, Name={friend.Name}, Email={friend.Email}, Avatar={friend.Avatar}, IsOnline={friend.IsOnline}");
-                        
+
                         Debug.WriteLine($"[GetUserByUid] Found user in publicUsers: {username} ({uid})");
                         return friend;
                     }
                 }
-                
+
                 // Nếu không tìm thấy trong publicUsers, thử tìm trong users (chỉ cho chính mình)
                 if (uid == AuthService.GetUserId())
                 {
                     var privateUrl = GetAuthenticatedUrl($"users/{uid}.json");
                     Debug.WriteLine($"[GetUserByUid] Request URL (private): {privateUrl}");
-                    
+
                     var privateResponse = await _httpClient.GetAsync(privateUrl);
                     Debug.WriteLine($"[GetUserByUid] Response status (private): {privateResponse.StatusCode}");
-                    
+
                     if (privateResponse.IsSuccessStatusCode)
                     {
                         var content = await privateResponse.Content.ReadAsStringAsync();
                         Debug.WriteLine($"[GetUserByUid] Response content (private): {content}");
-                        
+
                         if (!string.IsNullOrEmpty(content) && content != "null")
                         {
                             var data = JObject.Parse(content);
                             var username = data["username"]?.ToString() ?? uid;
                             var avatar = data["avatarUrl"]?.ToString() ?? "/Images/avatar1.svg";
                             var isOnline = data["isOnline"]?.Value<bool>() ?? false;
-                            
+
                             var friend = new Friend
                             {
                                 Name = username,
@@ -804,7 +822,7 @@ namespace Learnify.Services
                                 Email = data["email"]?.ToString() ?? ""
                             };
                             Debug.WriteLine($"[GetUserByUid] Friend object (private): Id={friend.Id}, Name={friend.Name}, Email={friend.Email}, Avatar={friend.Avatar}, IsOnline={friend.IsOnline}");
-                            
+
                             Debug.WriteLine($"[GetUserByUid] Found user in users: {username} ({uid})");
                             return friend;
                         }
@@ -815,7 +833,7 @@ namespace Learnify.Services
                         Debug.WriteLine($"[GetUserByUid] HTTP Error (private): {privateResponse.StatusCode}, Content: {errorContent}");
                     }
                 }
-                
+
                 Debug.WriteLine("[GetUserByUid] User not found in both publicUsers and users");
                 return null;
             }
@@ -1086,7 +1104,7 @@ namespace Learnify.Services
                 Debug.WriteLine("[FIREBASE] Getting weekly study time rankings for friends only...");
                 var currentUserId = AuthService.GetUserId();
                 Debug.WriteLine($"[FIREBASE] Current user: {currentUserId}");
-                
+
                 // Tính toán tuần hiện tại (thứ 2 đến chủ nhật) theo giờ Việt Nam (UTC+7)
                 var nowVN = DateTime.UtcNow.AddHours(7);
                 var today = nowVN.Date;
@@ -1095,39 +1113,39 @@ namespace Learnify.Services
                 var startOfWeek = today.AddDays(-(dayOfWeek - 1)); // Lùi về thứ 2
                 var endOfWeek = startOfWeek.AddDays(6); // Chủ nhật của tuần
                 Debug.WriteLine($"[FIREBASE] Current week (VN): {startOfWeek:yyyy-MM-dd} to {endOfWeek:yyyy-MM-dd}");
-                
+
                 // 1. Lấy danh sách bạn bè của current user
                 Debug.WriteLine("[FIREBASE] Step 1: Getting friends list...");
                 var friends = await GetFriendsAsync(currentUserId);
                 Debug.WriteLine($"[FIREBASE] Found {friends.Count} friends");
-                
+
                 if (friends.Count == 0)
                 {
                     Debug.WriteLine("[FIREBASE] No friends found, returning empty rankings");
                     return new List<(string UserId, TimeSpan Time)>();
                 }
-                
+
                 // 2. Thêm current user vào danh sách để tính toán
                 var allUserIds = new List<string> { currentUserId };
                 allUserIds.AddRange(friends.Select(f => f.Id));
                 Debug.WriteLine($"[FIREBASE] Processing {allUserIds.Count} users (including self)");
-                
+
                 var rankings = new List<(string UserId, TimeSpan Time)>();
-                
+
                 // 3. Lấy thời gian học của từng user (chỉ bạn bè + bản thân)
                 foreach (var userId in allUserIds)
                 {
                     try
                     {
                         Debug.WriteLine($"[FIREBASE] Processing user: {userId}");
-                        
+
                         // Lấy thời gian học của user này
                         var studyTimeData = await GetStudyTimeDataAsync(userId);
                         if (studyTimeData != null && studyTimeData.Sessions != null)
                         {
                             double weeklyMinutes = 0;
                             Debug.WriteLine($"[FIREBASE] User {userId}: Processing {studyTimeData.Sessions.Count} sessions");
-                            
+
                             foreach (var session in studyTimeData.Sessions)
                             {
                                 try
@@ -1136,7 +1154,7 @@ namespace Learnify.Services
                                     var duration = session.Duration;
                                     DateTime sessionTimeVN = DateTime.MinValue;
                                     bool parsed = false;
-                                    
+
                                     if (!string.IsNullOrEmpty(timestampStr))
                                     {
                                         // Try ISO format first (for new sessions)
@@ -1186,12 +1204,12 @@ namespace Learnify.Services
                                             parsed = DateTime.TryParse(timestampStr, out sessionTimeVN);
                                         }
                                     }
-                                    
+
                                     if (parsed)
                                     {
                                         var sessionDate = sessionTimeVN.Date;
                                         Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Session raw timestamp = '{timestampStr}', parsed = {sessionTimeVN:yyyy-MM-dd HH:mm:ss}, sessionDate = {sessionDate:yyyy-MM-dd}");
-                                        
+
                                         // Kiểm tra session có trong tuần hiện tại không
                                         if (sessionDate >= startOfWeek && sessionDate <= endOfWeek)
                                         {
@@ -1213,7 +1231,7 @@ namespace Learnify.Services
                                     Debug.WriteLine($"[FIREBASE] Error processing session for user {userId}: {sessionEx.Message}");
                                 }
                             }
-                            
+
                             Debug.WriteLine($"[FIREBASE] User {userId}: Weekly total = {weeklyMinutes} minutes");
                             if (weeklyMinutes > 0)
                             {
@@ -1231,7 +1249,7 @@ namespace Learnify.Services
                         Debug.WriteLine($"[FIREBASE] Error processing user {userId}: {ex.Message}");
                     }
                 }
-                
+
                 Debug.WriteLine($"[FIREBASE] Final weekly rankings count: {rankings.Count}");
                 return rankings.OrderByDescending(r => r.Time.TotalMinutes).ToList();
             }
@@ -1334,47 +1352,49 @@ namespace Learnify.Services
                 Debug.WriteLine($"[AcceptFriendRequest] 🎯 STARTING FRIEND ACCEPTANCE: {senderId} -> {receiverId}");
                 Debug.WriteLine($"[AcceptFriendRequest] 📋 Request ID: {requestId}");
                 Debug.WriteLine($"[AcceptFriendRequest] 🕐 Current time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
-                
+
                 // 1. Cập nhật trạng thái FriendRequest thành Accepted
-                var requestUpdate = new Dictionary<string, object> { 
+                var requestUpdate = new Dictionary<string, object>
+                {
                     ["status"] = "Accepted",
                     ["acceptedAt"] = DateTime.UtcNow.ToString("o")
                 };
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
                 var content = new StringContent(JsonConvert.SerializeObject(requestUpdate), Encoding.UTF8, "application/json");
-                
+
                 Debug.WriteLine($"[AcceptFriendRequest] 📍 Step 1: Updating request status to Accepted...");
                 Debug.WriteLine($"[AcceptFriendRequest] 🌐 URL: {url}");
-                
+
                 var res1 = await _httpClient.PatchAsync(url, content);
                 content.Dispose();
                 Debug.WriteLine($"[AcceptFriendRequest] ✅ Step 1 Result: {res1.StatusCode}");
-                
+
                 if (!res1.IsSuccessStatusCode)
                 {
                     var error1 = await res1.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[AcceptFriendRequest] ❌ Step 1 FAILED: {error1}");
                     return false; // Fail fast nếu không update được request status
                 }
-                
+
                 // 2. CHỈ thêm vào danh sách của receiver (người chấp nhận) - có quyền write
-                var friendData = new Dictionary<string, object> { 
-                    ["status"] = "Friends", 
+                var friendData = new Dictionary<string, object>
+                {
+                    ["status"] = "Friends",
                     ["since"] = DateTime.UtcNow.ToString("o"),
                     ["acceptedAt"] = DateTime.UtcNow.ToString("o"),
                     ["acceptedBy"] = receiverId
                 };
-                
+
                 var urlFriendReceiver = GetAuthenticatedUrl($"friends/{receiverId}/{senderId}.json");
                 var contentReceiver = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
-                
+
                 Debug.WriteLine($"[AcceptFriendRequest] 📍 Step 2: Adding {senderId} to {receiverId}'s friends list...");
                 Debug.WriteLine($"[AcceptFriendRequest] 🌐 URL: {urlFriendReceiver}");
-                
+
                 var res2 = await _httpClient.PutAsync(urlFriendReceiver, contentReceiver);
                 contentReceiver.Dispose();
                 Debug.WriteLine($"[AcceptFriendRequest] ✅ Step 2 Result: {res2.StatusCode}");
-                
+
                 if (!res2.IsSuccessStatusCode)
                 {
                     var error2 = await res2.Content.ReadAsStringAsync();
@@ -1386,20 +1406,20 @@ namespace Learnify.Services
                     rollbackContent.Dispose();
                     return false;
                 }
-                
+
                 // 3. Tạo acceptance marker để sender có thể detect và tự thêm mình qua polling
                 Debug.WriteLine($"[AcceptFriendRequest] 📍 Step 3: Creating acceptance marker for {senderId}...");
                 await CreateFriendAcceptanceMarkerAsync(senderId, receiverId);
                 Debug.WriteLine($"[AcceptFriendRequest] ✅ Step 3 COMPLETED: Created acceptance marker for {senderId}");
-                
+
                 // 4. Thông báo thay đổi cho receiver
                 Debug.WriteLine($"[AcceptFriendRequest] 📍 Step 4: Notifying friends list change for {receiverId}...");
                 await NotifyFriendsListChangeWithRetryAsync(receiverId);
                 Debug.WriteLine($"[AcceptFriendRequest] ✅ Step 4 COMPLETED: Notified {receiverId}");
-                
+
                 Debug.WriteLine($"[AcceptFriendRequest] 🎉 SUCCESS: {receiverId} accepted {senderId}'s request");
                 Debug.WriteLine($"[AcceptFriendRequest] 📌 {senderId} should detect acceptance marker via polling and update their friends list");
-                
+
                 return true;
             }
             catch (Exception ex)
@@ -1420,7 +1440,7 @@ namespace Learnify.Services
                 Debug.WriteLine($"[CreateFriendAcceptanceMarker] 🎯 CREATING ACCEPTANCE MARKER");
                 Debug.WriteLine($"[CreateFriendAcceptanceMarker] 👤 Sender (will receive marker): {senderId}");
                 Debug.WriteLine($"[CreateFriendAcceptanceMarker] 👤 Receiver (who accepted): {receiverId}");
-                
+
                 // Tạo marker trong friendRequests của sender với special status
                 var markerData = new Dictionary<string, object>
                 {
@@ -1430,21 +1450,21 @@ namespace Learnify.Services
                     ["acceptedAt"] = DateTime.UtcNow.ToString("o"),
                     ["markerType"] = "FriendAcceptance"
                 };
-                
+
                 // Tạo unique marker ID
                 var markerId = $"acceptance_{receiverId}_{DateTime.UtcNow.Ticks}";
                 var markerUrl = GetAuthenticatedUrl($"friendRequests/{senderId}/{markerId}.json");
-                
+
                 Debug.WriteLine($"[CreateFriendAcceptanceMarker] 📋 Marker ID: {markerId}");
                 Debug.WriteLine($"[CreateFriendAcceptanceMarker] 🌐 Target URL: {markerUrl}");
                 Debug.WriteLine($"[CreateFriendAcceptanceMarker] 📄 Marker data: {JsonConvert.SerializeObject(markerData)}");
-                
+
                 var markerContent = new StringContent(JsonConvert.SerializeObject(markerData), Encoding.UTF8, "application/json");
                 var markerResponse = await _httpClient.PutAsync(markerUrl, markerContent);
                 markerContent.Dispose();
-                
+
                 Debug.WriteLine($"[CreateFriendAcceptanceMarker] 🌐 HTTP Response: {markerResponse.StatusCode}");
-                
+
                 if (markerResponse.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[CreateFriendAcceptanceMarker] ✅ SUCCESS: Marker {markerId} created for {senderId}");
@@ -1472,7 +1492,7 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[CreateUnfriendMarker] 🎯 CREATING MARKER: {removerId} unfriended {targetUserId}");
-                
+
                 // Tạo marker trong friendRequests của target user với special status
                 var markerData = new Dictionary<string, object>
                 {
@@ -1482,20 +1502,20 @@ namespace Learnify.Services
                     ["unfriendedAt"] = DateTime.UtcNow.ToString("o"),
                     ["markerType"] = "UnfriendNotification"
                 };
-                
+
                 // Tạo unique marker ID
                 var markerId = $"unfriend_{removerId}_{DateTime.UtcNow.Ticks}";
                 var markerUrl = GetAuthenticatedUrl($"friendRequests/{targetUserId}/{markerId}.json");
-                
+
                 Debug.WriteLine($"[CreateUnfriendMarker] 📍 Target URL: {markerUrl}");
                 Debug.WriteLine($"[CreateUnfriendMarker] 📄 Marker data: {JsonConvert.SerializeObject(markerData)}");
-                
+
                 var markerContent = new StringContent(JsonConvert.SerializeObject(markerData), Encoding.UTF8, "application/json");
                 var markerResponse = await _httpClient.PutAsync(markerUrl, markerContent);
                 markerContent.Dispose();
-                
+
                 Debug.WriteLine($"[CreateUnfriendMarker] 🌐 HTTP response: {markerResponse.StatusCode}");
-                
+
                 if (markerResponse.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[CreateUnfriendMarker] ✅ SUCCESS: Marker {markerId} created for {targetUserId}");
@@ -1521,35 +1541,35 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[DeclineFriendRequest] Declining request {requestId} for receiver {receiverId}");
-                
+
                 // Validation
                 if (string.IsNullOrWhiteSpace(receiverId) || string.IsNullOrWhiteSpace(requestId))
                 {
                     Debug.WriteLine($"[DeclineFriendRequest] Invalid input parameters");
                     return false;
                 }
-                
+
                 // Cập nhật trạng thái FriendRequest thành Declined
-                var requestUpdate = new Dictionary<string, object> 
-                { 
+                var requestUpdate = new Dictionary<string, object>
+                {
                     ["status"] = "Declined",
                     ["declinedAt"] = DateTime.UtcNow.ToString("o")
                 };
-                
+
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
                 var content = new StringContent(JsonConvert.SerializeObject(requestUpdate), Encoding.UTF8, "application/json");
                 var res = await _httpClient.PatchAsync(url, content);
                 content.Dispose();
-                
+
                 var success = res.IsSuccessStatusCode;
                 Debug.WriteLine($"[DeclineFriendRequest] Decline result: {success} ({res.StatusCode})");
-                
+
                 if (!success)
                 {
                     var errorContent = await res.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[DeclineFriendRequest] Error: {errorContent}");
                 }
-                
+
                 return success;
             }
             catch (Exception ex)
@@ -1566,14 +1586,14 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[SendFriendRequest] Starting send process: {senderId} -> {receiverId}");
-                
+
                 // Validation đầu vào
                 if (string.IsNullOrWhiteSpace(senderId) || string.IsNullOrWhiteSpace(receiverId))
                 {
                     Debug.WriteLine($"[SendFriendRequest] Invalid user IDs");
                     return SendFriendRequestResult.Error;
                 }
-                
+
                 if (senderId == receiverId)
                 {
                     Debug.WriteLine($"[SendFriendRequest] Cannot send friend request to self");
@@ -1603,7 +1623,8 @@ namespace Learnify.Services
 
                 // 4. Gửi lời mời kết bạn
                 var requestId = $"{senderId}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
-                var request = new {
+                var request = new
+                {
                     senderId = senderId,
                     senderName = senderName,
                     receiverId = receiverId,
@@ -1612,13 +1633,13 @@ namespace Learnify.Services
                     sentAt = DateTime.UtcNow.ToString("o"),
                     requestId = requestId
                 };
-                
+
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}/{requestId}.json");
                 var json = JsonConvert.SerializeObject(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 var res = await _httpClient.PutAsync(url, content);
                 content.Dispose();
-                
+
                 if (res.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[SendFriendRequest] Request sent successfully from {senderId} to {receiverId}");
@@ -1665,58 +1686,58 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[ExceedsRequestLimit] Checking limit for {senderId} -> {receiverId}");
-                
+
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}.json");
                 var response = await _httpClient.GetAsync(url);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[ExceedsRequestLimit] HTTP Error: {response.StatusCode}");
                     return false; // Cho phép gửi nếu không check được
                 }
-                
+
                 var content = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(content) || content == "null")
                 {
                     Debug.WriteLine($"[ExceedsRequestLimit] No requests found, allowing send");
                     return false;
                 }
-                
+
                 var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
                 var thirtyMinutesAgo = DateTime.UtcNow.AddMinutes(-30);
-                var recentRequestsCount = 0;                        foreach (var kv in requests)
+                var recentRequestsCount = 0; foreach (var kv in requests)
+                {
+                    try
+                    {
+                        var request = kv.Value;
+                        var requestSenderId = request.senderId?.ToString();
+                        var sentAtStr = request.sentAt?.ToString();
+                        DateTime sentAt = DateTime.UtcNow;
+                        if (!string.IsNullOrEmpty(sentAtStr))
                         {
-                            try
+                            DateTime parsedSentAt;
+                            if (DateTime.TryParse(sentAtStr, out parsedSentAt))
                             {
-                                var request = kv.Value;
-                                var requestSenderId = request.senderId?.ToString();
-                                var sentAtStr = request.sentAt?.ToString();
-                                DateTime sentAt = DateTime.UtcNow;
-                                if (!string.IsNullOrEmpty(sentAtStr))
+                                sentAt = parsedSentAt;
+                            }
+                        }
+
+                        if (requestSenderId == senderId)
+                        {
+                            if (!string.IsNullOrEmpty(sentAtStr))
+                            {
+                                if (sentAt >= thirtyMinutesAgo)
                                 {
-                                    DateTime parsedSentAt;
-                                    if (DateTime.TryParse(sentAtStr, out parsedSentAt))
-                                    {
-                                        sentAt = parsedSentAt;
-                                    }
-                                }
-                                
-                                if (requestSenderId == senderId)
-                                {
-                                    if (!string.IsNullOrEmpty(sentAtStr))
-                                    {
-                                        if (sentAt >= thirtyMinutesAgo)
-                                        {
-                                            recentRequestsCount++;
-                                            Debug.WriteLine($"[ExceedsRequestLimit] Found recent request at {sentAt} (count: {recentRequestsCount})");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Debug.WriteLine($"[ExceedsRequestLimit] Could not parse timestamp '{sentAtStr}' for request from {senderId}");
-                                    }
+                                    recentRequestsCount++;
+                                    Debug.WriteLine($"[ExceedsRequestLimit] Found recent request at {sentAt} (count: {recentRequestsCount})");
                                 }
                             }
+                            else
+                            {
+                                Debug.WriteLine($"[ExceedsRequestLimit] Could not parse timestamp '{sentAtStr}' for request from {senderId}");
+                            }
+                        }
+                    }
                     catch (Exception requestEx)
                     {
                         Debug.WriteLine($"[ExceedsRequestLimit] Error processing request {kv.Key}: {requestEx.Message}");
@@ -1741,26 +1762,26 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[HasPendingRequest] Checking pending request: {senderId} -> {receiverId}");
-                
+
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}.json");
                 var response = await _httpClient.GetAsync(url);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[HasPendingRequest] HTTP Error: {response.StatusCode}");
                     return false;
                 }
-                
+
                 var content = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(content) || content == "null")
                 {
                     Debug.WriteLine($"[HasPendingRequest] No requests found for receiver {receiverId}");
                     return false;
                 }
-                
+
                 var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
                 Debug.WriteLine($"[HasPendingRequest] Found {requests.Count} requests for receiver {receiverId}");
-                
+
                 foreach (var kv in requests)
                 {
                     try
@@ -1768,7 +1789,7 @@ namespace Learnify.Services
                         var request = kv.Value;
                         var requestSenderId = request.senderId?.ToString();
                         var status = request.status?.ToString();
-                        
+
                         if (requestSenderId == senderId && status == "Pending")
                         {
                             Debug.WriteLine($"[HasPendingRequest] Found pending request from {senderId} to {receiverId}");
@@ -1780,7 +1801,7 @@ namespace Learnify.Services
                         Debug.WriteLine($"[HasPendingRequest] Error processing request {kv.Key}: {requestEx.Message}");
                     }
                 }
-                
+
                 Debug.WriteLine($"[HasPendingRequest] No pending request found from {senderId} to {receiverId}");
                 return false;
             }
@@ -1850,7 +1871,7 @@ namespace Learnify.Services
             {
                 Debug.WriteLine("[FixMissingFriendsData] Starting to fix missing friends data...");
                 int fixedCount = 0;
-                
+
                 // 1. Lấy tất cả friendRequests
                 var url = GetAuthenticatedUrl("friendRequests.json");
                 var response = await _httpClient.GetAsync(url);
@@ -1859,28 +1880,28 @@ namespace Learnify.Services
                     Debug.WriteLine($"[FixMissingFriendsData] Failed to get friendRequests: {response.StatusCode}");
                     return 0;
                 }
-                
+
                 var content = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(content) || content == "null")
                 {
                     Debug.WriteLine("[FixMissingFriendsData] No friendRequests found");
                     return 0;
                 }
-                
+
                 var allRequests = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, dynamic>>>(content);
                 Debug.WriteLine($"[FixMissingFriendsData] Found {allRequests.Count} receivers with requests");
-                
+
                 // 2. Duyệt qua tất cả các request đã Accepted
                 foreach (var receiverData in allRequests)
                 {
                     var receiverId = receiverData.Key;
                     var requests = receiverData.Value;
-                    
+
                     foreach (var requestData in requests)
                     {
                         var requestId = requestData.Key;
                         var request = requestData.Value;
-                        
+
                         var status = request.status?.ToString();
                         if (status == "Accepted")
                         {
@@ -1895,33 +1916,33 @@ namespace Learnify.Services
                                     sentAt = parsedSentAt;
                                 }
                             }
-                            
+
                             Debug.WriteLine($"[FixMissingFriendsData] Found accepted request: {senderId} -> {receiverId}");
-                            
+
                             // 3. Kiểm tra xem đã có trong friends chưa
                             if (!await AreAlreadyFriendsAsync(senderId, receiverId))
                             {
                                 Debug.WriteLine($"[FixMissingFriendsData] Missing friends data, fixing...");
-                                
+
                                 // 4. Tạo dữ liệu bạn bè
-                                var friendData = new Dictionary<string, object> 
-                                { 
-                                    ["status"] = "Friends", 
-                                    ["since"] = sentAtStr ?? DateTime.UtcNow.ToString("o") 
+                                var friendData = new Dictionary<string, object>
+                                {
+                                    ["status"] = "Friends",
+                                    ["since"] = sentAtStr ?? DateTime.UtcNow.ToString("o")
                                 };
-                                
+
                                 var urlFriend1 = GetAuthenticatedUrl($"friends/{senderId}/{receiverId}.json");
                                 var urlFriend2 = GetAuthenticatedUrl($"friends/{receiverId}/{senderId}.json");
-                                
+
                                 var contentFriend1 = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
                                 var contentFriend2 = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
-                                
+
                                 var res1 = await _httpClient.PutAsync(urlFriend1, contentFriend1);
                                 var res2 = await _httpClient.PutAsync(urlFriend2, contentFriend2);
-                                
+
                                 contentFriend1.Dispose();
                                 contentFriend2.Dispose();
-                                
+
                                 if (res1.IsSuccessStatusCode && res2.IsSuccessStatusCode)
                                 {
                                     fixedCount++;
@@ -1939,7 +1960,7 @@ namespace Learnify.Services
                         }
                     }
                 }
-                
+
                 Debug.WriteLine($"[FixMissingFriendsData] Fixed {fixedCount} missing friends relationships");
                 return fixedCount;
             }
@@ -1960,25 +1981,25 @@ namespace Learnify.Services
                 var testData = new Dictionary<string, object> { ["test"] = "permission_check" };
                 var url = GetAuthenticatedUrl($"friends/{currentUserId}/test.json");
                 var content = new StringContent(JsonConvert.SerializeObject(testData), Encoding.UTF8, "application/json");
-                
+
                 Debug.WriteLine($"[TestFriendsPermission] Testing write permission to: {url}");
                 var response = await _httpClient.PutAsync(url, content);
                 content.Dispose();
-                
+
                 Debug.WriteLine($"[TestFriendsPermission] Result: {response.StatusCode}");
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[TestFriendsPermission] Error: {error}");
                 }
-                
+
                 // Xóa dữ liệu test nếu thành công
                 if (response.IsSuccessStatusCode)
                 {
                     var deleteUrl = GetAuthenticatedUrl($"friends/{currentUserId}/test.json");
                     await _httpClient.DeleteAsync(deleteUrl);
                 }
-                
+
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -1996,31 +2017,31 @@ namespace Learnify.Services
                 Debug.WriteLine("[GetAllUserIds] Getting all user IDs from Firebase...");
                 var url = GetAuthenticatedUrl("users.json");
                 var response = await _httpClient.GetAsync(url);
-                
+
                 Debug.WriteLine($"[GetAllUserIds] Response status: {response.StatusCode}");
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[GetAllUserIds] Response content length: {content?.Length ?? 0}");
-                    
+
                     if (!string.IsNullOrEmpty(content) && content != "null")
                     {
                         var users = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(content);
                         var userIds = users.Keys.ToList();
-                        
+
                         Debug.WriteLine($"[GetAllUserIds] Found {userIds.Count} users:");
                         foreach (var uid in userIds.Take(10)) // Log only first 10 for brevity
                         {
                             var username = users[uid]["username"]?.ToString() ?? "No username";
                             Debug.WriteLine($"[GetAllUserIds] - {uid}: {username}");
                         }
-                        
+
                         if (userIds.Count > 10)
                         {
                             Debug.WriteLine($"[GetAllUserIds] ... and {userIds.Count - 10} more users");
                         }
-                        
+
                         return userIds;
                     }
                     else
@@ -2033,7 +2054,7 @@ namespace Learnify.Services
                     var errorContent = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[GetAllUserIds] HTTP Error: {response.StatusCode}, Content: {errorContent}");
                 }
-                
+
                 return new List<string>();
             }
             catch (Exception ex)
@@ -2050,26 +2071,26 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[SyncUserToPublic] Syncing user {userId} to publicUsers");
-                
+
                 // 1. Lấy dữ liệu từ users (private)
                 var privateUrl = GetAuthenticatedUrl($"users/{userId}.json");
                 var response = await _httpClient.GetAsync(privateUrl);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"[SyncUserToPublic] Failed to get private data: {response.StatusCode}");
                     return false;
                 }
-                
+
                 var content = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(content) || content == "null")
                 {
                     Debug.WriteLine("[SyncUserToPublic] No private data found");
                     return false;
                 }
-                
+
                 var userData = JObject.Parse(content);
-                
+
                 // 2. Tạo dữ liệu public (chỉ các trường an toàn)
                 var publicData = new
                 {
@@ -2077,24 +2098,24 @@ namespace Learnify.Services
                     avatarUrl = userData["avatarUrl"]?.ToString() ?? "/Images/avatar1.svg",
                     email = userData["email"]?.ToString() ?? "" // Có thể bỏ email nếu muốn bảo mật hơn
                 };
-                
+
                 // 3. Lưu vào publicUsers
                 var publicUrl = GetAuthenticatedUrl($"publicUsers/{userId}.json");
                 var json = JsonConvert.SerializeObject(publicData);
                 var putContent = new StringContent(json, Encoding.UTF8, "application/json");
-                
+
                 var putResponse = await _httpClient.PutAsync(publicUrl, putContent);
                 putContent.Dispose();
-                
+
                 var success = putResponse.IsSuccessStatusCode;
                 Debug.WriteLine($"[SyncUserToPublic] Sync result: {success} ({putResponse.StatusCode})");
-                
+
                 if (!success)
                 {
                     var error = await putResponse.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[SyncUserToPublic] Error: {error}");
                 }
-                
+
                 return success;
             }
             catch (Exception ex)
@@ -2112,18 +2133,18 @@ namespace Learnify.Services
                 Debug.WriteLine("[SyncAllUsersToPublic] Starting sync all users...");
                 var userIds = await GetAllUserIdsAsync();
                 var syncedCount = 0;
-                
+
                 foreach (var userId in userIds)
                 {
                     if (await SyncUserToPublicAsync(userId))
                     {
                         syncedCount++;
                     }
-                    
+
                     // Delay nhỏ để tránh spam requests
                     await Task.Delay(100);
                 }
-                
+
                 Debug.WriteLine($"[SyncAllUsersToPublic] Synced {syncedCount}/{userIds.Count} users");
                 return syncedCount;
             }
@@ -2143,11 +2164,11 @@ namespace Learnify.Services
             {
                 Debug.WriteLine($"[RemoveFriendAsync] 🔥 STARTING UNFRIEND: {userId1} removing {userId2}");
                 Debug.WriteLine($"[RemoveFriendAsync] Current time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
-                
+
                 // 1. CHỈ xóa khỏi danh sách bạn bè của user hiện tại (userId1) - có quyền write
                 var friendsUrl = GetAuthenticatedUrl($"friends/{userId1}/{userId2}.json");
                 Debug.WriteLine($"[RemoveFriendAsync] DELETE friends url: {friendsUrl}");
-                
+
                 var friendsRes = await _httpClient.DeleteAsync(friendsUrl);
                 Debug.WriteLine($"[RemoveFriendAsync] DELETE friends result: {friendsRes.StatusCode}");
 
@@ -2180,10 +2201,10 @@ namespace Learnify.Services
                 Debug.WriteLine($"[RemoveFriendAsync] 🔄 Step 4: Notifying friends list change for {userId1}...");
                 await NotifyFriendsListChangeWithRetryAsync(userId1);
                 Debug.WriteLine($"[RemoveFriendAsync] ✅ Step 4 COMPLETED: Notified friends list change");
-                
+
                 Debug.WriteLine($"[RemoveFriendAsync] 🎉 ALL STEPS COMPLETED: {userId1} unfriended {userId2}");
                 Debug.WriteLine($"[RemoveFriendAsync] 📌 {userId2} should detect unfriend marker via polling");
-                
+
                 return true;
             }
             catch (Exception ex)
@@ -2202,11 +2223,11 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[CleanupFriendRequestsAsync] Cleaning up requests from {fromUserId} to {toUserId}");
-                
+
                 // Lấy tất cả requests của toUserId
                 var url = GetAuthenticatedUrl($"friendRequests/{toUserId}.json");
                 var response = await _httpClient.GetAsync(url);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -2214,7 +2235,7 @@ namespace Learnify.Services
                     {
                         var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
                         Debug.WriteLine($"[CleanupFriendRequestsAsync] Found {requests.Count} requests for {toUserId}");
-                        
+
                         // Tìm và xóa tất cả requests từ fromUserId
                         foreach (var kv in requests)
                         {
@@ -2222,14 +2243,14 @@ namespace Learnify.Services
                             var request = kv.Value;
                             var senderId = request.senderId?.ToString();
                             var status = request.status?.ToString();
-                            
+
                             if (senderId == fromUserId)
                             {
                                 Debug.WriteLine($"[CleanupFriendRequestsAsync] Found request {requestId} from {senderId} with status {status}, deleting...");
-                                
+
                                 var deleteUrl = GetAuthenticatedUrl($"friendRequests/{toUserId}/{requestId}.json");
                                 var deleteResponse = await _httpClient.DeleteAsync(deleteUrl);
-                                
+
                                 Debug.WriteLine($"[CleanupFriendRequestsAsync] Delete request result: {deleteResponse.StatusCode}");
                             }
                         }
@@ -2258,7 +2279,7 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[NotifyFriendsListChange] Notifying friends list change for user: {userId}");
-                
+
                 // Kiểm tra token trước
                 var token = AuthService.GetToken();
                 if (string.IsNullOrEmpty(token))
@@ -2266,32 +2287,32 @@ namespace Learnify.Services
                     Debug.WriteLine($"[NotifyFriendsListChange] Error: No authentication token for user {userId}");
                     return false;
                 }
-                
+
                 // Tạo một marker thời gian để thông báo thay đổi
                 var changeMarker = new Dictionary<string, object>
                 {
                     ["lastUpdated"] = DateTime.UtcNow.ToString("o"),
                     ["userId"] = userId
                 };
-                
+
                 var url = GetAuthenticatedUrl($"friendsListChanges/{userId}.json");
                 Debug.WriteLine($"[NotifyFriendsListChange] URL: {url}");
-                
+
                 var content = new StringContent(JsonConvert.SerializeObject(changeMarker), Encoding.UTF8, "application/json");
                 var response = await _httpClient.PutAsync(url, content);
                 content.Dispose();
-                
+
                 var success = response.IsSuccessStatusCode;
                 Debug.WriteLine($"[NotifyFriendsListChange] Response status: {response.StatusCode}");
-                
+
                 if (!success)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[NotifyFriendsListChange] Error response: {errorContent}");
                 }
-                
+
                 Debug.WriteLine($"[NotifyFriendsListChange] Notification result: {success}");
-                
+
                 return success;
             }
             catch (Exception ex)
@@ -2311,7 +2332,7 @@ namespace Learnify.Services
             {
                 var url = GetAuthenticatedUrl($"friendsListChanges/{userId}.json");
                 var response = await _httpClient.GetAsync(url);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -2328,7 +2349,7 @@ namespace Learnify.Services
                         }
                     }
                 }
-                
+
                 return false;
             }
             catch (Exception ex)
@@ -2348,7 +2369,7 @@ namespace Learnify.Services
                 try
                 {
                     Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Attempt {attempt} for user: {userId}");
-                    
+
                     // Kiểm tra kết nối internet trước
                     if (!await CheckInternetConnectionAsync())
                     {
@@ -2359,7 +2380,7 @@ namespace Learnify.Services
                             continue;
                         }
                     }
-                    
+
                     var success = await NotifyFriendsListChangeAsync(userId);
                     if (success)
                     {
@@ -2376,7 +2397,7 @@ namespace Learnify.Services
                     Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Exception on attempt {attempt} for user {userId}: {ex.Message}");
                     Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Stack trace: {ex.StackTrace}");
                 }
-                
+
                 // Delay trước khi retry (exponential backoff)
                 if (attempt < maxRetries)
                 {
@@ -2385,7 +2406,7 @@ namespace Learnify.Services
                     await Task.Delay(delay);
                 }
             }
-            
+
             Debug.WriteLine($"[NotifyFriendsListChangeWithRetry] Failed to notify user {userId} after {maxRetries} attempts");
         }
 
@@ -2397,47 +2418,47 @@ namespace Learnify.Services
             try
             {
                 Debug.WriteLine($"[TestNotification] Testing notification for user: {userId}");
-                
+
                 // Kiểm tra token
                 var token = AuthService.GetToken();
                 Debug.WriteLine($"[TestNotification] Token: {(string.IsNullOrEmpty(token) ? "NULL" : "EXISTS")}");
-                
+
                 // Test URL
                 var url = GetAuthenticatedUrl($"friendsListChanges/{userId}.json");
                 Debug.WriteLine($"[TestNotification] Test URL: {url}");
-                
+
                 // Test GET request trước
                 var getResponse = await _httpClient.GetAsync(url);
                 Debug.WriteLine($"[TestNotification] GET response: {getResponse.StatusCode}");
-                
+
                 if (!getResponse.IsSuccessStatusCode)
                 {
                     var getError = await getResponse.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[TestNotification] GET error: {getError}");
                 }
-                
+
                 // Test PUT request
                 var testData = new Dictionary<string, object>
                 {
                     ["test"] = true,
                     ["timestamp"] = DateTime.UtcNow.ToString("o")
                 };
-                
+
                 var content = new StringContent(JsonConvert.SerializeObject(testData), Encoding.UTF8, "application/json");
                 var putResponse = await _httpClient.PutAsync(url, content);
                 content.Dispose();
-                
+
                 Debug.WriteLine($"[TestNotification] PUT response: {putResponse.StatusCode}");
-                
+
                 if (!putResponse.IsSuccessStatusCode)
                 {
                     var putError = await putResponse.Content.ReadAsStringAsync();
                     Debug.WriteLine($"[TestNotification] PUT error: {putError}");
                 }
-                
+
                 var success = putResponse.IsSuccessStatusCode;
                 Debug.WriteLine($"[TestNotification] Test result: {success}");
-                
+
                 return success;
             }
             catch (Exception ex)
@@ -2519,7 +2540,7 @@ namespace Learnify.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[ForceSyncAllFriends] Starting force sync for {myUserId}");
-                
+
                 var report = new List<string>();
                 var totalChanges = 0;
 
@@ -2528,7 +2549,7 @@ namespace Learnify.Services
 
                 // Phase 1: Sync from accepted requests
                 var changes1 = await SyncFromAcceptedRequestsAsync(myUserId);
-                if (changes1) 
+                if (changes1)
                 {
                     totalChanges++;
                     report.Add("✅ Synced from accepted requests");
@@ -2536,7 +2557,7 @@ namespace Learnify.Services
 
                 // Phase 2: Bidirectional sync
                 var changes2 = await SyncBidirectionalFriendsAsync(myUserId);
-                if (changes2) 
+                if (changes2)
                 {
                     totalChanges++;
                     report.Add("✅ Fixed bidirectional links");
@@ -2544,7 +2565,7 @@ namespace Learnify.Services
 
                 // Phase 3: Cross-check consistency
                 var changes3 = await CrossCheckFriendsConsistencyAsync(myUserId);
-                if (changes3) 
+                if (changes3)
                 {
                     totalChanges++;
                     report.Add("✅ Cross-synced missing friends");
@@ -2552,7 +2573,7 @@ namespace Learnify.Services
 
                 // Phase 4: Bidirectional unfriend cleanup
                 var changes4 = await SyncBidirectionalUnfriendAsync(myUserId);
-                if (changes4) 
+                if (changes4)
                 {
                     totalChanges++;
                     report.Add("✅ Cleaned up bidirectional unfriends");
@@ -2573,7 +2594,7 @@ namespace Learnify.Services
                     report.Add("🔄 UI reloaded");
                 }
 
-                var summary = totalChanges > 0 ? 
+                var summary = totalChanges > 0 ?
                     $"🎉 Force sync completed! {totalChanges} improvements made:\n" + string.Join("\n", report) :
                     "✨ Friend list is already in perfect sync!";
 
@@ -2603,7 +2624,7 @@ namespace Learnify.Services
                     return;
                 }
                 _syncCache.Add(cacheKey);
-                
+
                 // Cleanup cache mỗi 30 giây
                 if (DateTime.UtcNow.Second % 30 == 0)
                 {
@@ -2656,9 +2677,9 @@ namespace Learnify.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ENHANCED: Checking accepted requests for {myUserId}");
-                
+
                 var hasChanges = false;
-                
+
                 // === 1. Check requests TO me (received) ===
                 System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] Checking requests TO {myUserId}");
                 var toMeUrl = GetAuthenticatedUrl($"friendRequests/{myUserId}.json");
@@ -2695,7 +2716,7 @@ namespace Learnify.Services
                                 if (!await AreAlreadyFriendsAsync(myUserId, senderId))
                                 {
                                     System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ⭐ Found ACCEPTED request: {senderId} -> {myUserId}, adding friendship (RECEIVER SIDE)");
-                                    
+
                                     // Chỉ add friend cho receiver (người accept), KHÔNG show notification
                                     // Notification sẽ được hiển thị ở CASE 2 cho sender
                                     if (await AddSingleSideFriendshipAsync(myUserId, senderId))
@@ -2714,7 +2735,7 @@ namespace Learnify.Services
                             {
                                 var accepterId = senderId; // senderId in marker = who accepted
                                 var markerKey = $"accept_{accepterId}_{myUserId}_{requestId}";
-                                
+
                                 // Kiểm tra đã process marker này chưa để tránh duplicate
                                 if (_processedMarkers.Contains(markerKey))
                                 {
@@ -2722,29 +2743,30 @@ namespace Learnify.Services
                                     continue;
                                 }
                                 _processedMarkers.Add(markerKey);
-                                
+
                                 System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🎉 Found ACCEPTANCE MARKER: {accepterId} accepted my request! (SENDER SIDE)");
-                                
+
                                 // Add friendship cho sender (Firebase chỉ cho phép write vào friends của chính mình)
                                 if (!await AreAlreadyFriendsAsync(myUserId, accepterId))
                                 {
-                                    var friendData = new Dictionary<string, object> { 
-                                        ["status"] = "Friends", 
+                                    var friendData = new Dictionary<string, object>
+                                    {
+                                        ["status"] = "Friends",
                                         ["since"] = DateTime.UtcNow.ToString("o"),
                                         ["acceptedAt"] = DateTime.UtcNow.ToString("o"),
                                         ["acceptedBy"] = accepterId
                                     };
-                                    
+
                                     var friendUrl = GetAuthenticatedUrl($"friends/{myUserId}/{accepterId}.json");
                                     var friendContent = new StringContent(JsonConvert.SerializeObject(friendData), Encoding.UTF8, "application/json");
                                     var friendResponse = await _httpClient.PutAsync(friendUrl, friendContent);
                                     friendContent.Dispose();
-                                    
+
                                     if (friendResponse.IsSuccessStatusCode)
                                     {
                                         System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ✅ Added {accepterId} to my friends list (SENDER SIDE)");
                                         hasChanges = true;
-                                        
+
                                         // Trigger friends list reload for sender
                                         if (NotificationVM != null)
                                         {
@@ -2757,7 +2779,7 @@ namespace Learnify.Services
                                         System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ❌ Failed to add friend: {error}");
                                     }
                                 }
-                                
+
                                 // Show notification for successful acceptance (CHỈ CHO SENDER)
                                 if (NotificationVM != null)
                                 {
@@ -2766,7 +2788,7 @@ namespace Learnify.Services
                                     NotificationVM.AddFriendAcceptedNotification(accepterId, friendName);
                                     System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 📱 Showed acceptance notification: {friendName} accepted your request (SENDER SIDE)");
                                 }
-                                
+
                                 // Xóa marker sau khi process
                                 var deleteMarkerUrl = GetAuthenticatedUrl($"friendRequests/{myUserId}/{requestId}.json");
                                 await _httpClient.DeleteAsync(deleteMarkerUrl);
@@ -2777,10 +2799,10 @@ namespace Learnify.Services
                             {
                                 var removerId = senderId; // senderId in marker = who removed me
                                 var markerKey = $"unfriend_{removerId}_{myUserId}_{requestId}";
-                                
+
                                 System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🔥 DETECTED UNFRIEND MARKER! {removerId} unfriended {myUserId}");
                                 System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 📋 Marker details: requestId={requestId}, removerId={removerId}");
-                                
+
                                 // Kiểm tra đã process marker này chưa để tránh duplicate
                                 if (_processedMarkers.Contains(markerKey))
                                 {
@@ -2788,24 +2810,24 @@ namespace Learnify.Services
                                     continue;
                                 }
                                 _processedMarkers.Add(markerKey);
-                                
+
                                 System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 💔 PROCESSING UNFRIEND: {removerId} removed me from friends!");
-                                
+
                                 // DEBUG: Check current friends list status
                                 var isFriend = await AreAlreadyFriendsAsync(myUserId, removerId);
                                 System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🔍 DEBUG: Is {removerId} still in my friends? {isFriend}");
-                                
+
                                 // Tự xóa removerId khỏi friends list của mình
                                 if (await AreAlreadyFriendsAsync(myUserId, removerId))
                                 {
                                     var removeFriendUrl = GetAuthenticatedUrl($"friends/{myUserId}/{removerId}.json");
                                     var removeResponse = await _httpClient.DeleteAsync(removeFriendUrl);
-                                    
+
                                     if (removeResponse.IsSuccessStatusCode)
                                     {
                                         System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ✅ Removed {removerId} from my friends list");
                                         hasChanges = true;
-                                        
+
                                         // FORCE UI refresh ngay lập tức để user thấy friend đã bị xóa
                                         if (NotificationVM != null)
                                         {
@@ -2823,25 +2845,25 @@ namespace Learnify.Services
                                 {
                                     System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] ⚠️ {removerId} was not in friends list (already removed?)");
                                 }
-                                
+
                                 // Cleanup friendRequests để tránh auto-re-add
                                 await CleanupFriendRequestsAsync(removerId, myUserId);
                                 await CleanupFriendRequestsAsync(myUserId, removerId);
                                 System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 🧹 Cleaned up friend requests with {removerId}");
-                                
+
                                 // Show notification for unfriend AFTER removing from friends list
                                 if (NotificationVM != null)
                                 {
                                     var friend = await GetUserByUidAsync(removerId);
                                     var friendName = friend?.Name ?? removerId;
-                                    
+
                                     // Delay nhỏ để đảm bảo UI đã refresh friends list trước khi hiện notification
                                     await Task.Delay(500);
-                                    
+
                                     NotificationVM.AddUnfriendNotification(removerId, friendName);
                                     System.Diagnostics.Debug.WriteLine($"[SyncFromAcceptedRequests] 📱 Showed unfriend notification: {friendName} removed you from friends (after UI refresh)");
                                 }
-                                
+
                                 // Xóa marker sau khi process
                                 var deleteUnfriendMarkerUrl = GetAuthenticatedUrl($"friendRequests/{myUserId}/{requestId}.json");
                                 await _httpClient.DeleteAsync(deleteUnfriendMarkerUrl);
@@ -2882,7 +2904,7 @@ namespace Learnify.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalFriends] Checking bidirectional sync for {myUserId}");
-                
+
                 var hasChanges = false;
                 var myFriends = await GetFriendsAsync(myUserId);
 
@@ -2892,10 +2914,11 @@ namespace Learnify.Services
                     if (!await AreAlreadyFriendsAsync(friend.Id, myUserId))
                     {
                         System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalFriends] Missing bidirectional link: {friend.Id} doesn't have {myUserId}");
-                        
+
                         // Thêm mình vào danh sách của friend
-                        var friendData = new Dictionary<string, object> { 
-                            ["status"] = "Friends", 
+                        var friendData = new Dictionary<string, object>
+                        {
+                            ["status"] = "Friends",
                             ["since"] = DateTime.UtcNow.ToString("o"),
                             ["syncedAt"] = DateTime.UtcNow.ToString("o")
                         };
@@ -2930,24 +2953,24 @@ namespace Learnify.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Cross-checking friends consistency for {myUserId}");
-                
+
                 var hasChanges = false;
-                
+
                 // Lấy sample users thông qua GetLimitedUserIdsAsync (có nhiều fallback strategies)
                 var sampleUsers = await GetLimitedUserIdsAsync(10); // Limit để tránh quá tải
-                
+
                 if (sampleUsers.Count == 0)
                 {
                     System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] ⚠️ No users available for cross-check, skipping phase");
                     return false;
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Cross-checking with {sampleUsers.Count} users");
-                
+
                 foreach (var otherUserId in sampleUsers)
                 {
                     if (otherUserId == myUserId) continue;
-                    
+
                     try
                     {
                         // Kiểm tra xem user khác có mình trong friends list không
@@ -2957,10 +2980,11 @@ namespace Learnify.Services
                             if (!await AreAlreadyFriendsAsync(myUserId, otherUserId))
                             {
                                 System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Found missing friend: {otherUserId} has {myUserId} but not vice versa");
-                                
+
                                 // Thêm họ vào danh sách của mình
-                                var friendData = new Dictionary<string, object> { 
-                                    ["status"] = "Friends", 
+                                var friendData = new Dictionary<string, object>
+                                {
+                                    ["status"] = "Friends",
                                     ["since"] = DateTime.UtcNow.ToString("o"),
                                     ["crossSyncedAt"] = DateTime.UtcNow.ToString("o")
                                 };
@@ -2974,7 +2998,7 @@ namespace Learnify.Services
                                 {
                                     hasChanges = true;
                                     System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] Cross-synced: Added {otherUserId} to {myUserId}'s friends");
-                                    
+
                                     // NOTE: KHÔNG hiển thị notification ở đây vì đây chỉ là sync recovery, 
                                     // không phải acceptance event thực sự từ user
                                     System.Diagnostics.Debug.WriteLine($"[CrossCheckFriendsConsistency] ℹ️ No notification shown - this is sync recovery, not real acceptance");
@@ -3007,74 +3031,74 @@ namespace Learnify.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Checking bidirectional unfriend sync for {myUserId}");
-                
+
                 var hasChanges = false;
-                
+
                 // Lấy danh sách users thông qua GetLimitedUserIdsAsync (có nhiều fallback strategies)
                 var sampleUsers = await GetLimitedUserIdsAsync(15); // Limit để tránh quá tải
-                
+
                 if (sampleUsers.Count == 0)
                 {
                     System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] ⚠️ No users available for unfriend cleanup, skipping phase");
                     return false;
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Checking unfriend sync with {sampleUsers.Count} users");
-                
+
                 foreach (var otherUserId in sampleUsers)
                 {
                     if (otherUserId == myUserId) continue;
-                    
+
                     try
                     {
                         // Case 1: Nếu user khác có mình làm bạn nhưng mình không có họ
                         // → Có thể mình đã unfriend họ, cần sync lại
-                        if (await AreAlreadyFriendsAsync(otherUserId, myUserId) && 
+                        if (await AreAlreadyFriendsAsync(otherUserId, myUserId) &&
                             !await AreAlreadyFriendsAsync(myUserId, otherUserId))
                         {
                             // Kiểm tra xem có phải do unfriend không bằng cách check friendRequests
                             var hasActiveRequest = await HasActiveRequestBetweenUsersAsync(myUserId, otherUserId);
-                            
+
                             if (!hasActiveRequest)
                             {
                                 System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Detected unfriend: {myUserId} unfriended {otherUserId}, removing bidirectional link");
-                                
+
                                 // Xóa mình khỏi danh sách của user kia
                                 var unfriendUrl = GetAuthenticatedUrl($"friends/{otherUserId}/{myUserId}.json");
                                 var unfriendResponse = await _httpClient.DeleteAsync(unfriendUrl);
-                                
+
                                 if (unfriendResponse.IsSuccessStatusCode)
                                 {
                                     hasChanges = true;
                                     System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Successfully removed {myUserId} from {otherUserId}'s friends list");
-                                    
+
                                     // Cleanup friendRequests liên quan
                                     await CleanupFriendRequestsAsync(myUserId, otherUserId);
                                     await CleanupFriendRequestsAsync(otherUserId, myUserId);
                                 }
                             }
                         }
-                        
+
                         // Case 2: Nếu mình có user khác làm bạn nhưng họ không có mình
                         // → Có thể họ đã unfriend mình, cần sync lại
-                        if (await AreAlreadyFriendsAsync(myUserId, otherUserId) && 
+                        if (await AreAlreadyFriendsAsync(myUserId, otherUserId) &&
                             !await AreAlreadyFriendsAsync(otherUserId, myUserId))
                         {
                             var hasActiveRequest = await HasActiveRequestBetweenUsersAsync(otherUserId, myUserId);
-                            
+
                             if (!hasActiveRequest)
                             {
                                 System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Detected unfriend: {otherUserId} unfriended {myUserId}, removing from my list");
-                                
+
                                 // Xóa họ khỏi danh sách của mình
                                 var unfriendUrl = GetAuthenticatedUrl($"friends/{myUserId}/{otherUserId}.json");
                                 var unfriendResponse = await _httpClient.DeleteAsync(unfriendUrl);
-                                
+
                                 if (unfriendResponse.IsSuccessStatusCode)
                                 {
                                     hasChanges = true;
                                     System.Diagnostics.Debug.WriteLine($"[SyncBidirectionalUnfriend] Successfully removed {otherUserId} from {myUserId}'s friends list");
-                                    
+
                                     // Cleanup friendRequests liên quan
                                     await CleanupFriendRequestsAsync(myUserId, otherUserId);
                                     await CleanupFriendRequestsAsync(otherUserId, myUserId);
@@ -3107,14 +3131,14 @@ namespace Learnify.Services
             {
                 // Check senderId -> receiverId
                 var hasRequest1 = await HasPendingRequestAsync(senderId, receiverId);
-                
+
                 // Check receiverId -> senderId  
                 var hasRequest2 = await HasPendingRequestAsync(receiverId, senderId);
-                
+
                 // Check for accepted requests
                 var hasAccepted1 = await HasAcceptedRequestAsync(senderId, receiverId);
                 var hasAccepted2 = await HasAcceptedRequestAsync(receiverId, senderId);
-                
+
                 return hasRequest1 || hasRequest2 || hasAccepted1 || hasAccepted2;
             }
             catch (Exception ex)
@@ -3133,20 +3157,20 @@ namespace Learnify.Services
             {
                 var url = GetAuthenticatedUrl($"friendRequests/{receiverId}.json");
                 var response = await _httpClient.GetAsync(url);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     if (!string.IsNullOrEmpty(content) && content != "null")
                     {
                         var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
-                        
+
                         foreach (var kv in requests)
                         {
                             var request = kv.Value;
                             var requestSenderId = request.senderId?.ToString();
                             var status = request.status?.ToString();
-                            
+
                             if (requestSenderId == senderId && status == "Accepted")
                             {
                                 return true;
@@ -3154,7 +3178,7 @@ namespace Learnify.Services
                         }
                     }
                 }
-                
+
                 return false;
             }
             catch (Exception ex)
@@ -3177,12 +3201,12 @@ namespace Learnify.Services
                 {
                     return allIds.Take(limit).ToList();
                 }
-                
+
                 // Fallback Strategy 1: Direct scan friendRequests.json (thường ít restrictive hơn)
                 System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Primary GetAllUserIds failed, trying direct friendRequests scan...");
                 var requestsUrl = GetAuthenticatedUrl("friendRequests.json");
                 var requestsResponse = await _httpClient.GetAsync(requestsUrl);
-                
+
                 if (requestsResponse.IsSuccessStatusCode)
                 {
                     var requestsContent = await requestsResponse.Content.ReadAsStringAsync();
@@ -3190,14 +3214,14 @@ namespace Learnify.Services
                     {
                         var allRequests = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, dynamic>>>(requestsContent);
                         var userIds = new HashSet<string>();
-                        
+
                         // Lấy receiver IDs
                         foreach (var receiverId in allRequests.Keys)
                         {
                             userIds.Add(receiverId);
                             _userIdCache.Add(receiverId); // Cache ngay
                         }
-                        
+
                         // Lấy sender IDs từ requests
                         foreach (var receiverData in allRequests.Values)
                         {
@@ -3211,7 +3235,7 @@ namespace Learnify.Services
                                 }
                             }
                         }
-                        
+
                         var extractedIds = userIds.Take(limit).ToList();
                         System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] SUCCESS: Extracted {extractedIds.Count} user IDs from friendRequests.json");
                         return extractedIds;
@@ -3221,12 +3245,12 @@ namespace Learnify.Services
                 {
                     System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] friendRequests.json failed: {requestsResponse.StatusCode}");
                 }
-                
+
                 // Fallback Strategy 2: Lấy từ publicUsers (có thể ít restrictive hơn)
                 System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Trying publicUsers fallback...");
                 var publicUrl = GetAuthenticatedUrl("publicUsers.json");
                 var publicResponse = await _httpClient.GetAsync(publicUrl);
-                
+
                 if (publicResponse.IsSuccessStatusCode)
                 {
                     var publicContent = await publicResponse.Content.ReadAsStringAsync();
@@ -3234,13 +3258,13 @@ namespace Learnify.Services
                     {
                         var publicUsers = JsonConvert.DeserializeObject<Dictionary<string, object>>(publicContent);
                         var publicIds = publicUsers.Keys.Take(limit).ToList();
-                        
+
                         // Cache ngay
                         foreach (var id in publicIds)
                         {
                             _userIdCache.Add(id);
                         }
-                        
+
                         System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Found {publicIds.Count} users from publicUsers");
                         return publicIds;
                     }
@@ -3249,7 +3273,7 @@ namespace Learnify.Services
                 {
                     System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] publicUsers failed: {publicResponse.StatusCode}");
                 }
-                
+
                 // Fallback Strategy 3: Sử dụng cached user IDs từ previous operations
                 System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Using cached user IDs fallback");
                 if (_userIdCache.Count > 0)
@@ -3258,7 +3282,7 @@ namespace Learnify.Services
                     System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] Found {cachedIds.Count} cached user IDs");
                     return cachedIds;
                 }
-                
+
                 // Fallback Strategy 4: Return empty but log the issue
                 System.Diagnostics.Debug.WriteLine($"[GetLimitedUserIds] ⚠️ ALL FALLBACK STRATEGIES FAILED - No user IDs available for scanning");
                 return new List<string>();
@@ -3280,9 +3304,10 @@ namespace Learnify.Services
                 // Cache user IDs for future fallback
                 _userIdCache.Add(userId1);
                 _userIdCache.Add(userId2);
-                
-                var friendData = new Dictionary<string, object> { 
-                    ["status"] = "Friends", 
+
+                var friendData = new Dictionary<string, object>
+                {
+                    ["status"] = "Friends",
                     ["since"] = DateTime.UtcNow.ToString("o"),
                     ["syncedAt"] = DateTime.UtcNow.ToString("o")
                 };
@@ -3300,7 +3325,7 @@ namespace Learnify.Services
                 content2.Dispose();
 
                 var success = res1.IsSuccessStatusCode && res2.IsSuccessStatusCode;
-                
+
                 if (success)
                 {
                     System.Diagnostics.Debug.WriteLine($"[AddBidirectionalFriendship] Success: {userId1} <-> {userId2}");
@@ -3309,7 +3334,7 @@ namespace Learnify.Services
                 {
                     System.Diagnostics.Debug.WriteLine($"[AddBidirectionalFriendship] Failed: {userId1} <-> {userId2}, Status: {res1.StatusCode}, {res2.StatusCode}");
                 }
-                
+
                 return success;
             }
             catch (Exception ex)
@@ -3329,9 +3354,10 @@ namespace Learnify.Services
                 // Cache user IDs for future fallback
                 _userIdCache.Add(userId);
                 _userIdCache.Add(friendId);
-                
-                var friendData = new Dictionary<string, object> { 
-                    ["status"] = "Friends", 
+
+                var friendData = new Dictionary<string, object>
+                {
+                    ["status"] = "Friends",
                     ["since"] = DateTime.UtcNow.ToString("o"),
                     ["syncedAt"] = DateTime.UtcNow.ToString("o")
                 };
@@ -3343,7 +3369,7 @@ namespace Learnify.Services
                 content.Dispose();
 
                 var success = response.IsSuccessStatusCode;
-                
+
                 if (success)
                 {
                     System.Diagnostics.Debug.WriteLine($"[AddSingleSideFriendship] Success: {userId} -> {friendId}");
@@ -3356,7 +3382,7 @@ namespace Learnify.Services
                 {
                     System.Diagnostics.Debug.WriteLine($"[AddSingleSideFriendship] Failed: {userId} -> {friendId}, Status: {response.StatusCode}");
                 }
-                
+
                 return success;
             }
             catch (Exception ex)
@@ -3377,18 +3403,18 @@ namespace Learnify.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[DebugFriendsList] Checking friends list for {userId}");
-                
+
                 var friends = await GetFriendsAsync(userId);
                 var friendNames = new List<string>();
-                
+
                 foreach (var friend in friends)
                 {
                     friendNames.Add($"{friend.Name} ({friend.Id})");
                 }
-                
+
                 var result = $"User {userId} has {friends.Count} friends:\n" + string.Join("\n", friendNames);
                 System.Diagnostics.Debug.WriteLine($"[DebugFriendsList] {result}");
-                
+
                 return result;
             }
             catch (Exception ex)
@@ -3407,24 +3433,24 @@ namespace Learnify.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[DebugUnfriendMarkers] Checking unfriend markers for {userId}");
-                
+
                 var url = GetAuthenticatedUrl($"friendRequests/{userId}.json");
                 var response = await _httpClient.GetAsync(url);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     return $"Failed to get friendRequests: {response.StatusCode}";
                 }
-                
+
                 var content = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(content) || content == "null")
                 {
                     return $"No friendRequests found for {userId}";
                 }
-                
+
                 var requests = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
                 var unfriendMarkers = new List<string>();
-                
+
                 foreach (var kv in requests)
                 {
                     var requestId = kv.Key;
@@ -3432,17 +3458,17 @@ namespace Learnify.Services
                     var status = request.status?.ToString();
                     var markerType = request.markerType?.ToString();
                     var senderId = request.senderId?.ToString();
-                    
+
                     if (status == "NotifyUnfriend" && markerType == "UnfriendNotification")
                     {
                         unfriendMarkers.Add($"Marker {requestId}: {senderId} removed {userId}");
                     }
                 }
-                
-                var result = unfriendMarkers.Count > 0 
+
+                var result = unfriendMarkers.Count > 0
                     ? $"Found {unfriendMarkers.Count} unfriend markers:\n" + string.Join("\n", unfriendMarkers)
                     : $"No unfriend markers found for {userId}";
-                
+
                 System.Diagnostics.Debug.WriteLine($"[DebugUnfriendMarkers] {result}");
                 return result;
             }

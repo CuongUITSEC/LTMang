@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using Learnify.Models;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 using Learnify.Commands;
 using Learnify.Models;
@@ -31,7 +38,8 @@ namespace Learnify.ViewModels
 
         public ICommand ToggleNotificationCommand { get; }
         public ICommand MarkAsReadCommand { get; }
-        public ICommand ClearAllCommand { get; }        private readonly FirebaseService _firebaseService = new FirebaseService();
+        public ICommand ClearAllCommand { get; }
+        private readonly FirebaseService _firebaseService = new FirebaseService();
         private readonly MainViewModel _mainViewModel; // Tham chiếu để reload FriendsList
 
         private System.Threading.CancellationTokenSource _pollingCts;
@@ -55,12 +63,12 @@ namespace Learnify.ViewModels
                 Notifications.Insert(0, notification);
                 OnPropertyChanged(nameof(UnreadCount));
                 // System.Diagnostics.Debug.WriteLine($"[Notification] Notifications count: {Notifications.Count}");
-                
+
                 // Hiển thị panel nếu có thông báo mới
-                if (!notification.IsRead) 
+                if (!notification.IsRead)
                 {
                     IsPanelVisible = true;
-                    
+
                     // Phát âm thanh thông báo cho kết bạn thành công
                     if (notification is FriendAcceptedNotification)
                     {
@@ -114,11 +122,11 @@ namespace Learnify.ViewModels
         {
             // Hiển thị dialog xác nhận trước khi xóa
             var result = System.Windows.MessageBox.Show(
-                "Bạn có chắc chắn muốn xóa tất cả thông báo?", 
-                "Xác nhận xóa", 
-                System.Windows.MessageBoxButton.YesNo, 
+                "Bạn có chắc chắn muốn xóa tất cả thông báo?",
+                "Xác nhận xóa",
+                System.Windows.MessageBoxButton.YesNo,
                 System.Windows.MessageBoxImage.Question);
-            
+
             if (result == System.Windows.MessageBoxResult.Yes)
             {
                 Notifications.Clear();
@@ -142,28 +150,29 @@ namespace Learnify.ViewModels
                 DeclineCommand = new RelayCommand<object>(async _ => await DeclineFriendRequest(requestId))
             };
             AddNotification(notification);
-        }        private async Task AcceptFriendRequest(string senderId, string requestId)
+        }
+        private async Task AcceptFriendRequest(string senderId, string requestId)
         {
             try
             {
                 var receiverId = AuthService.GetUserId();
                 // System.Diagnostics.Debug.WriteLine($"[NotificationViewModel] Accepting friend request from {senderId} to {receiverId}");
-                
+
                 var result = await _firebaseService.AcceptFriendRequestAsync(senderId, receiverId, requestId);
-                
+
                 if (result)
                 {
                     // Xóa thông báo khỏi danh sách
                     RemoveNotificationByRequestId(requestId);
-                    
+
                     // Hiển thị thông báo thành công với thông tin chi tiết
                     var senderName = Notifications.OfType<FriendRequestNotification>()
                         .FirstOrDefault(n => n.SenderId == senderId)?.SenderName ?? "Bạn";
-                    
+
                     System.Windows.MessageBox.Show(
-                        $"🎉 Bạn và {senderName} đã trở thành bạn bè!\n\nBây giờ các bạn có thể:\n• Theo dõi tiến độ học tập của nhau\n• Cùng tham gia các thử thách học tập\n• Chia sẻ thành tích và động lực học tập", 
-                        "Kết bạn thành công!", 
-                        System.Windows.MessageBoxButton.OK, 
+                        $"🎉 Bạn và {senderName} đã trở thành bạn bè!\n\nBây giờ các bạn có thể:\n• Theo dõi tiến độ học tập của nhau\n• Cùng tham gia các thử thách học tập\n• Chia sẻ thành tích và động lực học tập",
+                        "Kết bạn thành công!",
+                        System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Information);
 
                     // Phát âm thanh thành công
@@ -178,7 +187,7 @@ namespace Learnify.ViewModels
 
                     // Gửi thông báo đã chấp nhận kết bạn cho sender (sau khi ấn OK)
                     await _firebaseService.NotifyFriendAcceptedAsync(receiverId, senderId);
-                    
+
                     // Reload FriendsList ngay lập tức sau khi chấp nhận kết bạn thành công
                     if (_mainViewModel != null)
                     {
@@ -194,7 +203,7 @@ namespace Learnify.ViewModels
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("Có lỗi xảy ra khi chấp nhận lời mời kết bạn!", "Lỗi", 
+                    System.Windows.MessageBox.Show("Có lỗi xảy ra khi chấp nhận lời mời kết bạn!", "Lỗi",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
@@ -202,7 +211,7 @@ namespace Learnify.ViewModels
             {
                 // System.Diagnostics.Debug.WriteLine($"[NotificationViewModel] AcceptFriendRequest error: {ex.Message}");
                 // System.Diagnostics.Debug.WriteLine($"[NotificationViewModel] StackTrace: {ex.StackTrace}");
-                System.Windows.MessageBox.Show("Có lỗi xảy ra khi chấp nhận lời mời kết bạn!", "Lỗi", 
+                System.Windows.MessageBox.Show("Có lỗi xảy ra khi chấp nhận lời mời kết bạn!", "Lỗi",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -238,7 +247,8 @@ namespace Learnify.ViewModels
         {
             var token = AuthService.GetToken();
             return $"https://learnify-b5cf3-default-rtdb.asia-southeast1.firebasedatabase.app/{path}?auth={token}";
-        }        private async Task PollFriendRequestsAsync(System.Threading.CancellationToken token)
+        }
+        private async Task PollFriendRequestsAsync(System.Threading.CancellationToken token)
         {
             var userId = AuthService.GetUserId();
             // System.Diagnostics.Debug.WriteLine($"[Notification] Start polling friend requests for user: {userId}");
@@ -251,13 +261,13 @@ namespace Learnify.ViewModels
                     // System.Diagnostics.Debug.WriteLine($"[Notification] Polling URL: {url}");                    // Sử dụng HttpClient static từ FirebaseService
                     var response = await Learnify.Services.FirebaseService.SharedHttpClient.GetAsync(url);
                     // System.Diagnostics.Debug.WriteLine($"[Notification] Polling response status: {response.StatusCode}");
-                    
+
                     if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     {
                         // System.Diagnostics.Debug.WriteLine("[Notification] Token expired or invalid, stopping polling");
                         break; // Dừng polling khi token hết hạn
                     }
-                    
+
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
@@ -307,7 +317,7 @@ namespace Learnify.ViewModels
             // System.Diagnostics.Debug.WriteLine($"[Notification] AddFriendAcceptedNotification called: friendId={friendId}, friendName={friendName}");
             var notification = new FriendAcceptedNotification(friendId, friendName);
             AddNotification(notification);
-            
+
             // Hiển thị thông báo toast/popup cho người gửi
             App.Current.Dispatcher.Invoke(() =>
             {
@@ -331,7 +341,7 @@ namespace Learnify.ViewModels
         public void AddUnfriendNotification(string friendId, string friendName)
         {
             // System.Diagnostics.Debug.WriteLine($"[Notification] AddUnfriendNotification called: friendId={friendId}, friendName={friendName}");
-            
+
             // Tạo notification object cho unfriend
             var now = DateTime.Now;
             var notification = new Notification
@@ -344,9 +354,9 @@ namespace Learnify.ViewModels
                 Timestamp = now,
                 IsRead = false
             };
-            
+
             AddNotification(notification);
-            
+
             // Hiển thị thông báo toast/popup
             App.Current.Dispatcher.Invoke(() =>
             {
@@ -388,6 +398,125 @@ namespace Learnify.ViewModels
             {
                 // System.Diagnostics.Debug.WriteLine($"[NotificationViewModel] TriggerFriendsListReload error: {ex.Message}");
             }
+        }
+
+        // Polling for shared campaign requests
+        private System.Threading.CancellationTokenSource _sharedCampaignPollingCts;
+        public void StartPollingSharedCampaignRequests()
+        {
+            _sharedCampaignPollingCts = new System.Threading.CancellationTokenSource();
+            Task.Run(() => PollSharedCampaignRequestsAsync(_sharedCampaignPollingCts.Token));
+        }
+
+        private async Task PollSharedCampaignRequestsAsync(System.Threading.CancellationToken token)
+        {
+            var firebase = new FirebaseService();
+            string userId = Services.AuthService.GetUserId();
+            var handledRequests = new HashSet<string>();
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    // Lấy các request chia sẻ chiến dịch mới
+                    var url = firebase.GetAuthenticatedUrl($"sharedCampaignRequests/{userId}.json");
+                    var response = await FirebaseService.SharedHttpClient.GetAsync(url);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync();
+                        if (!string.IsNullOrEmpty(content) && content != "null")
+                        {
+                            var dict = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(content);
+                            foreach (var kv in dict)
+                            {
+                                string requestId = kv.Key;
+                                var req = kv.Value;
+                                if (req == null || handledRequests.Contains(requestId)) continue;
+                                if ((string)req.status != "Pending") continue;
+
+                                // Hiển thị notification với Accept/Decline
+                                App.Current.Dispatcher.Invoke(() =>
+                                {
+                                    var noti = new Notification
+                                    {
+                                        Id = requestId,
+                                        Type = "SharedCampaign",
+                                        Title = "Lời mời tham gia chiến dịch",
+                                        Message = $"Bạn nhận được lời mời tham gia chiến dịch '{req.campaignName}' từ bạn bè.",
+                                        Time = DateTime.Now.ToString("HH:mm"),
+                                        Timestamp = DateTime.Now,
+                                        IsRead = false
+                                    };
+                                    AddNotification(noti);
+                                    // Hiển thị popup với Accept/Decline
+                                    var result = System.Windows.MessageBox.Show(
+                                        $"Bạn nhận được lời mời tham gia chiến dịch '{req.campaignName}' từ bạn bè.\n\nBạn có muốn đồng ý và thêm chiến dịch này vào danh sách của mình không?",
+                                        "Chia sẻ chiến dịch",
+                                        System.Windows.MessageBoxButton.YesNo,
+                                        System.Windows.MessageBoxImage.Question
+                                    );
+                                    if (result == System.Windows.MessageBoxResult.Yes)
+                                    {
+                                        // Đồng ý: thêm campaign vào danh sách của mình
+                                        Task.Run(async () =>
+                                        {
+                                            await AcceptSharedCampaignRequest(requestId, req);
+                                        });
+                                    }
+                                    else
+                                    {
+                                        // Từ chối: cập nhật trạng thái
+                                        Task.Run(async () =>
+                                        {
+                                            await UpdateSharedCampaignRequestStatus(requestId, "Declined");
+                                        });
+                                    }
+                                });
+                                handledRequests.Add(requestId);
+                            }
+                        }
+                    }
+                }
+                catch { }
+                await Task.Delay(5000, token); // Poll mỗi 5s
+            }
+        }
+
+        private async Task AcceptSharedCampaignRequest(string requestId, dynamic req)
+        {
+            try
+            {
+                var firebase = new FirebaseService();
+                string userId = Services.AuthService.GetUserId();
+                // Thêm campaign vào danh sách của mình (giả sử có AddCampaignAsync)
+                var campaignData = new Dictionary<string, object>
+                {
+                    ["title"] = (string)req.campaignName,
+                    ["date"] = (string)req.campaignDate,
+                    ["sharedBy"] = (string)req.fromUserId,
+                    ["acceptedAt"] = DateTime.UtcNow.ToString("o")
+                };
+                var url = firebase.GetAuthenticatedUrl($"campaigns/{userId}/{requestId}.json");
+                var content = new System.Net.Http.StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(campaignData), System.Text.Encoding.UTF8, "application/json");
+                var response = await FirebaseService.SharedHttpClient.PutAsync(url, content);
+                if (response.IsSuccessStatusCode)
+                {
+                    await UpdateSharedCampaignRequestStatus(requestId, "Accepted");
+                }
+            }
+            catch { }
+        }
+
+        private async Task UpdateSharedCampaignRequestStatus(string requestId, string status)
+        {
+            try
+            {
+                var firebase = new FirebaseService();
+                string userId = Services.AuthService.GetUserId();
+                var url = firebase.GetAuthenticatedUrl($"sharedCampaignRequests/{userId}/{requestId}/status.json");
+                var content = new System.Net.Http.StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(status), System.Text.Encoding.UTF8, "application/json");
+                await FirebaseService.SharedHttpClient.PutAsync(url, content);
+            }
+            catch { }
         }
     }
 }
