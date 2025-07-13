@@ -3,32 +3,43 @@
     "users": {
       "$uid": {
         ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid"
+        ".write": "$uid === auth.uid",
+        "studyTime": {
+          ".read": "$uid === auth.uid || root.child('friends').child(auth.uid).child($uid).exists()",
+          ".write": "$uid === auth.uid"
+        }
       }
     },
     "publicUsers": {
       "$uid": {
         ".read": true,
-        ".write": "$uid === auth.uid",
-        ".validate": "newData.hasChildren(['username', 'avatarUrl']) && newData.child('username').isString() && newData.child('avatarUrl').isString()"
+        ".write": "$uid === auth.uid"
       }
     },
     "friendRequests": {
       "$receiverId": {
         ".read": "$receiverId === auth.uid",
-        ".write": true
+        ".write": true,
+        "acceptanceMarkers": {
+          ".read": "$receiverId === auth.uid",
+          ".write": true
+        }
       }
     },
     "friends": {
       "$userId": {
-        ".read": "$userId === auth.uid",
-        ".write": "$userId === auth.uid"
+        ".read": "auth.token.admin === true || $userId === auth.uid",
+        ".write": "auth.token.admin === true || $userId === auth.uid",
+        "$friendId": {
+          ".write": "auth.token.admin === true || $userId === auth.uid || (newData.child('syncedFromAcceptance').val() === true)",
+          ".read": "auth.token.admin === true || $userId === auth.uid"
+        }
       }
     },
     "friendsListChanges": {
       "$userId": {
         ".read": "$userId === auth.uid",
-        ".write": "$userId === auth.uid"
+        ".write": true
       }
     },
     "friendAcceptedNotifications": {

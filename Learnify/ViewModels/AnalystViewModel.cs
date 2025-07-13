@@ -83,31 +83,11 @@ namespace Learnify.ViewModels
                     
                     foreach (var day in weekDates)
                     {
-                        double minutesForDay = 0;
+                        // Sử dụng StudyTimeService thống nhất
+                        double minutesForDay = StudyTimeService.CalculateStudyTimeForDate(studyTimeData?.Sessions, day);
                         
-                        // Tính từ studyTimeData.Sessions (nguồn dữ liệu chính)
-                        if (studyTimeData?.Sessions != null && studyTimeData.Sessions.Any())
-                        {
-                            var sessionsForDay = studyTimeData.Sessions
-                                .Where(s => !string.IsNullOrEmpty(s.Timestamp) && 
-                                           DateTime.TryParse(s.Timestamp, out var sessionDate) && 
-                                           sessionDate.Date == day.Date)
-                                .ToList();
-                            
-                            minutesForDay = sessionsForDay.Sum(s => s.Duration);
-                            
-                            if (sessionsForDay.Any())
-                            {
-                                Debug.WriteLine($"[ANALYST] {day:dd/MM}: {sessionsForDay.Count} sessions, {minutesForDay} minutes");
-                                foreach (var session in sessionsForDay)
-                                {
-                                    Debug.WriteLine($"  - Session: {session.Timestamp} = {session.Duration} min");
-                                }
-                            }
-                        }
-                        
-                        values.Add(minutesForDay);
                         Debug.WriteLine($"[ANALYST] {day:dd/MM}: Total {minutesForDay} minutes");
+                        values.Add(minutesForDay);
                     }
 
                     Debug.WriteLine($"[ANALYST] Week total: {values.Sum()} minutes across 7 days");
@@ -132,19 +112,8 @@ namespace Learnify.ViewModels
                     
                     foreach (var day in monthDates)
                     {
-                        double minutesForDay = 0;
-                        
-                        // Tính từ studyTimeData.Sessions (nguồn dữ liệu chính)
-                        if (studyTimeData?.Sessions != null && studyTimeData.Sessions.Any())
-                        {
-                            var sessionsForDay = studyTimeData.Sessions
-                                .Where(s => !string.IsNullOrEmpty(s.Timestamp) && 
-                                           DateTime.TryParse(s.Timestamp, out var sessionDate) && 
-                                           sessionDate.Date == day.Date)
-                                .ToList();
-                            
-                            minutesForDay = sessionsForDay.Sum(s => s.Duration);
-                        }
+                        // Sử dụng StudyTimeService thống nhất
+                        double minutesForDay = StudyTimeService.CalculateStudyTimeForDate(studyTimeData?.Sessions, day);
                         
                         values.Add(minutesForDay);
                     }

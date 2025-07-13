@@ -183,26 +183,58 @@ namespace Learnify.Services
         {
             try
             {
-                var url = GetAuthenticatedUrl($"users/{userId}/username.json");
-                var response = await _httpClient.GetAsync(url);
+                Debug.WriteLine($"[GetUsernameAsync] Getting username for user: {userId}");
+                
+                // Thử lấy từ publicUsers trước (có thể đọc được)
+                var publicUrl = GetAuthenticatedUrl($"publicUsers/{userId}.json");
+                Debug.WriteLine($"[GetUsernameAsync] Request URL (public): {publicUrl}");
+                var response = await _httpClient.GetAsync(publicUrl);
+                Debug.WriteLine($"[GetUsernameAsync] Response status (public): {response.StatusCode}");
+                
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    var username = content.Trim('"');
-                    if (string.IsNullOrEmpty(username) || username == "null")
+                    Debug.WriteLine($"[GetUsernameAsync] Response content (public): {content}");
+                    
+                    if (!string.IsNullOrEmpty(content) && content != "null")
                     {
-                        // Nếu không có username, trả về UID
-                        return userId;
+                        var data = JObject.Parse(content);
+                        var username = data["username"]?.ToString();
+                        
+                        if (!string.IsNullOrEmpty(username) && username != "null")
+                        {
+                            Debug.WriteLine($"[GetUsernameAsync] Found username in publicUsers: {username}");
+                            return username;
+                        }
                     }
-                    return username;
                 }
-                // Nếu không lấy được username, trả về UID
+                
+                // Fallback: Thử lấy từ users (chỉ cho chính mình)
+                if (userId == AuthService.GetUserId())
+                {
+                    var privateUrl = GetAuthenticatedUrl($"users/{userId}/username.json");
+                    Debug.WriteLine($"[GetUsernameAsync] Request URL (private): {privateUrl}");
+                    var privateResponse = await _httpClient.GetAsync(privateUrl);
+                    Debug.WriteLine($"[GetUsernameAsync] Response status (private): {privateResponse.StatusCode}");
+                    
+                    if (privateResponse.IsSuccessStatusCode)
+                    {
+                        var content = await privateResponse.Content.ReadAsStringAsync();
+                        var username = content.Trim('"');
+                        if (!string.IsNullOrEmpty(username) && username != "null")
+                        {
+                            Debug.WriteLine($"[GetUsernameAsync] Found username in users: {username}");
+                            return username;
+                        }
+                    }
+                }
+                
+                Debug.WriteLine($"[GetUsernameAsync] No username found for {userId}, returning UID");
                 return userId;
             }
             catch (Exception ex)
             {
-                // Debug.WriteLine($"Error getting username: {ex.Message}");
-                // Nếu có lỗi, trả về UID
+                Debug.WriteLine($"[GetUsernameAsync] Exception: {ex.Message}");
                 return userId;
             }
         }
@@ -1051,7 +1083,10 @@ namespace Learnify.Services
         {
             try
             {
-                Debug.WriteLine("[FIREBASE] Getting weekly study time rankings...");
+                Debug.WriteLine("[FIREBASE] Getting weekly study time rankings for friends only...");
+                var currentUserId = AuthService.GetUserId();
+                Debug.WriteLine($"[FIREBASE] Current user: {currentUserId}");
+                
                 // Tính toán tuần hiện tại (thứ 2 đến chủ nhật) theo giờ Việt Nam (UTC+7)
                 var nowVN = DateTime.UtcNow.AddHours(7);
                 var today = nowVN.Date;
@@ -1060,116 +1095,145 @@ namespace Learnify.Services
                 var startOfWeek = today.AddDays(-(dayOfWeek - 1)); // Lùi về thứ 2
                 var endOfWeek = startOfWeek.AddDays(6); // Chủ nhật của tuần
                 Debug.WriteLine($"[FIREBASE] Current week (VN): {startOfWeek:yyyy-MM-dd} to {endOfWeek:yyyy-MM-dd}");
-                var url = GetAuthenticatedUrl("users.json");
-                var response = await _httpClient.GetAsync(url);
-                if (response.IsSuccessStatusCode)
+                
+                // 1. Lấy danh sách bạn bè của current user
+                Debug.WriteLine("[FIREBASE] Step 1: Getting friends list...");
+                var friends = await GetFriendsAsync(currentUserId);
+                Debug.WriteLine($"[FIREBASE] Found {friends.Count} friends");
+                
+                if (friends.Count == 0)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"[FIREBASE] Response content length: {content?.Length ?? 0}");
-                    if (!string.IsNullOrEmpty(content) && content != "null")
+                    Debug.WriteLine("[FIREBASE] No friends found, returning empty rankings");
+                    return new List<(string UserId, TimeSpan Time)>();
+                }
+                
+                // 2. Thêm current user vào danh sách để tính toán
+                var allUserIds = new List<string> { currentUserId };
+                allUserIds.AddRange(friends.Select(f => f.Id));
+                Debug.WriteLine($"[FIREBASE] Processing {allUserIds.Count} users (including self)");
+                
+                var rankings = new List<(string UserId, TimeSpan Time)>();
+                
+                // 3. Lấy thời gian học của từng user (chỉ bạn bè + bản thân)
+                foreach (var userId in allUserIds)
+                {
+                    try
                     {
-                        var users = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(content);
-                        var rankings = new List<(string UserId, TimeSpan Time)>();
-                        Debug.WriteLine($"[FIREBASE] Found {users.Count} users");
-                        foreach (var user in users)
+                        Debug.WriteLine($"[FIREBASE] Processing user: {userId}");
+                        
+                        // Lấy thời gian học của user này
+                        var studyTimeData = await GetStudyTimeDataAsync(userId);
+                        if (studyTimeData != null && studyTimeData.Sessions != null)
                         {
-                            try
+                            double weeklyMinutes = 0;
+                            Debug.WriteLine($"[FIREBASE] User {userId}: Processing {studyTimeData.Sessions.Count} sessions");
+                            
+                            foreach (var session in studyTimeData.Sessions)
                             {
-                                var userId = user.Key;
-                                var userData = user.Value;
-                                var studyTimeData = userData["studyTime"] as JObject;
-                                if (studyTimeData != null)
+                                try
                                 {
-                                    var sessions = studyTimeData["sessions"] as JObject;
-                                    double weeklyMinutes = 0;
-                                    if (sessions != null)
+                                    var timestampStr = session.Timestamp;
+                                    var duration = session.Duration;
+                                    DateTime sessionTimeVN = DateTime.MinValue;
+                                    bool parsed = false;
+                                    
+                                    if (!string.IsNullOrEmpty(timestampStr))
                                     {
-                                        Debug.WriteLine($"[FIREBASE] User {userId}: Processing {sessions.Count} sessions");
-                                        foreach (var session in sessions)
+                                        // Try ISO format first (for new sessions)
+                                        parsed = DateTime.TryParseExact(
+                                            timestampStr,
+                                            "yyyy-MM-ddTHH:mm:ss.fffffff",
+                                            CultureInfo.InvariantCulture,
+                                            DateTimeStyles.None,
+                                            out sessionTimeVN
+                                        );
+                                        // Try current format MM/dd/yyyy hh:mm:ss tt (with AM/PM)
+                                        if (!parsed)
                                         {
-                                            try
-                                            {
-                                                var sessionData = session.Value as JObject;
-                                                var timestampStr = sessionData?["timestamp"]?.Value<string>();
-                                                var duration = sessionData?["duration"]?.Value<double>() ?? 0;
-                                                DateTime sessionTimeVN = DateTime.MinValue;
-                                                bool parsed = false;
-                                                if (!string.IsNullOrEmpty(timestampStr))
-                                                {
-                                                    // Try ISO format first (for new sessions)
-                                                    parsed = DateTime.TryParseExact(
-                                                        timestampStr,
-                                                        "yyyy-MM-ddTHH:mm:ss.fffffff",
-                                                        CultureInfo.InvariantCulture,
-                                                        DateTimeStyles.None,
-                                                        out sessionTimeVN
-                                                    );
-                                                    // Try legacy format if ISO fails
-                                                    if (!parsed)
-                                                    {
-                                                        parsed = DateTime.TryParseExact(
-                                                            timestampStr,
-                                                            "MM/dd/yyyy HH:mm:ss",
-                                                            CultureInfo.InvariantCulture,
-                                                            DateTimeStyles.None,
-                                                            out sessionTimeVN
-                                                        );
-                                                    }
-                                                }
-                                                if (parsed)
-                                                {
-                                                    var sessionDate = sessionTimeVN.Date;
-                                                    Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Session raw timestamp = '{timestampStr}', parsed = {sessionTimeVN:yyyy-MM-dd HH:mm:ss} (Kind={sessionTimeVN.Kind}), sessionDate = {sessionDate:yyyy-MM-dd}, week = {startOfWeek:yyyy-MM-dd} to {endOfWeek:yyyy-MM-dd}");
-                                                    if (sessionDate >= startOfWeek && sessionDate <= endOfWeek)
-                                                    {
-                                                        weeklyMinutes += duration;
-                                                        Debug.WriteLine($"[FIREBASE] User {userId}: Session {sessionDate:yyyy-MM-dd} = {duration} minutes (weekly total: {weeklyMinutes})");
-                                                    }
-                                                    else
-                                                    {
-                                                        Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Session {sessionDate:yyyy-MM-dd} is OUTSIDE week");
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Could not parse timestamp '{timestampStr}'");
-                                                }
-                                            }
-                                            catch (Exception sessionEx)
-                                            {
-                                                Debug.WriteLine($"[FIREBASE] Error processing session for user {userId}: {sessionEx.Message}");
-                                            }
+                                            parsed = DateTime.TryParseExact(
+                                                timestampStr,
+                                                "MM/dd/yyyy hh:mm:ss tt",
+                                                CultureInfo.InvariantCulture,
+                                                DateTimeStyles.None,
+                                                out sessionTimeVN
+                                            );
+                                        }
+                                        // Try 24-hour format MM/dd/yyyy HH:mm:ss
+                                        if (!parsed)
+                                        {
+                                            parsed = DateTime.TryParseExact(
+                                                timestampStr,
+                                                "MM/dd/yyyy HH:mm:ss",
+                                                CultureInfo.InvariantCulture,
+                                                DateTimeStyles.None,
+                                                out sessionTimeVN
+                                            );
+                                        }
+                                        // Try legacy format if all else fails
+                                        if (!parsed)
+                                        {
+                                            parsed = DateTime.TryParseExact(
+                                                timestampStr,
+                                                "MM/dd/yyyy HH:mm:ss",
+                                                CultureInfo.InvariantCulture,
+                                                DateTimeStyles.None,
+                                                out sessionTimeVN
+                                            );
+                                        }
+                                        // Final fallback: use DateTime.TryParse
+                                        if (!parsed)
+                                        {
+                                            parsed = DateTime.TryParse(timestampStr, out sessionTimeVN);
                                         }
                                     }
-                                    Debug.WriteLine($"[FIREBASE] User {userId}: Weekly total = {weeklyMinutes} minutes");
-                                    if (weeklyMinutes > 0)
+                                    
+                                    if (parsed)
                                     {
-                                        rankings.Add((userId, TimeSpan.FromMinutes(weeklyMinutes)));
+                                        var sessionDate = sessionTimeVN.Date;
+                                        Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Session raw timestamp = '{timestampStr}', parsed = {sessionTimeVN:yyyy-MM-dd HH:mm:ss}, sessionDate = {sessionDate:yyyy-MM-dd}");
+                                        
+                                        // Kiểm tra session có trong tuần hiện tại không
+                                        if (sessionDate >= startOfWeek && sessionDate <= endOfWeek)
+                                        {
+                                            weeklyMinutes += duration;
+                                            Debug.WriteLine($"[FIREBASE] User {userId}: Session {sessionDate:yyyy-MM-dd} = {duration} minutes (weekly total: {weeklyMinutes})");
+                                        }
+                                        else
+                                        {
+                                            Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Session {sessionDate:yyyy-MM-dd} is OUTSIDE week {startOfWeek:yyyy-MM-dd} to {endOfWeek:yyyy-MM-dd}");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Debug.WriteLine($"[FIREBASE][DEBUG] User {userId}: Could not parse timestamp '{timestampStr}' with any format");
                                     }
                                 }
-                                else
+                                catch (Exception sessionEx)
                                 {
-                                    Debug.WriteLine($"[FIREBASE] User {userId}: No study time data");
+                                    Debug.WriteLine($"[FIREBASE] Error processing session for user {userId}: {sessionEx.Message}");
                                 }
                             }
-                            catch (Exception ex)
+                            
+                            Debug.WriteLine($"[FIREBASE] User {userId}: Weekly total = {weeklyMinutes} minutes");
+                            if (weeklyMinutes > 0)
                             {
-                                Debug.WriteLine($"[FIREBASE] Error processing user {user.Key}: {ex.Message}");
+                                rankings.Add((userId, TimeSpan.FromMinutes(weeklyMinutes)));
+                                Debug.WriteLine($"[FIREBASE] Added {userId} to rankings with {weeklyMinutes} minutes");
                             }
                         }
-                        Debug.WriteLine($"[FIREBASE] Final weekly rankings count: {rankings.Count}");
-                        return rankings.OrderByDescending(r => r.Time.TotalMinutes).ToList();
+                        else
+                        {
+                            Debug.WriteLine($"[FIREBASE] User {userId}: No study time data");
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Debug.WriteLine("[FIREBASE] Empty or null response content");
+                        Debug.WriteLine($"[FIREBASE] Error processing user {userId}: {ex.Message}");
                     }
                 }
-                else
-                {
-                    Debug.WriteLine($"[FIREBASE] HTTP error: {response.StatusCode}");
-                }
-                return new List<(string UserId, TimeSpan Time)>();
+                
+                Debug.WriteLine($"[FIREBASE] Final weekly rankings count: {rankings.Count}");
+                return rankings.OrderByDescending(r => r.Time.TotalMinutes).ToList();
             }
             catch (Exception ex)
             {

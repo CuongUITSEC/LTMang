@@ -58,8 +58,8 @@ namespace Learnify.ViewModels
                     return;
                 }
 
-                var today = DateTime.Now.Date;
-                var startOfWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+                var today = StudyTimeService.GetCurrentDateVN();
+                var startOfWeek = StudyTimeService.GetStartOfWeekVN();
                 double todayMinutes = 0;
                 double weekMinutes = 0;
 
@@ -70,32 +70,13 @@ namespace Learnify.ViewModels
                 var studyTimeData = await new FirebaseService().GetStudyTimeDataAsync(userId);
                 if (studyTimeData != null && studyTimeData.Sessions != null)
                 {
-                    // Debug.WriteLine($"[REWARD] Tổng số phiên học: {studyTimeData.Sessions.Count}");
+                    // Sử dụng StudyTimeService thống nhất
+                    todayMinutes = StudyTimeService.CalculateTodayStudyTime(studyTimeData.Sessions);
+                    weekMinutes = StudyTimeService.CalculateWeekStudyTime(studyTimeData.Sessions);
                     
-                    foreach (var session in studyTimeData.Sessions)
-                    {
-                        if (DateTime.TryParse(session.Timestamp, out var sessionTime))
-                        {
-                            var localSessionTime = sessionTime.ToLocalTime();
-                            var sessionDate = localSessionTime.Date;
-                            
-                            if (session.Duration > 0)
-                            {
-                                // Debug.WriteLine($"[REWARD] Phiên học: {localSessionTime:yyyy-MM-dd HH:mm:ss} | Thời lượng: {session.Duration} phút");
-                                
-                                if (sessionDate == today)
-                                {
-                                    todayMinutes += session.Duration;
-                                    // Debug.WriteLine($"[REWARD] => Cộng vào thời gian học hôm nay: {session.Duration} phút (Tổng: {todayMinutes} phút)");
-                                }
-                                if (sessionDate >= startOfWeek && sessionDate <= today)
-                                {
-                                    weekMinutes += session.Duration;
-                                    // Debug.WriteLine($"[REWARD] => Cộng vào thời gian học tuần này: {session.Duration} phút (Tổng: {weekMinutes} phút)");
-                                }
-                            }
-                        }
-                    }
+                    // Debug.WriteLine($"[REWARD] Tổng số phiên học: {studyTimeData.Sessions.Count}");
+                    // Debug.WriteLine($"[REWARD] Thời gian học hôm nay: {todayMinutes} phút");
+                    // Debug.WriteLine($"[REWARD] Thời gian học tuần này: {weekMinutes} phút");
                 }
 
                 // Debug.WriteLine($"[REWARD] === Kết quả ===");

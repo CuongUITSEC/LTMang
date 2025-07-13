@@ -37,20 +37,9 @@ public class PieChartViewModel
     {
         var userId = AuthService.GetUserId();
         var studyTimeData = await new FirebaseService().GetStudyTimeDataAsync(userId);
-        double todayMinutes = 0;
-        var today = DateTime.Now.Date;
         
-        if (studyTimeData?.Sessions != null)
-        {
-            foreach (var session in studyTimeData.Sessions)
-            {
-                if (DateTime.TryParse(session.Timestamp, out var sessionTime))
-                {
-                    if (sessionTime.ToLocalTime().Date == today && session.Duration > 0)
-                        todayMinutes += session.Duration;
-                }
-            }
-        }
+        // Sử dụng StudyTimeService thống nhất
+        double todayMinutes = StudyTimeService.CalculateTodayStudyTime(studyTimeData?.Sessions);
 
         // Cập nhật giá trị cho biểu đồ
         PieSeries[0].Values[0] = todayMinutes;
